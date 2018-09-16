@@ -1,16 +1,19 @@
 
-# Introduction
+# Wprowadzenie
 
-It is human instinct to be sceptical of a new paradigm. To put some
-perspective on how far we have come, and the shifts we have already
-accepted on the JVM, let's start with a quick recap of the last 20
-years.
+To normalne, że gdy poznajemy nowy paradygmat robimy to sceptycznie.
+Aby zarysować nieco drogę jaką przeszliśmy i zmiany jakie zaakceptowaliśmy 
+w JVMie, zacznijmy od szybkiej powtórki z ostanich 20 lat tej platformy.
 
-Java 1.2 introduced the Collections API, allowing us to write methods
-that abstracted over mutable collections. It was useful for writing
-general purpose algorithms and was the bedrock of our codebases.
+Java 1.2 wprowadziła _Collections API_, pozwalające nam pisac metody które mogły
+abstrahować nad[^absover]??? mutowalnymi kolekcjami. Była to zmiana pomocna w pisaniu 
+algorytmów ogólnego przeznaczenia, która stała się podwaliną dla naszego kodu.
 
-But there was a problem, we had to perform runtime casting:
+[^absover]: Jest to tłumaczenie angielskiego _abstract over_, które w języku polskim nie ma dobrego tłumaczenia.
+    Zwrot ten oznacza zrobienie czegoś bez brania pod uwagę szczegółów, np. "abstrahować nad mutowalnymi kolekcjami"
+    oznacza  używać ich ogólnej abstrakcji (interfejsu) zamiast konkretnych implementacji. (przyp. tłum.)???
+
+Niestety, API to miało jeden problem, zmuszało nas do rzutowania w czasie wykonania (runtime casting)???:
 
 {lang="text"}
 ~~~~~~~~
@@ -19,40 +22,39 @@ But there was a problem, we had to perform runtime casting:
   }
 ~~~~~~~~
 
-In response, developers defined domain objects in their business logic
-that were effectively `CollectionOfThings`, and the Collection API
-became implementation detail.
+W odpowiedzi na ten problem, developerzy definiowali obiekty domenowe, które były 
+efektywnie `CollcetionOfThing`, czyli kolekcjami konkretnych typów, z ich własnym silnie typowanym interfejsem,
+a Collection API stało się szczegółem implementacyjnym.
 
-In 2005, Java 5 introduced *generics*, allowing us to define
-`Collection<Thing>`, abstracting over the container **and** its
-elements. Generics changed how we wrote Java.
+W 2005 Java 5 wprowadziła *typy generyczne* (generics)???, pozwalające nam defniować `Collection<Thing>`,
+abstrahując nad konkretną kolekjcę **oraz** jej elementami. Typy generyczne zmieniły sposób w jaki pisaliśmy kod w Javie.
 
-The author of the Java generics compiler, Martin Odersky, then created
-Scala with a stronger type system, immutable data and multiple
-inheritance. This brought about a fusion of object oriented (OOP) and
-functional programming (FP).
+Autor javowego kompilatora typów generycznych, Martin Odersky, niedługo później stworzył Scalę, język z silniejszym 
+systemem typów, niemutowalnymi kolekcjami oraz wielokrotnym dziedziczeniem. Sprowadziło to fuzję pomiędzy programowaniem
+zorientowanym obiektowo (OOP) oraz programowniem funkcyjnym (FP).
 
-For most developers, FP means using immutable data as much as
-possible, but mutable state is still a necessary evil that must be
-isolated and managed, e.g. with Akka actors or `synchronized` classes.
-This style of FP results in simpler programs that are easier to
-parallelise and distribute, an improvement over Java. But it is only
-scratching the surface of the benefits of FP, as we will discover in
-this book.
+Dla większości programistów FP oznacza używanie niemutowalnych struktur danych tak często jak to możliwe,
+ale mutowalny stan jest nadal złem koniecznym które musi być wyizolowane i zarządzane, np. przy użyciu aktorów z `Akki` lub
+klas używających `synchronized`. Ten styl FP skutkuje prostszymi programami które łatwiej zrównoleglić i rozproszyć, 
+stawiając zdecydowany krok naprzód względem Javy. Jest to jednak niewielka częśc zalet i korzyści płynących z programowa funkcyjnego, 
+które odkryjemy w tej książce.
 
-Scala also brings `Future`, making it easy to write asynchronous
-applications. But when a `Future` makes it into a return type,
-*everything* needs to be rewritten to accomodate it, including the
-tests, which are now subject to arbitrary timeouts.
+Scala wprowadza również typ `Future`, sprawiając że pisanie aplikacji asynchonicznych staje się dużo łatwiejsze.
+Jendak gdy tylko `Future` pojawi się w typie zwracanym z funkcji, *wszystko* musi zostać przepisane i dostosowane,
+wliczając testy, które teraz narażone są na arbitralne _timeouty_[^timeout]
 
-We have a problem similar to Java 1.0: there is no way of abstracting
-over execution, much as we had no way of abstracting over collections.
+[^timeout]: Wielokrotnie w tej książce pojawią się spolszczone wyrażenia angielskie w miejscach w których nie ma dla nich dobrego
+    polskiego odpowiednika. Uznaliśmy że dużo lepiej użyć wyrażenia które być może brzmi dziwnie, ale pozwala w łatwy sposób zrozumieć
+    niesione znaczenie, niż wymyślać nową nazwę, której znaczenia trzba się domyślać.
+
+Mamy więc problem podobny to tego z Javy 1.0: brakuje nam możliwości abstrahowania nad wykonaniem programu, tak samo
+jak brakowało nam możliwość abstrahowania nad używanymi kolekcjami.
 
 
-## Abstracting over Execution
+## Abstrahowanie nad Wykonaniem
 
-Say we want to interact with the user over the command line interface. We can
-`read` what the user types and we can `write` a message to them.
+Powiedzmy, że chcemy komunikować się z użytkownikiem poprzed interjs wiersza poleceń. Możemy czytać (`read`)
+to co uzytkownik napisał i pisać (`write`) wiadomośći które będzie mógł przeczytać.
 
 {lang="text"}
 ~~~~~~~~
@@ -67,21 +69,20 @@ Say we want to interact with the user over the command line interface. We can
   }
 ~~~~~~~~
 
-How do we write generic code that does something as simple as echo the user's
-input synchronously or asynchronously depending on our runtime implementation?
+Jak możemy napisać generyczny kod, który zrobić coś tak prostego jak powtórzenie (`echo`) wiadomości
+wpisanej przez użytkownia, w sposób synchroniczny bądz asynchroniczny w zależności do naszego środowiska uruchomieniowego?
 
-We could write a synchronous version and wrap it with `Future` but now
-we have to worry about which thread pool we should be using for the
-work, or we could `Await.result` on the `Future` and introduce thread
-blocking. In either case, it is a lot of boilerplate and we are
-fundamentally dealing with different APIs that are not unified.
+Moglibyśmy napisać wersję synchroniczą i owinąć ją typem `Future` ale zmusiłoby nas to do zdecydowania jakiej puli wątków
+powinnismy użyć. Alternatywnie moglibyśmy zawołać `Await.result` na `Future` i wprowadzić tym samym blokowanie wątku. 
+W obu przypadkach sprowadza się to do napisanie dużej ilości _boilerplate'u_ i utrzymywania dwóch różnych API które nie są
+w żaden sposób zunifikowane.
 
-We can solve the problem, like Java 1.2, with a common parent using the *higher
-kinded types* (HKT) Scala language feature.
+Możemy rozwiązać ten problem, podobnie jak w Javie 1.2, używając wspólnego interfejsu bazującego na 
+*typach wyższego rodzaju* (higher kinded types, HKT) dostępnych w Scali.
 
-A> **Higher Kinded Types** allow us to use a *type constructor* in our type
-A> parameters, which looks like `C[_]`. This is a way of saying that
-A> whatever `C` is, it must take a type parameter. For example:
+A> **Higher Kinded Types** pozwalają nam na używnie  *konstruktorów typów* (_type constructors_) przy definiowaniu 
+A> parametrów typów (_type parameters_), które wygladają tak: `C[_]`. Jest to spósb na wyrażenie:
+A> czymkolwiek jest `C`, musi ono przyjmowac jeden _type parameter_. Na przykład:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -90,8 +91,8 @@ A>     def create(i: Int): C[Int]
 A>   }
 A> ~~~~~~~~
 A> 
-A> `List` is a type constructor because it takes a type (e.g. `Int`) and constructs
-A> a type (`List[Int]`). We can implement `Foo` using `List`:
+A> `List` jest _type constructor'em_ ponieważ przyjmuje on typ (np. `Int`) i tworzy nowy typ
+A> (`List[Int]`). Możemu zaimplementować `Foo` używając `List`:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -100,21 +101,19 @@ A>     def create(i: Int): List[Int] = List(i)
 A>   }
 A> ~~~~~~~~
 A> 
-A> We can implement `Foo` for anything with a type parameter hole, e.g.
-A> `Either[String, _]`. Unfortunately it is a bit clunky and we have to
-A> create a type alias to trick the compiler into accepting it:
+A> Możemy zaimplementować `Foo` używając dowolnego typu z pojedynczym brakującym parametrem typu, np.
+A> `Either[String, _]`. Niestety jest to dość uciążliwe, ponieważ musimy zdefiniować alias typu (_type alias_) aby
+A> zmusic kompilator do zaakceptwania tego co chcemy zrobić:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
 A>   type EitherString[T] = Either[String, T]
 A> ~~~~~~~~
 A> 
-A> Type aliases don't define new types, they just use substitution and
-A> don't provide extra type safety. The compiler substitutes
-A> `EitherString[T]` with `Either[String, T]` everywhere. This technique
-A> can be used to trick the compiler into accepting types with one hole
-A> when it would otherwise think there are two, like when we implement
-A> `Foo` with `EitherString`:
+A> Aliasy typów nie denfiują nowych typów ani nie zwiększają bezpieczeństwa ich używania (_type safety_), a jedynie pozwalają na proste podstawienia.
+A> Kompilator zamienia `EitherString[T]` na `Either[String, T]` gdziekolwiek to pierwsze jest użyte. 
+A> Technika ta może być użyta do oszukiwania kompilatora gdy chcemy użyć typu z dwoma parametrami tam gdzie kompilator oczekuje jednego,
+A> tak jak gdy implementowaliśmy `Foo` przy użyciu `EitherString`:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -123,8 +122,8 @@ A>     def create(i: Int): Either[String, Int] = Right(i)
 A>   }
 A> ~~~~~~~~
 A> 
-A> Alternatively, the [kind projector](https://github.com/non/kind-projector/) plugin allows us to avoid the `type`
-A> alias and use `?` syntax to tell the compiler where the type hole is:
+A> Alternatywnie, możemy uzyć pluginu do kompilatora [kind projector](https://github.com/non/kind-projector/), która pozwala na 
+A> uniknąć definiowania aliasów typów, a zamiast nich możemy użyć `?` aby przekazać kompilatorowi odpowiednią informacje:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -133,17 +132,16 @@ A>     def create(i: Int): Either[String, Int] = Right(i)
 A>   }
 A> ~~~~~~~~
 A> 
-A> Finally, there is this one weird trick we can use when we want to ignore the
-A> type constructor. Define a type alias to be equal to its parameter:
+A> Na koniec został nam jeszcze jeden trik, którego możemy użyć aby zignorować konstruktor typu. 
+A> Możemy zdefiniować alias typu tak, aby był równoważny ze swoim parametrem:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
 A>   type Id[T] = T
 A> ~~~~~~~~
-A> 
-A> Before proceeding, understand that `Id[Int]` is the same thing as `Int`, by
-A> substituting `Int` into `T`. Because `Id` is a valid type constructor we can use
-A> `Id` in an implementation of `Foo`
+A>
+A> Nim przejdziemy dalej, musisz zrozumieć, że `Id[Int]` jest dokładnie tym samym co `Int`. Ponieważ `Id` jest
+A> poprawnym konstruktorem typu możemy użyć `Id` aby zaimplementować `Foo`:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -152,10 +150,9 @@ A>     def create(i: Int): Int = i
 A>   }
 A> ~~~~~~~~
 
-We want to define `Terminal` for a type constructor `C[_]`. By
-defining `Now` to construct to its type parameter (like `Id`), we can
-implement a common interface for synchronous and asynchronous
-terminals:
+Chcemy zdefiniowac `Terminal` dla dowolnego konstruktora typu `C[_]`. Poprzez zdefiniowanie `Now` 
+jako równoznacznego ze swoim parametrem (analogicznie do `Id`), możemy zaimplementować ten wspólny interfejs dla terminali
+synchronicznych i asynchronicznych:
 
 {lang="text"}
 ~~~~~~~~
@@ -177,14 +174,10 @@ terminals:
   }
 ~~~~~~~~
 
-We can think of `C` as a *Context* because we say "in the context of
-executing `Now`" or "in the `Future`".
-
-But we know nothing about `C` and we cannot do anything with a
-`C[String]`. What we need is a kind of execution environment that lets
-us call a method returning `C[T]` and then be able to do something
-with the `T`, including calling another method on `Terminal`. We also
-need a way of wrapping a value as a `C[_]`. This signature works well:
+Niestety nie wiemy nic o `C` i nic nie jesteśmy w stanie zrobić z `C[String]`.
+Potrzebujemy środowiska wykoniania (_execution environment_), które pozwoli nam zawołać metodę zwracającą `C[T]` a póżniej
+zrobić coś z `T`, np zawołać kolejną metodę z interfejsu `Terminal`.  Potrzebujemy również możliwość owinięcia wartośći 
+typem `C[_]`. Poniższa sygnatura dobrze spełnia nasze wymagania:
 
 {lang="text"}
 ~~~~~~~~
@@ -194,7 +187,7 @@ need a way of wrapping a value as a `C[_]`. This signature works well:
   }
 ~~~~~~~~
 
-letting us write:
+pozwalając nam na napisanie:
 
 {lang="text"}
 ~~~~~~~~
@@ -206,20 +199,16 @@ letting us write:
     }
 ~~~~~~~~
 
-We can now share the `echo` implementation between synchronous and
-asynchronous codepaths. We can write a mock implementation of
-`Terminal[Now]` and use it in our tests without any timeouts.
+Możemy teraz współdzielić implementację `echo` pomiędzy synchroniczną i asynchroniczną wersją naszego programu.
+Możemy napisać sztuczną (_mock_) implementację `Terminal[Now]` i użyć jej w naszych testach beż zagrożenia ze strony _timeoutów_. 
 
-Implementations of `Execution[Now]` and `Execution[Future]` are
-reusable by generic methods like `echo`.
+Implementacje `Execution[Now]` oraz `Execution[Future]` moga być reużywane przez generyczne metody takie jak `echo`.
 
-But the code for `echo` is horrible!
+Ale kod implementujący `echo` jest okropny!
 
-The `implicit class` Scala language feature gives `C` some methods.
-We will call these methods `flatMap` and `map` for reasons that will
-become clearer in a moment. Each method takes an `implicit
-Execution[C]`, but this is nothing more than the `flatMap` and `map`
-that we're used to on `Seq`, `Option` and `Future`
+Używając mechnizmu `implicit class` w Scali, możemy dodać metody do `C`.
+Nazwijmy te metody `flatMap` i `map` z powodów, które staną sie jasne już niedługo. Każda z metod przyjmuje
+`implicit Execution[C]`, ale oprócz tego są to dokładnie takie same `flatMap` i `map` jakie znamy z typów `Seq`, `Option` czy `Future`. 
 
 {lang="text"}
 ~~~~~~~~
@@ -240,9 +229,8 @@ that we're used to on `Seq`, `Option` and `Future`
     }
 ~~~~~~~~
 
-We can now reveal why we used `flatMap` as the method name: it lets us
-use a *for comprehension*, which is just syntax sugar over nested
-`flatMap` and `map`.
+Możemy teraz zdradzić dlaczego użyliśmy `flatMap` jako nazwy metody: pozwala nam to używać *for comprehension*, czyli 
+lepszej składni dla zagnieżdżonych wywowałań `flatMap` i `map`.
 
 {lang="text"}
 ~~~~~~~~
@@ -253,67 +241,60 @@ use a *for comprehension*, which is just syntax sugar over nested
     } yield in
 ~~~~~~~~
 
-Our `Execution` has the same signature as a trait in Scalaz called `Monad`,
-except `chain` is `bind` and `create` is `pure`. We say that `C` is *monadic*
-when there is an implicit `Monad[C]` available. In addition, Scalaz has the `Id`
-type alias.
+Nasze `Execution` ma taką samą sygnaturę jak trait w Scalaz zwany `Monad`,
+z ta różnicą że `chain` to `bind` and `create` to `pure`. Mówimy, że `C` jest *monadyczne* (_monadic_)
+gdy dostępna jest implicit instancja `Monad[C]`. Dodatkow Scalaz ma również alias typu `Id`.
 
-The takeaway is: if we write methods that operate on monadic types,
-then we can write sequential code that abstracts over its execution
-context. Here, we have shown an abstraction over synchronous and
-asynchronous execution but it can also be for the purpose of more
-rigorous error handling (where `C[_]` is `Either[Error, _]`), managing
-access to volatile state, performing I/O, or auditing of the session.
+Podsumowując: jeśli piszemy metody operujące na typach moandycznych, wówczas możemy 
+pisać sekwencyjny kod który abstrahuje nad swoim środowiskiem wykonania. Pokazaliśmy jak zrobić to dla 
+synchronicznego i asynchronicznego wykonania programu ale tej samej techniki możemy użyć dla innych kontekstów, np.
+statycznego deklarowania błedów (gdzie `C[_]` stanie się `Either[Error, _]`), zarządzania dostępem do ulotnego stanu aplikacji (_volatile state_),
+wykonywania operacji wejścia/wyjścia albo audytowalnej sesji.
 
+## Programowanie Czysto Funkcyjne[^purefp]
 
-## Pure Functional Programming
+[^purefp]: _Pure Functional Programming_
 
-Functional Programming is the act of writing programs with *pure functions*.
-Pure functions have three properties:
+Programowanie Funkcyjne to akt tworzenia programów przy użyciu *czystych funkcji* (_pure functions_).
+Czyste funkcje mają trzy własciwości:
 
--   **Total**: return a value for every possible input
--   **Deterministic**: return the same value for the same input
--   **Inculpable**: no (direct) interaction with the world or program state.
+-  **Totalność**: zwracają wartość dla każdego możliwego argumentu (_total_)
+-  **Deterministyczność**: za kazdym razem zwracają tę samą wartość dla tego samego argumentu (_deterministic_)
+-  **Niewinność**: brak (bezpośrednich) interakcji ze światem lub wewnętrznym stanem programu (_inculpable_)
 
-Together, these properties give us an unprecedented ability to reason about our
-code. For example, input validation is easier to isolate with totality, caching
-is possible when functions are deterministic, and interacting with the world is
-easier to control, and test, when functions are inculpable.
+Razem te właściwości dają nam bezprecensową zdolność do rozumowania o naszym kodzie. Na przykład, walidacja
+wejścia jest łatwiejsza do wyizolowania z totalnością, caching jest możliwy gdy funkcje są deterministyczne a
+interagowanie ze światem jest łatwiejsze do kontrolowania i testowania gdy funkcje są niewinne.
 
-The kinds of things that break these properties are *side effects*: directly
-accessing or changing mutable state (e.g. maintaining a `var` in a class or
-using a legacy API that is impure), communicating with external resources (e.g.
-files or network lookup), or throwing and catching exceptions.
+Rzeczy które łamią te właściwośći nazywamy *efektami ubocznymi* (_side effects_): bezpośredni dostęp lub zmiana
+mutowalnego stanu aplikacji (np. `var` wewnątrz klasy), komunikowanie się z zewnętrznymi zasobami (np. plikami lub siecią) lub
+rzucanie i łapanie wyjątków.
 
-We write pure functions by avoiding exceptions, and interacting with the world
-only through a safe `F[_]` execution context.
+Piszemy czyste funkcje przez unikanie wyjątkow i komunikowanie się ze światem jedynie poprzez bezpieczny kontekst wywołania `F[_]`.
 
-In the previous section, we abstracted over execution and defined `echo[Id]` and
-`echo[Future]`. We might reasonably expect that calling any `echo` will not
-perform any side effects, because it is pure. However, if we use `Future` or
-`Id` as the execution context, our application will start listening to stdin:
+W poprzedniej sekcji abstrahowaliśmy nad wykonianiem programu i definiowaliśmy `echo[Id]` oraz `echo[Future]`.
+Możemy oczekiwać że wywołanie jakiegokolwiek `echo` nie spowoduje żadnych efektów ubocznych, ponieważ jest to czysta funkcja.
+Jednak jeśli używamy `Future` lub `Id` jako konktekstu wykonania, nasza aplikacjia zacznie nasłuchiwać na standardowym stumieniu wejścia (_stdin_):
 
 {lang="text"}
 ~~~~~~~~
   val futureEcho: Future[String] = echo[Future]
 ~~~~~~~~
 
-We have broken purity and are no longer writing FP code: `futureEcho` is the
-result of running `echo` once. `Future` conflates the definition of a program
-with *interpreting* it (running it). As a result, applications built with
-`Future` are difficult to reason about.
+Zaburzyliśmy czystość in tym samym nie piszemy kodu funkcyjnego: `futureEcho` jest rezultate wykonania `echo` raz. 
+`Future` łączy defnicje programu z jego *interpretacją* (uruchomieniem). Tym samym, trudnym staje się rozumowanie o 
+aplikacjach zbudowanych przy użyciu `Future`.
 
-A> An expression is *referentially transparent* if it can be replaced with its
-A> corresponding value without changing the program's behaviour.
+A> Wyrażenie jest *referencyjnie transparentne* (_referentially transparent_) jeśli może ono być zastąpione
+A> jego wartośćia bez zmieniania zachowania programu.
+A>
+A> Czyste funkcje są referenycjnie transparentne, pozwalając na szeroko zakrojone reużycie kodu, 
+A> optymalizacje wydajności, zrozumienie i kontrolę nad programem.
 A> 
-A> Pure functions are referentially transparent, allowing for a great deal of code
-A> reuse, performance optimisation, understanding, and control of a program.
-A> 
-A> Impure functions are not referentially transparent. We cannot replace
-A> `echo[Future]` with a value, such as `val futureEcho`, since the pesky user can
-A> type something different the second time.
+A> Nieczyste funkcje nie są referencyjnie transparentne. Nie możemy zastapić wywołania `echo[Future]` jego wartością
+A> ponieważ ten nieznośny użytkownik za drugim razem może wpisać coś zupełnie innego.
 
-We can define a simple safe `F[_]` execution context
+Możemy zdefiniować prosty i bezpieczny kontekst wykonania `F[_]`
 
 {lang="text"}
 ~~~~~~~~
@@ -326,9 +307,10 @@ We can define a simple safe `F[_]` execution context
   }
 ~~~~~~~~
 
-which lazily evaluates a thunk. `IO` is just a data structure that references
-(potentially) impure code, it isn't actually running anything. We can implement
-`Terminal[IO]`
+który leniwie wykonuje thunk[^thunk]. `IO` jest jest zwyczajną struktura danych która odnosi się do (potencjalnie)
+nieczystego kodu ale nic nie wykonuje. Możemy zaimplementować `Terminal[IO]`
+
+[^thunk]: kawałek kodu. Jedno z wyrażeń bez odpowiednika w języku polskim. (przyp. tłum.)
 
 {lang="text"}
 ~~~~~~~~
@@ -338,31 +320,29 @@ which lazily evaluates a thunk. `IO` is just a data structure that references
   }
 ~~~~~~~~
 
-and call `echo[IO]` to get back a value
+i wywołać `echo[IO]` aby dostać spowrotem wartość
 
 {lang="text"}
 ~~~~~~~~
   val delayed: IO[String] = echo[IO]
 ~~~~~~~~
 
-This `val delayed` can be reused, it is just the definition of the work to be
-done. We can map the `String` and compose additional programs, much as we would
-map over a `Future`. `IO` keeps us honest that we are depending on some
-interaction with the world, but does not prevent us from accessing the output of
-that interaction.
+Ta `val delayed` może być reużywana, gdyż jest to tylko definicja pracy która musi zostać wykonana. Możemy 
+przemapować `String` i tworzyć kolejne programy, podobnie jak mapowalibyśmy `Future`. `IO` pozwala nam zachować szczerość
+co do tego, że zależymy od pewnych interakcji ze światem zewnętrznym, ale nie pozbawia nas dostępu do wyniku tej interakcji.
 
-The impure code inside the `IO` is only evaluated when we `.interpret()` the
-value, which is an impure action
+Nieczysty kod wewnątrz `IO` jest ewaluowany kiedy wywołamy `.interpret()` na zwróconej wartości. Wywoałnie to jest oczywiście 
+również nieczystą akcją
 
 {lang="text"}
 ~~~~~~~~
   delayed.interpret()
 ~~~~~~~~
 
-An application composed of `IO` programs is only interpreted once, in the `main`
-method, which is also called *the end of the world*.
+Aplikacja złożona z programów opartych o `IO` jest interpretowana jedynie raz, wewnątrz metody `main`, która jest
+również zwana *końcem świata* (_the end of the world_).
 
-In this book, we expand on the concepts introduced in this chapter and show how
-to write maintainable, pure functions, that achieve our business's objectives.
+W tej książce rozszerzamy koncepcje wprowadzone w tym rozdziale i pokazujemy jak pisać utrzymywalne, czyste funkcje które
+rozwiązują stawiane przed nimi problemy.
 
 

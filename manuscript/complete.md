@@ -1,23 +1,22 @@
 
 # For Comprehensions
 
-Scala's `for` comprehension is the ideal FP abstraction for sequential
-programs that interact with the world. Since we will be using it a lot,
-we're going to relearn the principles of `for` and how Scalaz can help
-us to write cleaner code.
+`for comprehension` to idealna abstrakcja do pisania funkcyjnych programów komunikujących się ze światem.
+Ponieważ będziemy używać jej bardzo często poświęcimy chwilę na przypomnienie sobie jej zasad działania a
+przy okazji zobaczymy jak Scalaz może pomóc nam pisać czystszy kod.
 
-This chapter doesn't try to write pure programs and the techniques are
-applicable to non-FP codebases.
-
+Ten rozdział nie skupia się na programowaniu czysto funkcyjnym a techniki w nim opisane znajdą zastosowanie
+również w aplikacjach niefunkcyjnych.
 
 ## Syntax Sugar
 
-Scala's `for` is just a simple rewrite rule, also called *syntax
-sugar*, that doesn't have any contextual information.
+Konstrukcja `for` w Scali jest prostą reguła przepisania (_rewrite rule_), zwaną również *syntax sugar*[^synntaxsugar], 
+i nie wnosi żadnych dodatkowych informacji do programu.
 
-To see what a `for` comprehension is doing, we use the `show` and
-`reify` feature in the REPL to print out what code looks like after
-type inference.
+[^syntaxsugar]: Tłumaczenie _cukier składniowy_ jest tak niedorzeczne, że zdecydowaliśmy pozostać przy angielskiej wersji.
+
+Aby zobaczyć co tak na prawdę robi `for` użyjemy funkcji `show` i `reify` dostępnych w REPLu. Dzięki nim możemy
+wypisać kod w formie jaką przyjmuje po inferencji typów (_type inference_). 
 
 {lang="text"}
 ~~~~~~~~
@@ -34,10 +33,9 @@ type inference.
         ((k) => i.$plus(j).$plus(k)))))))
 ~~~~~~~~
 
-There is a lot of noise due to additional sugarings (e.g. `+` is
-rewritten `$plus`, etc). We will skip the `show` and `reify` for brevity
-when the REPL line is `reify>`, and manually clean up the generated
-code so that it doesn't become a distraction.
+Widzimy dużo szumu spowodowanego dodatkowymi wzbogaceniami (np. `+` jest przepisany jako `$plus`, itp.). 
+Dla zwiększenia zwięzłości w dalszych przykładach pominiemy wywołania `show` oraz `reify` kiedy linia rozpoczyna się 
+od `reify>`. Dodatkowo generowany kod ulegać będzie ręcznemu oczyszczeniu aby nie rozpraszać czytelnika.
 
 {lang="text"}
 ~~~~~~~~
@@ -49,15 +47,12 @@ code so that it doesn't become a distraction.
         k => i + j + k }}}
 ~~~~~~~~
 
-The rule of thumb is that every `<-` (called a *generator*) is a
-nested `flatMap` call, with the final generator a `map` containing the
-`yield` body.
+Zasadą kciuka jest że każdy `<-` (zwany *generatorem*) jest równoznaczny z zagnieżdżonym wywołaniem `flatMap`,
+z wyjątkiem ostatniego, który jest wywołaniem `map` zwracającym ciało bloku `yield`.
 
+### Przypisania
 
-### Assignment
-
-We can assign values inline like `ij = i + j` (a `val` keyword is not
-needed).
+Możemy bezpośrednio przypisywać wartości do zmiennych za pomocą wyrażeń typu `ij = i + j` (słowo kluczowe `val` nie jest wymagane)
 
 {lang="text"}
 ~~~~~~~~
@@ -74,11 +69,11 @@ needed).
         k => ij + k }}}
 ~~~~~~~~
 
-A `map` over the `b` introduces the `ij` which is flat-mapped along
-with the `j`, then the final `map` for the code in the `yield`.
+Wywołanie `map` na `b` wprowadza zmienną `ij` która jest flat-mapowana razem z `j` a na końcu
+wołane jest ostateczne `map` wykorzystujące kod z bloku `yield`.
 
-Unfortunately we cannot assign before any generators. It has been
-requested as a language feature but has not been implemented:
+Niestety nie możemy deklarować przypisań przed użyciem generatora. Funkcjonalność ta
+została zasugerowana ale nie została jeszcze zaimplementowana: 
 <https://github.com/scala/bug/issues/907>
 
 {lang="text"}
@@ -90,7 +85,7 @@ requested as a language feature but has not been implemented:
   <console>:1: error: '<-' expected but '=' found.
 ~~~~~~~~
 
-We can workaround the limitation by defining a `val` outside the `for`
+Możemy obejść to ograniczenie poprzez zadeklarowanie zmiennej poza konstrukcją `for`
 
 {lang="text"}
 ~~~~~~~~
@@ -98,7 +93,7 @@ We can workaround the limitation by defining a `val` outside the `for`
   scala> for { i <- a } yield initial + i
 ~~~~~~~~
 
-or create an `Option` out of the initial assignment
+lub poprzez stworzenie `Option` z pierwotnej wartości
 
 {lang="text"}
 ~~~~~~~~
@@ -108,8 +103,8 @@ or create an `Option` out of the initial assignment
          } yield initial + i
 ~~~~~~~~
 
-A> `val` doesn't have to assign to a single value, it can be anything
-A> that works as a `case` in a pattern match.
+
+A> `val` oprócz przypisywania pojedynczych wartości wspiera także dowolne wyrażenia poprawne w kontekscie `case` przy pattern matchingu.
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -123,7 +118,7 @@ A>   head: Int = 1
 A>   tail: List[Int] = List(2, 3)
 A> ~~~~~~~~
 A> 
-A> The same is true for assignment in `for` comprehensions
+A> Tak samo działa przypisywanie wenątrz `for`
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -135,8 +130,8 @@ A>          } yield first
 A>   res: Some(hello)
 A> ~~~~~~~~
 A> 
-A> But be careful not to miss any cases or there will be a runtime exception (a
-A> *totality* failure).
+A> Trzeba jednak uważać aby nie pominąć żadnego z wariantów gdyż skutkować to będzie wyjątkiem wyrzuconym w trakcie 
+A> działania programu (zaburzenie *totalności*).
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -147,8 +142,7 @@ A> ~~~~~~~~
 
 ### Filter
 
-It is possible to put `if` statements after a generator to filter
-values by a predicate
+Możemy umieścić wyrażenie `if` za generatorerm aby ograniczyć wartości za pomocą predykatu
 
 {lang="text"}
 ~~~~~~~~
@@ -166,10 +160,9 @@ values by a predicate
           k => i + j + k }}}
 ~~~~~~~~
 
-Older versions of Scala used `filter`, but `Traversable.filter` creates new
-collections for every predicate, so `withFilter` was introduced as the more
-performant alternative. We can accidentally trigger a `withFilter` by providing
-type information, interpreted as a pattern match.
+Starsze wersje Scali używały metody `filter`, ale ponieważ `Traversable.filter` tworzy nową kolekcje dla każdego predykatu
+wprowadzono metodę `withFilter` jako bardziej wydajną alternatywę. Możemy przypadkowo wywołać `withFilter` podając informację 
+co do oczekiwanego typu, którą kompilator interpretuje jako pattern matching.
 
 {lang="text"}
 ~~~~~~~~
@@ -181,13 +174,12 @@ type information, interpreted as a pattern match.
   }.map { case i: Int => i }
 ~~~~~~~~
 
-Like assignment, a generator can use a pattern match on the left hand side. But
-unlike assignment (which throws `MatchError` on failure), generators are
-*filtered* and will not fail at runtime. However, there is an inefficient double
-application of the pattern.
+Podobnie do przypisywania zmiennych, generatory moga używać pattern matchingu po swojej lewej stronie. W przeciwieństwie 
+do przypisań (które rzucają `MatchError` w przypadku niepowodzenia), generatory są *filtrowane* i nie rzucają wyjatków 
+w czasie wykonania. Niestety dzieje się do kosztem podwójnego zaaplikowania wzoru (_pattern_).
 
-A> The compiler plugin [`better-monadic-for`](https://github.com/oleg-py/better-monadic-for) produces alternative, **better**,
-A> desugarings than the Scala compiler. This example is interpreted as:
+A> Plugin kompilatora [`better-monadic-for`](https://github.com/oleg-py/better-monadic-for) produkuje altenatywną, **lepszą**
+A> wersję kodu niż oryginalny kompilator Scali. Ten przykład jest interpretowany jako:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -196,14 +188,13 @@ A>
 A>   a.map { (i: Int) => i}
 A> ~~~~~~~~
 A> 
-A> instead of inefficient double matching (in the best case) and silent filtering
-A> at runtime (in the worst case). Highly recommended.
-
+A> zamiast nieefektywnego podwójnego dopasowywania (_matching_) (w najlepszym przypadku) i potejmnego filtrowania
+A> wartości w czasie wykonania (w przypadku najgorszym). Używanie wysoce zalecane.
 
 ### For Each
 
-Finally, if there is no `yield`, the compiler will use `foreach`
-instead of `flatMap`, which is only useful for side-effects.
+W końcu, jeśli nie użyjemy słowa `yield`, kompilator użyje metody `foreach` zamiast `flatMap`, która użyteczna
+jest jedynie w przypadku użycia efektów ubocznych.
 
 {lang="text"}
 ~~~~~~~~
@@ -213,11 +204,10 @@ instead of `flatMap`, which is only useful for side-effects.
 ~~~~~~~~
 
 
-### Summary
+### Podsumowanie
 
-The full set of methods supported by `for` comprehensions do not share
-a common super type; each generated snippet is independently compiled.
-If there were a trait, it would roughly look like:
+Pełen zbiór metodu używanych przez konstrukcję `for` nie ma jednego wspólnego interfejsu; każde użycie jest 
+niezależnie kompilowane. Gdyby taki interfejs istaniał wyglądałby mniej więcej tak:
 
 {lang="text"}
 ~~~~~~~~
@@ -229,13 +219,12 @@ If there were a trait, it would roughly look like:
   }
 ~~~~~~~~
 
-If the context (`C[_]`) of a `for` comprehension doesn't provide its
-own `map` and `flatMap`, all is not lost. If an implicit
-`scalaz.Bind[T]` is available for `T`, it will provide `map` and
-`flatMap`.
+Jeśli kontekst (`C[_]`) konstrukcji `for` nie dostarcza swoich własnych metod `map` i `flatMap` 
+to nie wszystko jeszcze stracone. Jeśli dostępna jest domniemana (_implicit_)  instancja typu `scalaz.Bind[T]` dla `T`
+dostarczy ona potrzebne metody `map` oraz `flatMap`.
 
-A> It often surprises developers when inline `Future` calculations in a
-A> `for` comprehension do not run in parallel:
+A> Developerzy czesto zaskakiwani są faktem, że operacje oparte o typ `Future` i zdefiniowane wewnątrz konstrukcji `for`
+A> nie sa wykonywane równolegle:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -248,10 +237,9 @@ A>     j <- Future { anotherExpensiveCalc() }
 A>   } yield (i + j)
 A> ~~~~~~~~
 A> 
-A> This is because the `flatMap` spawning `anotherExpensiveCalc` is
-A> strictly **after** `expensiveCalc`. To ensure that two `Future`
-A> calculations begin in parallel, start them outside the `for`
-A> comprehension.
+A> Dzieję sie tak ponieważ funkcja przekazana do metody `flatMap`, która wywołuje `anotherExpensiveCalc`, wykonuje się wyłącznie
+A> **po** zakończeniu `expensiveCalc`. Aby wymusić równoległe wykonanie tych dwóch operacji musimy utworzyć je poza
+A> konstrukcją `for`.
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -260,19 +248,19 @@ A>   val b = Future { anotherExpensiveCalc() }
 A>   for { i <- a ; j <- b } yield (i + j)
 A> ~~~~~~~~
 A> 
-A> `for` comprehensions are fundamentally for defining sequential
-A> programs. We will show a far superior way of defining parallel
-A> computations in a later chapter. Spoiler: don't use `Future`.
+A> Konstrukcja `for` zaprojektowana jest wyłącznie do definiowania programów sekwencyjnych. W jednym z następnych
+A> rozdziałów pokażemy o wile lepszą metodę definiowania obliczeń równległych. Spoiler: nie używaj typu `Future`.
 
 
-## Unhappy path
+## Nieszczęśliwa ścieżka[^unhappypath]
 
-So far we've only looked at the rewrite rules, not what is happening in `map`
-and `flatMap`. Consider what happens when the `for` context decides that it
-cannot proceed any further.
+[^unhappypath]: Jest to kuriozalne tłumaczenie wyrażenia _unhappy path_. Ale wydało nam sie całkiem zabawne.
 
-In the `Option` example, the `yield` is only called when `i,j,k` are
-all defined.
+Jak dotąd patrzyliśmy jedynie na reguły przepisywania, nie natomiast no to co dzieje się wewnątrz metod `map` i `flatMap`.
+Zastanówmy się co dzieje się kiedy kontekst `for` zadecyduje że nie może kontynuować działania.
+
+W przykładzie bazującym na typie `Option`, blok `yield` jest wywoływany jest jedynie kiedy wartości wszystkich zmiennych 
+`i,j,k` są zdefiniowane.
 
 {lang="text"}
 ~~~~~~~~
@@ -283,13 +271,14 @@ all defined.
   } yield (i + j + k)
 ~~~~~~~~
 
-If any of `a,b,c` are `None`, the comprehension short-circuits with
-`None` but it doesn't tell us what went wrong.
+Jeśli którakolwiek ze zmiennych `a,b,c` przyjmie wartość `None`, konstrukcja `for` zrobi zwarcie[^zwarcie] i zwróci None nie mówiąc
+nam co poszło nie tak.
 
-A> There are many functions in the wild that take `Option` parameters but actually
-A> require all parameters to exist. An alternative to throwing a runtime exception
-A> is to use a `for` comprehension, giving us totality (a return value for every
-A> input):
+[^zwarcie] Z angielskiego _short-circuits_. Chodzi tutaj o zakończenie przetwarzania bez wykonywania pozostałych instrukcji.
+
+A> W praktyce możemy zobaczyć wiele funkcji z parametrami typu `Option`, które w rzeczywistości muszą być zdefiniowane
+A> aby uzyskać sensowny rezultat. Alternatywą do rzucania wyjatku jest użycie konstrukcji `for`, która zapewni nam totalność
+A> naszej funkcji (zwrócenie wartości dla każdego możliwego argumentu):
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -302,18 +291,17 @@ A>     number <- someNumber
 A>   } yield s"$number ${name}s"
 A> ~~~~~~~~
 A> 
-A> but this is verbose, clunky and bad style. If a function requires
-A> every input then it should make its requirement explicit, pushing the
-A> responsibility of dealing with optional parameters to its caller.
+A> jest to jednak rozwiązanie rozwlekłe, niezdarne i w złym stylu. Jeśli funkcja wymaga wszystkich swoich argumentów
+A> to powinna zadeklarować takie wymaganie jawnie, spychając tym samym obowiązek obsłużenia brakujących wartości na 
+A> wywołującego tęże funkcję.
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
 A>   def namedThings(name: String, num: Int) = s"$num ${name}s"
 A> ~~~~~~~~
 
-If we use `Either`, then a `Left` will cause the `for` comprehension
-to short circuit with extra information, much better than `Option` for
-error reporting:
+Jeśli użyjemy typu `Either`, wtedy to `Left` powodwać będzie zwarcie konstrukcji `for` z dodatkową informacją którą niesie w sobie.
+Rozwiązanie to jest zdecydowanie lepsze w przypadku raportowania błędów niż użycie typu `Option`:
 
 {lang="text"}
 ~~~~~~~~
@@ -325,7 +313,7 @@ error reporting:
   Left(sorry, no c)
 ~~~~~~~~
 
-And lastly, let's see what happens with a `Future` that fails:
+Na koniec spójrzmy co stanie się z typem `Future`, który zawiedzie
 
 {lang="text"}
 ~~~~~~~~
@@ -339,30 +327,27 @@ And lastly, let's see what happens with a `Future` that fails:
   caught java.lang.Throwable
 ~~~~~~~~
 
-The `Future` that prints to the terminal is never called because, like
-`Option` and `Either`, the `for` comprehension short circuits.
+Wartość `Future`, która wypisuje wiadomość do terminala nie jest nigdy tworzona ponieważ, 
+tak jak w przypadku `Option` i `Either`, konstrukcja `for` zwiera obwód i zakańcza przetwarzanie.
 
-Short circuiting for the unhappy path is a common and important theme.
-`for` comprehensions cannot express resource cleanup: there is no way
-to `try` / `finally`. This is good, in FP it puts a clear ownership of
-responsibility for unexpected error recovery and resource cleanup onto
-the context (which is usually a `Monad` as we will see later), not the
-business logic.
-
-
-## Gymnastics
-
-Although it is easy to rewrite simple sequential code as a `for`
-comprehension, sometimes we will want to do something that appears to
-require mental summersaults. This section collects some practical
-examples and how to deal with them.
+Zwieranie obwodu w przypadku odejścia od oczekiwanej ścieżki przetwarzania jest ważnym i czesto spotykanym rozwiązaniem.
+Konstrukcja `for` nie jest w stanie obsłużyć uprzątnięcia zasobów (_resource cleanup_): nie ma możliwośći wyrażenia zachowania 
+podobnego do `try`/`finally`. Rozwiązanie to jest dobre, gdyż w programowaniu funkcyjnym jasno deklaruje że to kontekst 
+(który zazwyczaj jest `Monad`ą, jak zobaczymy później), a nie logika biznesowa, jest odpowiedzialny za obsługe błędów 
+i uprzątnięcie zasobów.
 
 
-### Fallback Logic
+## Gimnastyka
 
-Say we are calling out to a method that returns an `Option`. If it is not
-successful we want to fallback to another method (and so on and so on), like
-when we're using a cache:
+Chociaż łatwo jest przepisać prosty kod sekwencyjny przy pomocy konstrukcji `for`,
+czasami chcielibyśmy zrobić coś co wymaga mentalnych fikołków. Ten rozdział zbiera
+niektóre praktyczne przykłady i pokazuje jak sobie z nimi radzić.
+
+
+### Wyjście awaryjne
+
+Powiedzmy że wywołujemy metodę, która zwraca typ `Option`. Jeśli wywołanie to sie nie powiedzie,
+chcielibyśmy użyć innej metody (i tak dalej i tak dalej), np. gdy używamy cache'a.
 
 {lang="text"}
 ~~~~~~~~
@@ -372,7 +357,7 @@ when we're using a cache:
   getFromRedis(key) orElse getFromSql(key)
 ~~~~~~~~
 
-If we have to do this for an asynchronous version of the same API
+Jeśli chcemy zrobić to samo poprzez asynchroniczną wersję tego samego API
 
 {lang="text"}
 ~~~~~~~~
@@ -380,7 +365,7 @@ If we have to do this for an asynchronous version of the same API
   def getFromSql(s: String): Future[Option[String]]
 ~~~~~~~~
 
-then we have to be careful not to do extra work because
+musimy uważać aby nie spowodować zbędnych obliczeń, ponieważ
 
 {lang="text"}
 ~~~~~~~~
@@ -390,8 +375,7 @@ then we have to be careful not to do extra work because
   } yield cache orElse sql
 ~~~~~~~~
 
-will run both queries. We can pattern match on the first result but
-the type is wrong
+uruchomi oba zapytania. Możemy użyć pattern matchingu na pierwszym rezultacie, ale typ sie nie zgadza
 
 {lang="text"}
 ~~~~~~~~
@@ -404,7 +388,7 @@ the type is wrong
   } yield res
 ~~~~~~~~
 
-We need to create a `Future` from the `cache`
+Musimy stworzyć `Future` ze zmiennej `cache`
 
 {lang="text"}
 ~~~~~~~~
@@ -417,16 +401,17 @@ We need to create a `Future` from the `cache`
   } yield res
 ~~~~~~~~
 
-`Future.successful` creates a new `Future`, much like an `Option` or
-`List` constructor.
+`Future.successful` tworzy nową wartoś typu `Future`, podobnie jak konstruktor typu `Option` lub
+`List`.
 
 
-### Early Exit
+### Wczesne wyjście
 
-Say we have some condition that should exit early with a successful value.
+Powiedzmy, że znamy warunek, który pozwala nam szybciej zakończyć obliczenia z poprawną wartością.
 
-If we want to exit early with an error, it is standard practice in OOP to throw
-an exception
+Jeśli chcemy zakończyć je szybciej z błedem, standardowym sposobem na zrobienie tego w OOP[^oop] jest rzucenie wyjątku
+
+[^oop]: _Object Oriented Programming_
 
 {lang="text"}
 ~~~~~~~~
@@ -437,7 +422,7 @@ an exception
   a * 10
 ~~~~~~~~
 
-which can be rewritten async
+co można zapisać asynchronicznie jako
 
 {lang="text"}
 ~~~~~~~~
@@ -452,8 +437,7 @@ which can be rewritten async
   } yield b * 10
 ~~~~~~~~
 
-But if we want to exit early with a successful return value, the simple
-synchronous code:
+Lecz jeśli chcemy zakończyć obliczenia z poprawna wartościa, prosty kod synchroniczny:
 
 {lang="text"}
 ~~~~~~~~
@@ -464,8 +448,7 @@ synchronous code:
   else a * getB
 ~~~~~~~~
 
-translates into a nested `for` comprehension when our dependencies are
-asynchronous:
+przekłada sie na zagnieżdzone konstrukcje `for` gdy tylko nasze zależności stają się asynchroniczne:]]
 
 {lang="text"}
 ~~~~~~~~
@@ -478,12 +461,12 @@ asynchronous:
   } yield c
 ~~~~~~~~
 
-A> If there is an implicit `Monad[T]` for `T[_]` (i.e. `T` is monadic) then Scalaz
-A> lets us create a `T[A]` from a value `a: A` by calling `a.pure[T]`.
+A> Jeśli dostępna jest domyślna instancja `Monad[T]` dla `T[_]` (co oznacza, że `T` jest moandyczne), wówczas
+A> Scalaz pozwalan nam tworzyć instancje `T[A]` używając wartości `a: A` poprzez wywołanie `a.pure[T]`.
 A> 
-A> Scalaz provides `Monad[Future]`, and `.pure[Future]` calls `Future.successful`.
-A> Besides `pure` being slightly shorter to type, it is a general concept that
-A> works beyond `Future`, and is therefore recommended.
+A> Scalaz dostarcza instancję `Monad[Future]` a `.pure[Future]` wywołuje `Future.successful`.
+A> Poza tym że `pure` jest nieco bardziej zwięzłe, jest to koncept ogólny, który aplikuje się do typów innych niż `Future`
+A> a przez to jest to rozwiąznie rekomendowane.
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -495,10 +478,9 @@ A>   } yield c
 A> ~~~~~~~~
 
 
-## Incomprehensible
+## Niepojmowalny
 
-The context we're comprehending over must stay the same: we cannot mix
-contexts.
+Kontekst którego używamy wewnątrz konstrukcji `for` musi być niezmienny: nie możemy ich mieszać.
 
 {lang="text"}
 ~~~~~~~~
@@ -515,11 +497,11 @@ contexts.
                 ^
 ~~~~~~~~
 
-Nothing can help us mix arbitrary contexts in a `for` comprehension
-because the meaning is not well defined.
+Nie ma nic, co pozwoliło by nam mieszać dowolne dwa konteksty wewnątrz kontrukcji `for`. Wynika 
+to za faktu, że nie da się zdefiniowac znaczenia takiej operacji.
 
-But when we have nested contexts the intention is usually obvious yet
-the compiler still doesn't accept our code.
+Jednak gdy mamy do czynienia z zagnieżdzonymi kontekstami intencja jest zazwyczaj oczywista, tymczasem 
+kompilator nadal nie przyjmuje naszego kodu.
 
 {lang="text"}
 ~~~~~~~~
@@ -533,16 +515,17 @@ the compiler still doesn't accept our code.
   <console>:30: error: value * is not a member of Option[Int]
 ~~~~~~~~
 
-Here we want `for` to take care of the outer context and let us write
-our code on the inner `Option`. Hiding the outer context is exactly
-what a *monad transformer* does, and Scalaz provides implementations
-for `Option` and `Either` named `OptionT` and `EitherT` respectively.
+Chcielbyśmy aby konstrukcja `for` zajęła się zewnętrznym kontekstem i pozwoliła nam
+skupić się modyfikacji zagnieżdzonej wartości typu `Option`. 
+Ukrywaniem zewnętrznego kontekstu zajmują się tzw. transformatory monad (_monad transformers_), 
+a Scalaz dostarcza nam implementacje tychże dla typów `Option` i `Either` nazywające się 
+odpowiednio `OptionT` oraz `EitherT`.
 
-The outer context can be anything that normally works in a `for`
-comprehension, but it needs to stay the same throughout.
+Kontekst zewnętrzny może być dowolnym kontekstem który sam w sobie kompatybilny jest z konstrukcją `for`,
+musi jedynie pozostać niezmienny.
 
-We create an `OptionT` from each method call. This changes the context
-of the `for` from `Future[Option[_]]` to `OptionT[Future, _]`.
+Tworzymy instancję `OptionT` z kadego wywołania metody, zmieniając tym samym kontekst z `Future[Option[_]]` 
+na `OptionT[Future, _]`.
 
 {lang="text"}
 ~~~~~~~~
@@ -553,7 +536,7 @@ of the `for` from `Future[Option[_]]` to `OptionT[Future, _]`.
   result: OptionT[Future, Int] = OptionT(Future(<not completed>))
 ~~~~~~~~
 
-`.run` returns us to the original context
+`.run` pozwala nam wrócić do oryginalnego kontekstu
 
 {lang="text"}
 ~~~~~~~~
@@ -561,9 +544,8 @@ of the `for` from `Future[Option[_]]` to `OptionT[Future, _]`.
   res: Future[Option[Int]] = Future(<not completed>)
 ~~~~~~~~
 
-The monad transformer also allows us to mix `Future[Option[_]]` calls with
-methods that just return plain `Future` via `.liftM[OptionT]` (provided by
-scalaz):
+Transformatory monad pozwalają nam mieszać wywołania funkcji zwracajacych `Future[Option[_]]` z
+funkcjami zwracajacymi po prostu `Future` poprzes `.liftM[OptionT]` (pochodzące ze scalaz):
 
 {lang="text"}
 ~~~~~~~~
@@ -576,8 +558,8 @@ scalaz):
   result: OptionT[Future, Int] = OptionT(Future(<not completed>))
 ~~~~~~~~
 
-and we can mix with methods that return plain `Option` by wrapping
-them in `Future.successful` (`.pure[Future]`) followed by `OptionT`
+Dodatkowo możemy mieszać wartości typu `Option` poprzez wywołanie
+`Future.successful` (`.pure[Future]`) a następnie `OptionT`.
 
 {lang="text"}
 ~~~~~~~~
@@ -591,9 +573,9 @@ them in `Future.successful` (`.pure[Future]`) followed by `OptionT`
   result: OptionT[Future, Int] = OptionT(Future(<not completed>))
 ~~~~~~~~
 
-It is messy again, but it is better than writing nested `flatMap` and
-`map` by hand. We can clean it up with a DSL that handles all the
-required conversions into `OptionT[Future, _]`
+Znów zrobił sie bałagan, ale i tak jest lepiej niż gdybyśmy musieli ręcznie pisać zagnieżdżone 
+wywołania metod `flatMap` oraz `map`. Możemy nieco uprzątnąć za pomocą  DSLa który obsłuży
+wszystkie wymagane konwersje
 
 {lang="text"}
 ~~~~~~~~
@@ -603,9 +585,8 @@ required conversions into `OptionT[Future, _]`
   def lift[A](a: A)               = liftOption(Option(a))
 ~~~~~~~~
 
-combined with the `|>` operator, which applies the function on the
-right to the value on the left, to visually separate the logic from
-the transformers
+w połączeniu z operatorem `|>`, który aplikuje funkcje podaną po prawej stronie na argumencie 
+podanym z lewej strony, możemy wizualnie oddzielić logikę od tranformacji.
 
 {lang="text"}
 ~~~~~~~~
@@ -619,14 +600,12 @@ the transformers
   result: OptionT[Future, Int] = OptionT(Future(<not completed>))
 ~~~~~~~~
 
-A> `|>` is often called the *thrush operator* because of its uncanny resemblance to
-A> the cute bird. Those who do not like symbolic operators can use the alias
-A> `.into`.
+A> `|>` jest często nazywany *operatorem drozda* z powodu jego podobieństwa do tego słodkiego ptaka.
+A> Ci, który nie lubią operatorów symbolicznych mogą użyć aliasu `.into`. 
 
-This approach also works for `EitherT` (and others) as the inner
-context, but their lifting methods are more complex and require
-parameters. Scalaz provides monad transformers for a lot of its own
-types, so it is worth checking if one is available.
+To podejście działa również dla `EitherT` (i innych) ale w ich przypadku metody pomocniczne są bardziej skomplikowane
+i wymagają dodatkowy parametrów. Scalaz dostarcza wiele transformatorów monad dla typów które definiuje, więc zawsze 
+warto sprawdzić czy ten którego potrzebujemy jest dostepny.
 
 
 # Application Design
