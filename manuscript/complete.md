@@ -608,69 +608,58 @@ i wymagają dodatkowy parametrów. Scalaz dostarcza wiele transformatorów monad
 warto sprawdzić czy ten którego potrzebujemy jest dostepny.
 
 
-# Application Design
+# Projektowanie Aplikacji
 
-In this chapter we will write the business logic and tests for a purely
-functional server application. The source code for this application is included
-under the `example` directory along with the book's source, however it is
-recommended not to read the source code until the final chapter as there will be
-significant refactors as we learn more about FP.
+W tym rozdziale napiszemy logikę biznesową oraz testy dla czysto funkcyjnej aplikacji serwerowej.
+Kod źródłowy tej aplikacji dostępny jest wraz ze źródłami tej ksiązki w katalogu `example`.
+Nie mniej lepiej nie zagłebiać się w niego zanim nie dotrzemy do ostatniego rozdziału, gdyż
+wraz z poznawanie technik FP będziemy go istotnie zmieniać.
 
+## Specyfikacja
 
-## Specification
-
-Our application will manage a just-in-time build farm on a shoestring
-budget. It will listen to a [Drone](https://github.com/drone/drone) Continuous Integration server, and
-spawn worker agents using [Google Container Engine](https://cloud.google.com/container-engine/) (GKE) to meet the
-demand of the work queue.
+Nasza aplikacja będzie zarządzać farmą serwerów, tworzoną na bazie zapotrzebowania i operującą na możliwie niskim
+budżecie. Będzie ona nasłuchiwać wiadomości od serwera CI [Drone](https://github.com/drone/drone) i uruchamiać
+agentów (maszyny robocze) używając [Google Container Engine](https://cloud.google.com/container-engine/) (GKE), tak aby 
+zaspokoić potrzeby kolejki zadań.
 
 {width=60%}
 ![](images/architecture.png)
 
-Drone receives work when a contributor submits a github pull request
-to a managed project. Drone assigns the work to its agents, each
-processing one job at a time.
+Drone otrzymuje pracę do wykonania kiedy kontrybutor zgłasza pull request w obsługiwanym projekcie na githubie.
+Drone przydziela pracę swoim agentom, gdzie każdy z nich przetwarza jedno zadanie w danym momencie.
 
-The goal of our app is to ensure that there are enough agents to
-complete the work, with a cap on the number of agents, whilst
-minimising the total cost. Our app needs to know the number of items
-in the *backlog* and the number of available *agents*.
+Zadaniem naszej aplikacji jest zagwarantować że zawsze jest dość agentów aby wykonać potrzebną pracę, 
+jednocześnie dbajac aby ich liczba nie przekroczyła okreslonej granicy i minimalizując całkowite koszta.
+Nasza aplikacja muszi znać liczbę elementów w *kolejce* i liczbę dostepnych *agentów*.
 
-Google can spawn *nodes*, each can host multiple drone agents. When an
-agent starts up, it registers itself with drone and drone takes care
-of the lifecycle (including keep-alive calls to detect removed
-agents).
+Google potrafi tworzyć węzły (_nodes_), każdy z nich może być gospodarzem dla wielu agentów równocześnie.
+Agent podczas startu rejestruje się w serwerze, który od tej pory kontroluje jego cykl życia (wliczając 
+cykliczne weryfikowanie czy agent jest nadal aktywny).
 
-GKE charges a fee per minute of uptime, rounded up to the nearest hour
-for each node. One does not simply spawn a new node for each job in
-the work queue, we must re-use nodes and retain them until their 58th
-minute to get the most value for money.
+GKE pobiera opłatę za każdą minutę działania węzła, zaokrąglając czas do najbliższej godziny. Aby osiagnąć maksymalną 
+efektywność nie możemy po prostu tworzyć nowych węzłów dla każdego zadania. Zamiast tego powinniśmy reużywać
+wcześniej stworzone węzły i utrzymywać je do 58 minuty ich działania. 
 
-Our app needs to be able to start and stop nodes, as well as check
-their status (e.g. uptimes, list of inactive nodes) and to know what
-time GKE believes it to be.
+Nasza aplikacja musi być w stanie uruchamiać i zatrzymywać węzły, sprawdzać ich status (np. czas działania, aktywność)
+oraz wiedzieć jaki jest aktualny czas wg. GKE.
 
-In addition, there is no API to talk directly to an *agent* so we do
-not know if any individual agent is performing any work for the drone
-server. If we accidentally stop an agent whilst it is performing work,
-it is inconvenient and requires a human to restart the job.
+Dodatkowo, nie jest dostępne żadne API, które pozwoliłoby rozmawiać bezpośrednio z danym *agentem*, tak więc nie wiemy
+czy aktualnie wykonuje on jakąś pracę dla serwera. Jeśli przypadkowo zatrzymamy agenta w czasie wykonywania pracy
+jest to niewygodne, gdyż wymaga ludzkiej interakcji i ponownego startu zadania.
 
-Contributors can manually add agents to the farm, so counting agents
-and nodes is not equivalent. We don't need to supply any nodes if
-there are agents available.
+Kontrybutorzy mogą ręcznie dodawać agentów do farmy, tak więc liczba agentów i węzłów może być różna. Nie musimy
+dostarczać węzłów jeśli dostępni sa wolni agenci.
 
-The failure mode should always be to take the least costly option.
+W przypadku awari powinnismy zawsze wybierać najtańszą opcję.
 
-Both Drone and GKE have a JSON over REST API with OAuth 2.0
-authentication.
+Zarówno Drone jak i GKE udostępniają JSONowe REST API zabezpieczone OAuth 2.0.
 
 
-## Interfaces / Algebras
+## Interfejsy / Algebry
 
-We will now codify the architecture diagram from the previous section. Firstly,
-we need to define a simple data type to capture a millisecond timestamp because
-such a simple thing does not exist in either the Java or Scala standard
-libraries:
+Spróbujmy teraz zkodyfikować diagram architektury z poprzedniego rozdziału. Po pierwsze powinniśmy zdefiniować
+prosty typ danych do przechowywania zacznik czasu z dokładnaściową do milisekund. Niestety typ taki nie
+jest dostępny w bibliotece standardowej Javy ani Scali.
 
 {lang="text"}
 ~~~~~~~~
@@ -682,12 +671,13 @@ libraries:
   }
 ~~~~~~~~
 
-In FP, an *algebra* takes the place of an `interface` in Java, or the
-set of valid messages for an `Actor` in Akka. This is the layer where
-we define all side-effecting interactions of our system.
+W FP *algebra* przyjmuje miejsce *interfejsu* z Javy lub zbioru poprawnych wiadomości obsługiwanych
+przez aktora z Akki. W tej właśnie warstwie definiujemy wszystkie operacje naszego systemu które 
+prowadzą do komunikacji ze światem zewnętrznym a tym samym do efektów ubocznych.
 
-There is tight iteration between writing the business logic and the
-algebra: it is a good level of abstraction to design a system.
+Istnieje ścisła więź między algebrami a logiką biznesową. Często przechodzić będziemy przez kolejne iteracje,
+w których próbujemy zamodelować nasz problem, następnie implementujemy rozwiązanie, tylko po to aby przekonać się
+że nasz model i zrozumienie problemu wcale nie było takie zupełne.
 
 {lang="text"}
 ~~~~~~~~
@@ -706,36 +696,35 @@ algebra: it is a good level of abstraction to design a system.
   }
 ~~~~~~~~
 
-We've used `NonEmptyList`, easily created by calling `.toNel` on the
-stdlib's `List` (returning an `Option[NonEmptyList]`), otherwise
-everything should be familiar.
-
-A> It is good practice in FP to encode constraints in parameters **and** return types
-A> --- it means we never need to handle situations that are impossible. However,
-A> this often conflicts with *Postel's law* "be liberal in what you accept from
-A> others".
-A> 
-A> Although we agree that parameters should be as general as possible, we do not
-A> agree that a function should take `Seq` unless it can handle empty `Seq`,
-A> otherwise the only course of action would be to exception, breaking totality and
-A> causing a side effect.
-A> 
-A> We prefer `NonEmptyList`, not because it is a `List`, but because of its
-A> non-empty property. When we learn about Scalaz's typeclass hierarchy, we will
-A> see a better way to request non-emptyness.
+Uzyliśmy typu `NonEmptyList`, który można łatwo utworzyć wywołując metodę `.toNel` na standardowej liście, która zwraca
+`Option[NonEmptyList]`. Poza tym wszystko powinno być jasne.
 
 
-## Business Logic
+A> Dobrą praktyką w FP jest zakodowanie ograniczeń (_constraints_) zarówno w typach przyjmowanych **jak i** zwracanych z 
+A> funkcji --- oznacza to że nigdy nie musimy obsługiwać sytuacji, które nie mają prawa się zdażyć. Jednocześnie
+A> podejście to kłóci się z *prawem Postela* (_Postel's law_) "bądź liberalny względem tego co przyjmujesz od innych"[^postel].
+A>
+A> I chociaż zgadzamy się że typy parametrów powinny być tak ogólne jak to tylko możliwe, to nie zgadzamy się
+A> że funkcja powinna przyjmować typ `Seq` jeśli nie potrafi obsłużyć pustej kolekcji tego typu. Inaczej zmuszeni jesteśmy
+A> wyrzucić wyjątek tym samym tracąc totalność funkcji i powodując efekt uboczony. 
+A>
+A> Dlatego też wybieramy `NonEmptyList` nie dlatego że jest to lista, ale dlatego że gwarantuje ona nam obecność 
+A> przynajmniej jednego elementu. Kiedy lepiej poznamy hierarchie typclass ze Scalaz poznamy również lepszy sposób na
+A> wyrażenie tej gwarancji.
 
-Now we write the business logic that defines the application's
-behaviour, considering only the happy path.
+[^postel]: _Be conservative in what you do, be liberal in what you accept from others_
 
-We need a `WorldView` class to hold a snapshot of our knowledge of the
-world. If we were designing this application in Akka, `WorldView`
-would probably be a `var` in a stateful `Actor`.
+## Logika Biznesowa
 
-`WorldView` aggregates the return values of all the methods in the
-algebras, and adds a *pending* field to track unfulfilled requests.
+Teraz przyszedł czas na napisanie logiki biznesowej, która definuje zachowanie naszej aplikacji.
+Na razie rozpatrywać będziemy tylko szczęśliwy scenariusz (_happy path_).
+
+Potrzebujemy klasy `WorldView` która przechowywać będzie zrzut naszej wiedzy o świecie. 
+Gdybyśmy projektowali naszą aplikację przy użyciu Akki, `WorldView` najprawdopodobniej
+zostałby zaimplementowany jako `var` wewnątrz stanowego aktora.
+
+`WorldView` agreguje wartości zwracane przez wszystkie metody ze wcześniej zdefiniowanych algebr
+oraz dodaje pole `pending` aby śledzić nieobsłużone jeszcze żądania.
 
 {lang="text"}
 ~~~~~~~~
@@ -749,10 +738,10 @@ algebras, and adds a *pending* field to track unfulfilled requests.
   )
 ~~~~~~~~
 
-Now we are ready to write our business logic, but we need to indicate
-that we depend on `Drone` and `Machines`.
+Teraz gotowi jesteśmy aby zacząć pisać naszą logikę biznesową, ale musimy zadeklarować że zależy ona
+od algebr `Drone` in `Machines`.
 
-We can write the interface for the business logic
+Możemy zacząc od interfejsu dla naszej logiki
 
 {lang="text"}
 ~~~~~~~~
@@ -763,10 +752,9 @@ We can write the interface for the business logic
   }
 ~~~~~~~~
 
-and implement it with a *module*. A module depends only on other modules,
-algebras and pure functions, and can be abstracted over `F`. If an
-implementation of an algebraic interface is tied to a specific type, e.g. `IO`,
-it is called an *interpreter*.
+i zaimplementować go za pomocą *modułu*. Moduł zależy wyłącznie od innych modułów, algebr i czystych funkcji oraz 
+postrafi abtrahować nad `F`. Jeśli implementacja algebraicznego interfejsu zależy od konkretnego typu, np. `IO`,
+nazywamy ją *interpreterem*.
 
 {lang="text"}
 ~~~~~~~~
@@ -774,14 +762,13 @@ it is called an *interpreter*.
     extends DynAgents[F] {
 ~~~~~~~~
 
-The `Monad` context bound means that `F` is *monadic*, allowing us to use `map`,
-`pure` and, of course, `flatMap` via `for` comprehensions.
+Ograniczenie kontekstu (_context bound_) poprzez typ `Monad` oznacza że `F` jest *monadyczne*, pozwalając nam tym samym na używanie
+metod `map`, `pure`, i oczyświście, `flatmap` wewnątrz konstrukcji `for`.
 
-We have access to the algebra of `Drone` and `Machines` as `D` and `M`,
-respectively. Using a single capital letter name is a common naming convention
-for monad and algebra implementations.
+Mamy dostęp do algebr `Drone` i `Machines` poprzez `D` i `M`. Używanie pojedyńczych wielkich liter jest popularną konwencją
+dla implementacji algebr i monad.
 
-Our business logic will run in an infinite loop (pseudocode)
+Nasza logika biznesowa działać będzie wewnątrz nieskończonej pętli (pseudokod)
 
 {lang="text"}
 ~~~~~~~~
@@ -794,8 +781,8 @@ Our business logic will run in an infinite loop (pseudocode)
 
 ### initial
 
-In `initial` we call all external services and aggregate their results
-into a `WorldView`. We default the `pending` field to an empty `Map`.
+Wewnątrz metody `initial` wywołujemy wszystkie zewnętrzne serwisy i zbieramy wyniki tych wywołań wewnątrz
+instancji `WorldView`.  Pole `pending` domyślnie jest puste.
 
 {lang="text"}
 ~~~~~~~~
@@ -808,23 +795,19 @@ into a `WorldView`. We default the `pending` field to an empty `Map`.
   } yield WorldView(db, da, mm, ma, Map.empty, mt)
 ~~~~~~~~
 
-Recall from Chapter 1 that `flatMap` (i.e. when we use the `<-`
-generator) allows us to operate on a value that is computed at
-runtime. When we return an `F[_]` we are returning another program to
-be interpreted at runtime, that we can then `flatMap`. This is how we
-safely chain together sequential side-effecting code, whilst being
-able to provide a pure implementation for tests. FP could be described
-as Extreme Mocking.
+Przypomnij sobie, jak w Rodziale 1 mówiliśmy, że `flatMap` (używany wraz z generatorem `<-`)
+pozwala nam operować na wartościach dostępnych w czasie wykonania. Kiedy zwracamy `F[_]` to tak na prawdę
+zwracamy kolejny program który zostanie zinterpretowany w czasie wykonania. Na takim włąśnie programie wywołujemy `flatMap`.
+Tak właśnie możemy sekwencyjnie łączyć kod, który powoduje efekty uboczne, jednocześnie mogąc używać zupełnie czystej
+(pozbawionej tychże efektów) implementacji w czasie testowania. FP może być przez to widziane jako Extremalane Mockowanie.
 
 
 ### update
 
-`update` should call `initial` to refresh our world view, preserving
-known `pending` actions.
+Metoda `update` powinna wywołać `initial` aby odświeżyć nasz obraz świata, zachowując znane akcje oczekujące (pole `pending`).
 
-If a node has changed state, we remove it from `pending` and if a
-pending action is taking longer than 10 minutes to do anything, we
-assume that it failed and forget that we asked to do it.
+Jeśli węzeł zmienił swój stan, usuwamy go z listy oczekujących, a jeśli akcja trwa dłużej niż 10 minut to zakładamy
+że zakończyła się porażką i zapominamy że ją zainicjowaliśmy.
 
 {lang="text"}
 ~~~~~~~~
@@ -841,28 +824,25 @@ assume that it failed and forget that we asked to do it.
     (a union b) -- (a intersect b)
 ~~~~~~~~
 
-Concrete functions like `.symdiff` don't need test interpreters, they have
-explicit inputs and outputs, so we could move all pure code into standalone
-methods on a stateless `object`, testable in isolation. We're happy testing only
-the public methods, preferring that our business logic is easy to read.
+Konkretne funkcje takie jak `.symdiff` nie wymagają testowych interpreterów, ponieważ mają wyrażone wprost zarówno
+wejście jak i wyjście. Dlatego też moglibyśmy przenieść je do samodzielnego, bezstanowego obiektu, który można
+testować w izolacji. Z radością testować będziemy tylko metody publiczne, ceniąc sobie czytelność logiki biznesowej.
 
 
 ### act
 
-The `act` method is slightly more complex, so we will split it into two
-parts for clarity: detection of when an action needs to be taken,
-followed by taking action. This simplification means that we can only
-perform one action per invocation, but that is reasonable because we
-can control the invocations and may choose to re-run `act` until no
-further action is taken.
+Metoda `act` jest nieco bardziej skomplikowana, więc dla zwiększenia czytelności podzielimy ją na dwie części:
+wykrywanie akcji które należy wykonać oraz wykonywanie tych akcji. To uproszczenie sprawia że możemy wykonać tylko 
+jedną akcje per wywołanie, ale jest to całkiem rozsądne biorąc pod uwagę że możemy lepiej kontrolować wykonywane akcje
+oraz wywoływać `act` tak długo aż nie pozostanie żadna akcja do wykonania.
 
-We write the scenario detectors as extractors for `WorldView`, which
-is nothing more than an expressive way of writing `if` / `else`
-conditions.
 
-We need to add agents to the farm if there is a backlog of work, we
-have no agents, we have no nodes alive, and there are no pending
-actions. We return a candidate node that we would like to start:
+Wykrywanie konkretnych scenariuszy piszemy jako ekstraktory bazujące na `WorldView`, co w praktyce jest
+po prostu bardziej ekspresywną formą implementacji warunków `if` / `else`.
+
+Musimy dodać agentów do farmy jeśli praca gromadzi się w kolejce, nie ma żadnych agentów,
+nie ma aktywnych węzłów i nie ma żadnych akcji oczekujących an wykonanie. Zwracamy węzeł który chcielibyśmy 
+uruchomić.
 
 {lang="text"}
 ~~~~~~~~
@@ -876,13 +856,11 @@ actions. We return a candidate node that we would like to start:
   }
 ~~~~~~~~
 
-If there is no backlog, we should stop all nodes that have become stale (they
-are not doing any work). However, since Google charge per hour we only shut down
-machines in their 58th minute to get the most out of our money. We return the
-non-empty list of nodes to stop.
+Jeśli kolejka jest pusta, powinniśmy zatrzymać wszystkie nieaktywne (nie wykonujące żadnych zadań) węzły. 
+Pamiętając, że Google zawsze pobiera opłatę za pełne godziny, wyłączamy węzły jedynie w 58 minucie ich działania.
+Zwracamy listę węzłów do zatrzymania,
 
-As a financial safety net, all nodes should have a maximum lifetime of
-5 hours.
+Jako zabezpieczenie finansowe zakładamy że żaden węzeł nie może żyć dłużej niż 5 godzin.
 
 {lang="text"}
 ~~~~~~~~
@@ -899,9 +877,9 @@ As a financial safety net, all nodes should have a maximum lifetime of
   }
 ~~~~~~~~
 
-Now that we have detected the scenarios that can occur, we can write
-the `act` method. When we schedule a node to be started or stopped, we
-add it to `pending` noting the time that we scheduled the action.
+Gdy już zdefiniowaliśmy scenariusze, które nas interesują możemy przejśc do implementacji metody `act`. 
+Gdy chcemy aby węzeł został uruchomiony lub zatrzymany, dodajemy go do listy `pending` wraz z zapisem
+czasu w którym tę akcję zaplanowaliśmy.
 
 {lang="text"}
 ~~~~~~~~
@@ -924,30 +902,28 @@ add it to `pending` noting the time that we scheduled the action.
   }
 ~~~~~~~~
 
-Because `NeedsAgent` and `Stale` do not cover all possible situations,
-we need a catch-all `case _` to do nothing. Recall from Chapter 2 that
-`.pure` creates the `for`'s (monadic) context from a value.
+Ponieważ `NeedsAgent` i `Stale` nie pokrywają wszystkich możliwych sytuacji musimy również zdefiniować
+zachowanie domyślne, które nie robi nic. Przypomnie z Rozdziału 2: `.pure` tworzy (monadyczny) kontekst używany 
+wenątrz `for`z prostej wartości.
 
-`foldLeftM` is like `foldLeft`, but each iteration of the fold may return a
-monadic value. In our case, each iteration of the fold returns `F[WorldView]`.
-The `M` is for Monadic. We will find more of these *lifted* methods that behave
-as one would expect, taking monadic values in place of values.
+`foldLeftM` działa podobnie do `foldLeft`, z tą różnicą że przyjmowana funkcja może zwracać wartość opakowaną w kontekst.
+W naszym przypadku, każda iteracja zwraca `F[WorldView]`. `M` w nazwie jest krótem od _Monadic_. Niedługo dowiemy się
+wiecej o tego typu *wyniesionych* (_lifted_) funkcjach, która zachowują się tak jak byśmy oczekiwali ale przyjmują
+funkcje zwracające wartości monadyczne zamiast zwykłych wartości.
 
 
-## Unit Tests
+## Testy Jednostkowe
 
-The FP approach to writing applications is a designer's dream: delegate writing
-the implementations of algebras to team members while focusing on making
-business logic meet the requirements.
+Podejśce funkcyjne do pisania aplikacji jest marzeniem projektanta: można skupić się na logice biznesowej pozostawiając
+implementacji algebr pozostałym członkom zespołu.
 
-Our application is highly dependent on timing and third party webservices. If
-this was a traditional OOP application, we'd create mocks for all the method
-calls, or test actors for the outgoing mailboxes. FP mocking is equivalent to
-providing an alternative implementation of dependency algebras. The algebras
-already isolate the parts of the system that need to be *mocked*, i.e.
-interpreted differently in the unit tests.
+Nasza aplikacja bardzo silnie zależy od upływu czasu oraz zewnętrznych webserwisów. Gdyby była to tradycyjna aplikacja
+napisania w duchu OOP, stworzylibyśmy mocki dla wszystkich wywołań lub testowych aktorów dla wysyłanych wiadomości.
+Mockowanie w FP jest równoznaczne z dostarczeniem alternatywnej implementacji algebr od których zależymy. Algebry 
+izolują części systemu, które muszą zostać *zamockowane*, czyli poprostu inaczej interpretowane w kontekscie testów 
+jednostkowych.
 
-We will start with some test data
+Zaczniemy od przygotowania danych testowych
 
 {lang="text"}
 ~~~~~~~~
@@ -966,9 +942,9 @@ We will start with some test data
   import Data._
 ~~~~~~~~
 
-A> The `epoch` string interpolator is written with Jon Pretty's [contextual](https://github.com/propensive/contextual) library,
-A> giving us compiletime safety around string constructors of a type:
-A> 
+A> String interpolator `epoch` został napisany przy użyciu biblioteki [contextual](https://github.com/propensive/contextual) 
+A> autorstwa Jona Pretty'iego. Biblioteka ta pozwala nam tworzyć obiekty ze stringów z weryfikacją na etapie kompilacji.
+A>
 A> {lang="text"}
 A> ~~~~~~~~
 A>   import java.time.Instant
@@ -982,12 +958,11 @@ A>     val epoch = Prefix(EpochInterpolator, sc)
 A>   }
 A> ~~~~~~~~
 
-We implement algebras by extending `Drone` and `Machines` with a specific
-monadic context, `Id` being the simplest.
+Implementujemy algebry poprzez rozszerzenie interfejsów `Drone` i `Machines` podając konkretny kontekst monadyczny,
+w najprostszym przypadku `Id`.
 
-Our "mock" implementations simply play back a fixed `WorldView`. We've
-isolated the state of our system, so we can use `var` to store the
-state:
+Nasza "mockowa" implementacja zwyczajnie odtwarza wczesniej przygotowany `WorldView`. 
+Stan naszego systemu został wyizolowany, więc możemy użyć `var` do jego przechowywania:
 
 {lang="text"}
 ~~~~~~~~
@@ -1011,17 +986,16 @@ state:
   }
 ~~~~~~~~
 
-A> We will return to this code later on and replace `var` with something safer.
+A> Powrócimy do tego kodu trochę póżniej i zamienimy `var` na coś bezpieczniejszego.
 
-When we write a unit test (here using `FlatSpec` from Scalatest), we create an
-instance of `Mutable` and then import all of its members.
+Kiedy piszemy testy jednostkowe (używając `FlatSpec` z biblioteki Scalatest), tworzymy instancje `Mutable` 
+i importujemy wszystkie jej pola i metody.
 
-Our implicit `drone` and `machines` both use the `Id` execution
-context and therefore interpreting this program with them returns an
-`Id[WorldView]` that we can assert on.
+Nasze `drone` i `machines` używają `Id` jako kontekstu wykonania przez co interpretacja naszego programu
+zwraca `Id[WoldView]` na którym możemy wykonywać asercje.
 
-In this trivial case we just check that the `initial` method returns
-the same value that we use in the static implementations:
+W tym trywialnym scenariuszy sprawdzamy czy `initial` zwraca tę sama wartość, której użylismy 
+w naszej statycznej implementacji:
 
 {lang="text"}
 ~~~~~~~~
@@ -1033,8 +1007,8 @@ the same value that we use in the static implementations:
   }
 ~~~~~~~~
 
-We can create more advanced tests of the `update` and `act` methods,
-helping us flush out bugs and refine the requirements:
+Możemy też stworzyć bardziej skomplikowane testy dla metod `update` i `act`,
+które pomoga nam znaleźć błędy i dopracować wymagania:
 
 {lang="text"}
 ~~~~~~~~
@@ -1064,58 +1038,53 @@ helping us flush out bugs and refine the requirements:
   }
 ~~~~~~~~
 
-It would be boring to go through the full test suite. The following tests are
-easy to implement using the same approach:
+Przejście przez pełen komplet testów byłby dość nudny. Poniższe testy można łatwo zaimplementować używając tego 
+samego podejścia:
 
--   not request agents when pending
--   don't shut down agents if nodes are too young
--   shut down agents when there is no backlog and nodes will shortly incur new costs
--   not shut down agents if there are pending actions
--   shut down agents when there is no backlog if they are too old
--   shut down agents, even if they are potentially doing work, if they are too old
--   ignore unresponsive pending actions during update
+- nie proś o nowych agentów gdy kolejka oczekujących jest niepusta
+- nie wyłaczaj agentów jeśli węzły są zbyt młode
+- wyłacz agenty gdy backlog jest pusty a węzły wkrótce wygenerują nowe koszta
+- nie wyłączaj agentów gdy obecne są oczekujące akcje
+- wyłacz agenty gdy backlog jest pusty a ci są zbyt starzy
+- wyłacz agenty nawet jeśli wykonują prace jeśli są zbyt starzy
+- zignoruj nieodpowiadające oczekujące akcje podczas aktualizacji
 
-All of these tests are synchronous and isolated to the test runner's
-thread (which could be running tests in parallel). If we'd designed
-our test suite in Akka, our tests would be subject to arbitrary
-timeouts and failures would be hidden in logfiles.
+Wszystkie te testy są synchroniczne i działają na wątku uruchamiającym testy (i mogą być uruchamiane równolegle).
+Gdybyśmy zaprojektowali nasze testy z użyciem Akki, narażone byłyby na arbitralne timeouty a błedy ukryte byłyby 
+w logach.
 
-The productivity boost of simple tests for business logic cannot be
-overstated. Consider that 90% of an application developer's time
-interacting with the customer is in refining, updating and fixing
-these business rules. Everything else is implementation detail.
+Cięzko jest przecenić wwiększenie produktywności wynikające z prostych testów logiki biznesowej. Weż pod uwagę, że
+90% czasu programisty podczas interakcji z klientem poświęcone jest na ulepszanie, aktualizowanie i poprawianie 
+tych właśnie reguł. Wszystko inne to tylko szczegół implementacyjny.
 
 
-## Parallel
+## Równolegle
 
-The application that we have designed runs each of its algebraic
-methods sequentially. But there are some obvious places where work can
-be performed in parallel.
-
+Aplikacja którą stowrzyliśmy uruchamia każdą z algebraicznych metod sekwencyjnie. Jednak jest kilka oczywistych miejsc
+w których praca może być wykonywana równolegle.
 
 ### initial
 
-In our definition of `initial` we could ask for all the information we
-need at the same time instead of one query at a time.
+W naszej definicji metody `initial` moglibyśmy zarządać wszystkich informacji równocześnie zamiast wykonywać tylko jedno
+zapytanie na raz.
 
-As opposed to `flatMap` for sequential operations, Scalaz uses
-`Apply` syntax for parallel operations:
+W przeciwieństwie do metody `flatMap` która działa sekwencyjnie, Scalaz dostarcza składnie `Apply` 
+przewidzianą do operacji rownoległych:
 
 {lang="text"}
 ~~~~~~~~
   ^^^^(D.getBacklog, D.getAgents, M.getManaged, M.getAlive, M.getTime)
 ~~~~~~~~
 
-which can also use infix notation:
+możemy również użyć notacji infiksowej (_infix_):
 
 {lang="text"}
 ~~~~~~~~
   (D.getBacklog |@| D.getAgents |@| M.getManaged |@| M.getAlive |@| M.getTime)
 ~~~~~~~~
 
-If each of the parallel operations returns a value in the same monadic
-context, we can apply a function to the results when they all return.
-Rewriting `update` to take advantage of this:
+Jeśli każda z operacji równoległych zwraca ten sam kontekst, możemy wywołać funkcję w momencie gdy wszystkie one zwrócą
+wynik. Przepiszmy `initial` aby skorzystac z tej możliwości:
 
 {lang="text"}
 ~~~~~~~~
@@ -1128,21 +1097,17 @@ Rewriting `update` to take advantage of this:
 
 ### act
 
-In the current logic for `act`, we are stopping each node
-sequentially, waiting for the result, and then proceeding. But we
-could stop all the nodes in parallel and then update our view of the
-world.
+W aktualnej implementacji `act` zatrzymujemy każdy z węzłów sekwencyjnie, czekając na wynik i kontunując pracę 
+dopiero gdy operacja się zakończy. Moglibyśmy jednak zatrzymać wszystkie węzły równolegle i na koniec zaktualizować
+nasz obraz świata.
 
-A disadvantage of doing it this way is that any failures will cause us
-to short-circuit before updating the `pending` field. But that is a
-reasonable tradeoff since our `update` will gracefully handle the case
-where a `node` is shut down unexpectedly.
+Wadą tego rozwiązania jest fakt, że bład w którejkolwiek akcji sposoduje zwarcie zanim zdążymy zaktualizować pole
+`pending`. Wydaje się to być rozsądnym kompromisem, gdyż nasza metoda `update` poradzi sobie z sytacją w której
+węzeł niespodziewanie się zatrzyma.
 
-We need a method that operates on `NonEmptyList` that allows us to
-`map` each element into an `F[MachineNode]`, returning an
-`F[NonEmptyList[MachineNode]]`. The method is called `traverse`, and
-when we `flatMap` over it we get a `NonEmptyList[MachineNode]` that we
-can deal with in a simple way:
+Potrzebujemy metody która operuje na typie `NonEmptyList` i pozwoli nam prze`map`ować każdy element na
+`F[MachineNode]`, zwracając `F[NonEmptyList[MachineNode]]`. Metoda ta nazywa się `traverse`, a gdy na jej rezultacie 
+wywołamy `flatMap` otrzymamy wartość typu `NonEmptyList[MachineNode]` z którą możemy sobie poradzić w prosty sposób:
 
 {lang="text"}
 ~~~~~~~~
@@ -1153,16 +1118,15 @@ can deal with in a simple way:
   } yield update
 ~~~~~~~~
 
-Arguably, this is easier to understand than the sequential version.
+Prawdopodobnie wersja ta jest łątwiejsza do zrozumienia niż wersja sekwencyjna.
 
 
-## Summary
+## Podsumowanie
 
-1.  *algebras* define the interface between systems.
-2.  *modules* are implementations of an algebra in terms of other algebras.
-3.  *interpreters* are concrete implementations of an algebra for a fixed `F[_]`.
-4.  Test interpreters can replace the side-effecting parts of the system,
-    giving a high amount of test coverage.
+1. *algebry* definiują interfejsy między systemami
+2. *moduły* implementują algebry używając innych algebr
+3. *interpretery* to konkretne implementacje algebr dla określonego `F[_]`
+4. Intepretery testowe mogą zamienić części systemu wyołujące efekty uboczne, dając nam wysokie pokrycie testami.
 
 
 # Data and Functionality
