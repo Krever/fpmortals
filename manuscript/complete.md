@@ -11,9 +11,9 @@ również w aplikacjach niefunkcyjnych.
 ## Syntax Sugar
 
 Konstrukcja `for` w Scali jest prostą reguła przepisania (_rewrite rule_), zwaną również *syntax sugar*[^synntaxsugar], 
-i nie wnosi żadnych dodatkowych informacji do programu.
+i nie wnosi żadnych dodatkowych informacji do naszego programu.
 
-[^syntaxsugar]: Tłumaczenie _cukier składniowy_ jest tak niedorzeczne, że zdecydowaliśmy pozostać przy angielskiej wersji.
+[^syntaxsugar]: Tłumaczenie _cukier składniowy_ jest tak niedorzeczne, że zdecydowaliśmy pozostać przy wersji angielskiej.
 
 Aby zobaczyć co tak na prawdę robi `for` użyjemy funkcji `show` i `reify` dostępnych w REPLu. Dzięki nim możemy
 wypisać kod w formie jaką przyjmuje po inferencji typów (_type inference_). 
@@ -35,7 +35,7 @@ wypisać kod w formie jaką przyjmuje po inferencji typów (_type inference_).
 
 Widzimy dużo szumu spowodowanego dodatkowymi wzbogaceniami (np. `+` jest przepisany jako `$plus`, itp.). 
 Dla zwiększenia zwięzłości w dalszych przykładach pominiemy wywołania `show` oraz `reify` kiedy linia rozpoczyna się 
-od `reify>`. Dodatkowo generowany kod ulegać będzie ręcznemu oczyszczeniu aby nie rozpraszać czytelnika.
+od `reify>`. Dodatkowo generowany kod poddamy ręcznemu oczyszczeniu aby nie rozpraszać czytelnika.
 
 {lang="text"}
 ~~~~~~~~
@@ -47,8 +47,8 @@ od `reify>`. Dodatkowo generowany kod ulegać będzie ręcznemu oczyszczeniu aby
         k => i + j + k }}}
 ~~~~~~~~
 
-Zasadą kciuka jest że każdy `<-` (zwany *generatorem*) jest równoznaczny z zagnieżdżonym wywołaniem `flatMap`,
-z wyjątkiem ostatniego, który jest wywołaniem `map` zwracającym ciało bloku `yield`.
+Zasadą kciuka jest, że każdy `<-` (zwany *generatorem*) jest równoznaczny z zagnieżdżonym wywołaniem `flatMap`,
+z wyjątkiem ostatniego, który jest wywołaniem funkcji `map` do której przekazane zostaje ciało bloku `yield`.
 
 ### Przypisania
 
@@ -69,7 +69,7 @@ Możemy bezpośrednio przypisywać wartości do zmiennych za pomocą wyrażeń t
         k => ij + k }}}
 ~~~~~~~~
 
-Wywołanie `map` na `b` wprowadza zmienną `ij` która jest flat-mapowana razem z `j` a na końcu
+Wywołanie `map` na `b` wprowadza zmienną `ij` która jest flat-mapowana razem z `j`, a na końcu
 wołane jest ostateczne `map` wykorzystujące kod z bloku `yield`.
 
 Niestety nie możemy deklarować przypisań przed użyciem generatora. Funkcjonalność ta
@@ -104,7 +104,7 @@ lub poprzez stworzenie `Option` z pierwotnej wartości
 ~~~~~~~~
 
 
-A> `val` oprócz przypisywania pojedynczych wartości wspiera także dowolne wyrażenia poprawne w kontekscie `case` przy pattern matchingu.
+A> `val` oprócz przypisywania pojedynczych wartości wspiera także dowolne wyrażenia poprawne w kontekście `case` znanym z pattern matchingu.
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -118,7 +118,7 @@ A>   head: Int = 1
 A>   tail: List[Int] = List(2, 3)
 A> ~~~~~~~~
 A> 
-A> Tak samo działa przypisywanie wenątrz `for`
+A> Tak samo działa przypisywanie wewnątrz `for`
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -142,7 +142,7 @@ A> ~~~~~~~~
 
 ### Filter
 
-Możemy umieścić wyrażenie `if` za generatorerm aby ograniczyć wartości za pomocą predykatu
+Możemy umieścić wyrażenie `if` za generatorem aby ograniczyć wartości za pomocą predykatu
 
 {lang="text"}
 ~~~~~~~~
@@ -160,7 +160,7 @@ Możemy umieścić wyrażenie `if` za generatorerm aby ograniczyć wartości za 
           k => i + j + k }}}
 ~~~~~~~~
 
-Starsze wersje Scali używały metody `filter`, ale ponieważ `Traversable.filter` tworzy nową kolekcje dla każdego predykatu
+Starsze wersje Scali używały metody `filter`, ale ponieważ `Traversable.filter` tworzy nową kolekcje dla każdego predykatu,
 wprowadzono metodę `withFilter` jako bardziej wydajną alternatywę. Możemy przypadkowo wywołać `withFilter` podając informację 
 co do oczekiwanego typu, którą kompilator interpretuje jako pattern matching.
 
@@ -174,11 +174,11 @@ co do oczekiwanego typu, którą kompilator interpretuje jako pattern matching.
   }.map { case i: Int => i }
 ~~~~~~~~
 
-Podobnie do przypisywania zmiennych, generatory moga używać pattern matchingu po swojej lewej stronie. W przeciwieństwie 
-do przypisań (które rzucają `MatchError` w przypadku niepowodzenia), generatory są *filtrowane* i nie rzucają wyjatków 
-w czasie wykonania. Niestety dzieje się do kosztem podwójnego zaaplikowania wzoru (_pattern_).
+Podobnie do przypisywania zmiennych, generatory mogą używać pattern matchingu po swojej lewej stronie. W przeciwieństwie 
+do przypisań (które rzucają `MatchError` w przypadku niepowodzenia), generatory są *filtrowane* i nie rzucają wyjątków 
+w czasie wykonania. Niestety dzieje się to kosztem podwójnego zaaplikowania wzoru (_pattern_).
 
-A> Plugin kompilatora [`better-monadic-for`](https://github.com/oleg-py/better-monadic-for) produkuje altenatywną, **lepszą**
+A> Plugin kompilatora [`better-monadic-for`](https://github.com/oleg-py/better-monadic-for) produkuje alternatywną, **lepszą**
 A> wersję kodu niż oryginalny kompilator Scali. Ten przykład jest interpretowany jako:
 A> 
 A> {lang="text"}
@@ -188,7 +188,7 @@ A>
 A>   a.map { (i: Int) => i}
 A> ~~~~~~~~
 A> 
-A> zamiast nieefektywnego podwójnego dopasowywania (_matching_) (w najlepszym przypadku) i potejmnego filtrowania
+A> zamiast nieefektywnego podwójnego dopasowywania (_matching_) (w najlepszym przypadku) i potajemnego filtrowania
 A> wartości w czasie wykonania (w przypadku najgorszym). Używanie wysoce zalecane.
 
 ### For Each
@@ -206,8 +206,8 @@ jest jedynie w przypadku użycia efektów ubocznych.
 
 ### Podsumowanie
 
-Pełen zbiór metodu używanych przez konstrukcję `for` nie ma jednego wspólnego interfejsu; każde użycie jest 
-niezależnie kompilowane. Gdyby taki interfejs istaniał wyglądałby mniej więcej tak:
+Pełen zbiór metod używanych przez konstrukcję `for` nie ma jednego wspólnego interfejsu; każde użycie jest 
+niezależnie kompilowane. Gdyby taki interfejs istniał wyglądałby mniej więcej tak:
 
 {lang="text"}
 ~~~~~~~~
@@ -221,10 +221,10 @@ niezależnie kompilowane. Gdyby taki interfejs istaniał wyglądałby mniej wię
 
 Jeśli kontekst (`C[_]`) konstrukcji `for` nie dostarcza swoich własnych metod `map` i `flatMap` 
 to nie wszystko jeszcze stracone. Jeśli dostępna jest domniemana (_implicit_)  instancja typu `scalaz.Bind[T]` dla `T`
-dostarczy ona potrzebne metody `map` oraz `flatMap`.
+to dostarczy ona potrzebne metody `map` oraz `flatMap`.
 
-A> Developerzy czesto zaskakiwani są faktem, że operacje oparte o typ `Future` i zdefiniowane wewnątrz konstrukcji `for`
-A> nie sa wykonywane równolegle:
+A> Developerzy często zaskakiwani są faktem, że operacje oparte o typ `Future` i zdefiniowane wewnątrz konstrukcji `for`
+A> nie są wykonywane równolegle:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -237,7 +237,7 @@ A>     j <- Future { anotherExpensiveCalc() }
 A>   } yield (i + j)
 A> ~~~~~~~~
 A> 
-A> Dzieję sie tak ponieważ funkcja przekazana do metody `flatMap`, która wywołuje `anotherExpensiveCalc`, wykonuje się wyłącznie
+A> Dzieję się tak ponieważ funkcja przekazana do metody `flatMap`, która wywołuje `anotherExpensiveCalc`, wykonuje się wyłącznie
 A> **po** zakończeniu `expensiveCalc`. Aby wymusić równoległe wykonanie tych dwóch operacji musimy utworzyć je poza
 A> konstrukcją `for`.
 A> 
@@ -249,12 +249,12 @@ A>   for { i <- a ; j <- b } yield (i + j)
 A> ~~~~~~~~
 A> 
 A> Konstrukcja `for` zaprojektowana jest wyłącznie do definiowania programów sekwencyjnych. W jednym z następnych
-A> rozdziałów pokażemy o wile lepszą metodę definiowania obliczeń równległych. Spoiler: nie używaj typu `Future`.
+A> rozdziałów pokażemy o wiele lepszą metodę definiowania obliczeń równoległych. Spoiler: nie używaj typu `Future`.
 
 
 ## Nieszczęśliwa ścieżka[^unhappypath]
 
-[^unhappypath]: Jest to kuriozalne tłumaczenie wyrażenia _unhappy path_. Ale wydało nam sie całkiem zabawne.
+[^unhappypath]: Jest to kuriozalne tłumaczenie wyrażenia _unhappy path_. Ale wydało nam się całkiem zabawne.
 
 Jak dotąd patrzyliśmy jedynie na reguły przepisywania, nie natomiast no to co dzieje się wewnątrz metod `map` i `flatMap`.
 Zastanówmy się co dzieje się kiedy kontekst `for` zadecyduje że nie może kontynuować działania.
@@ -271,13 +271,13 @@ W przykładzie bazującym na typie `Option`, blok `yield` jest wywoływany jest 
   } yield (i + j + k)
 ~~~~~~~~
 
-Jeśli którakolwiek ze zmiennych `a,b,c` przyjmie wartość `None`, konstrukcja `for` zrobi zwarcie[^zwarcie] i zwróci None nie mówiąc
+Jeśli którakolwiek ze zmiennych `a,b,c` przyjmie wartość `None`, konstrukcja `for` zrobi zwarcie[^zwarcie] i zwróci `None` nie mówiąc
 nam co poszło nie tak.
 
 [^zwarcie] Z angielskiego _short-circuits_. Chodzi tutaj o zakończenie przetwarzania bez wykonywania pozostałych instrukcji.
 
 A> W praktyce możemy zobaczyć wiele funkcji z parametrami typu `Option`, które w rzeczywistości muszą być zdefiniowane
-A> aby uzyskać sensowny rezultat. Alternatywą do rzucania wyjatku jest użycie konstrukcji `for`, która zapewni nam totalność
+A> aby uzyskać sensowny rezultat. Alternatywą do rzucania wyjątku jest użycie konstrukcji `for`, która zapewni nam totalność
 A> naszej funkcji (zwrócenie wartości dla każdego możliwego argumentu):
 A> 
 A> {lang="text"}
@@ -300,7 +300,7 @@ A> ~~~~~~~~
 A>   def namedThings(name: String, num: Int) = s"$num ${name}s"
 A> ~~~~~~~~
 
-Jeśli użyjemy typu `Either`, wtedy to `Left` powodwać będzie zwarcie konstrukcji `for` z dodatkową informacją którą niesie w sobie.
+Jeśli użyjemy typu `Either`, wtedy to `Left` powodować będzie zwarcie konstrukcji `for` z dodatkową informacją którą niesie w sobie.
 Rozwiązanie to jest zdecydowanie lepsze w przypadku raportowania błędów niż użycie typu `Option`:
 
 {lang="text"}
@@ -327,13 +327,13 @@ Na koniec spójrzmy co stanie się z typem `Future`, który zawiedzie
   caught java.lang.Throwable
 ~~~~~~~~
 
-Wartość `Future`, która wypisuje wiadomość do terminala nie jest nigdy tworzona ponieważ, 
+Wartość `Future`, która wypisuje wiadomość do terminala nie jest nigdy tworzona, ponieważ, 
 tak jak w przypadku `Option` i `Either`, konstrukcja `for` zwiera obwód i zakańcza przetwarzanie.
 
-Zwieranie obwodu w przypadku odejścia od oczekiwanej ścieżki przetwarzania jest ważnym i czesto spotykanym rozwiązaniem.
-Konstrukcja `for` nie jest w stanie obsłużyć uprzątnięcia zasobów (_resource cleanup_): nie ma możliwośći wyrażenia zachowania 
+Zwieranie obwodu w przypadku odejścia od oczekiwanej ścieżki przetwarzania jest ważnym i często spotykanym rozwiązaniem.
+Konstrukcja `for` nie jest w stanie obsłużyć uprzątnięcia zasobów (_resource cleanup_): nie ma możliwości wyrażenia zachowania 
 podobnego do `try`/`finally`. Rozwiązanie to jest dobre, gdyż w programowaniu funkcyjnym jasno deklaruje że to kontekst 
-(który zazwyczaj jest `Monad`ą, jak zobaczymy później), a nie logika biznesowa, jest odpowiedzialny za obsługe błędów 
+(który zazwyczaj jest `Monad`ą, jak zobaczymy później), a nie logika biznesowa, jest odpowiedzialny za obsługę błędów 
 i uprzątnięcie zasobów.
 
 
@@ -346,7 +346,7 @@ niektóre praktyczne przykłady i pokazuje jak sobie z nimi radzić.
 
 ### Wyjście awaryjne
 
-Powiedzmy że wywołujemy metodę, która zwraca typ `Option`. Jeśli wywołanie to sie nie powiedzie,
+Powiedzmy że wywołujemy metodę, która zwraca typ `Option`. Jeśli wywołanie to się nie powiedzie,
 chcielibyśmy użyć innej metody (i tak dalej i tak dalej), np. gdy używamy cache'a.
 
 {lang="text"}
@@ -375,7 +375,7 @@ musimy uważać aby nie spowodować zbędnych obliczeń, ponieważ
   } yield cache orElse sql
 ~~~~~~~~
 
-uruchomi oba zapytania. Możemy użyć pattern matchingu na pierwszym rezultacie, ale typ sie nie zgadza
+uruchomi oba zapytania. Możemy użyć pattern matchingu na pierwszym rezultacie, ale typ się nie zgadza
 
 {lang="text"}
 ~~~~~~~~
@@ -401,7 +401,7 @@ Musimy stworzyć `Future` ze zmiennej `cache`
   } yield res
 ~~~~~~~~
 
-`Future.successful` tworzy nową wartoś typu `Future`, podobnie jak konstruktor typu `Option` lub
+`Future.successful` tworzy nową wartość typu `Future`, podobnie jak konstruktor typu `Option` lub
 `List`.
 
 
@@ -409,7 +409,7 @@ Musimy stworzyć `Future` ze zmiennej `cache`
 
 Powiedzmy, że znamy warunek, który pozwala nam szybciej zakończyć obliczenia z poprawną wartością.
 
-Jeśli chcemy zakończyć je szybciej z błedem, standardowym sposobem na zrobienie tego w OOP[^oop] jest rzucenie wyjątku
+Jeśli chcemy zakończyć je szybciej z błędem, standardowym sposobem na zrobienie tego w OOP[^oop] jest rzucenie wyjątku
 
 [^oop]: _Object Oriented Programming_
 
@@ -437,7 +437,7 @@ co można zapisać asynchronicznie jako
   } yield b * 10
 ~~~~~~~~
 
-Lecz jeśli chcemy zakończyć obliczenia z poprawna wartościa, prosty kod synchroniczny:
+Lecz jeśli chcemy zakończyć obliczenia z poprawna wartością, prosty kod synchroniczny:
 
 {lang="text"}
 ~~~~~~~~
@@ -448,7 +448,7 @@ Lecz jeśli chcemy zakończyć obliczenia z poprawna wartościa, prosty kod sync
   else a * getB
 ~~~~~~~~
 
-przekłada sie na zagnieżdzone konstrukcje `for` gdy tylko nasze zależności stają się asynchroniczne:]]
+przekłada się na zagnieżdżone konstrukcje `for` gdy tylko nasze zależności stają się asynchroniczne:
 
 {lang="text"}
 ~~~~~~~~
@@ -461,12 +461,12 @@ przekłada sie na zagnieżdzone konstrukcje `for` gdy tylko nasze zależności s
   } yield c
 ~~~~~~~~
 
-A> Jeśli dostępna jest domyślna instancja `Monad[T]` dla `T[_]` (co oznacza, że `T` jest moandyczne), wówczas
-A> Scalaz pozwalan nam tworzyć instancje `T[A]` używając wartości `a: A` poprzez wywołanie `a.pure[T]`.
+A> Jeśli dostępna jest domyślna instancja `Monad[T]` dla `T[_]` (co oznacza, że `T` jest monadyczne), wówczas
+A> Scalaz pozwala nam tworzyć instancje `T[A]` używając wartości `a: A` poprzez wywołanie `a.pure[T]`.
 A> 
 A> Scalaz dostarcza instancję `Monad[Future]` a `.pure[Future]` wywołuje `Future.successful`.
 A> Poza tym że `pure` jest nieco bardziej zwięzłe, jest to koncept ogólny, który aplikuje się do typów innych niż `Future`
-A> a przez to jest to rozwiąznie rekomendowane.
+A> a przez to jest to rozwiązanie rekomendowane.
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -480,7 +480,8 @@ A> ~~~~~~~~
 
 ## Niepojmowalny
 
-Kontekst którego używamy wewnątrz konstrukcji `for` musi być niezmienny: nie możemy ich mieszać.
+Kontekst którego używamy wewnątrz konstrukcji `for` musi być niezmienny: nie możemy mieszać wielu równych typów jak 
+na przykład `Future` i `Option`.
 
 {lang="text"}
 ~~~~~~~~
@@ -497,10 +498,10 @@ Kontekst którego używamy wewnątrz konstrukcji `for` musi być niezmienny: nie
                 ^
 ~~~~~~~~
 
-Nie ma nic, co pozwoliło by nam mieszać dowolne dwa konteksty wewnątrz kontrukcji `for`. Wynika 
-to za faktu, że nie da się zdefiniowac znaczenia takiej operacji.
+Nie ma nic, co pozwoliło by nam mieszać dowolne dwa konteksty wewnątrz konstrukcji `for`. Wynika 
+to za faktu, że nie da się zdefiniować znaczenia takiej operacji.
 
-Jednak gdy mamy do czynienia z zagnieżdzonymi kontekstami intencja jest zazwyczaj oczywista, tymczasem 
+Jednak gdy mamy do czynienia z zagnieżdżonymi kontekstami intencja jest zazwyczaj oczywista, tymczasem 
 kompilator nadal nie przyjmuje naszego kodu.
 
 {lang="text"}
@@ -515,8 +516,8 @@ kompilator nadal nie przyjmuje naszego kodu.
   <console>:30: error: value * is not a member of Option[Int]
 ~~~~~~~~
 
-Chcielbyśmy aby konstrukcja `for` zajęła się zewnętrznym kontekstem i pozwoliła nam
-skupić się modyfikacji zagnieżdzonej wartości typu `Option`. 
+Chcielibyśmy aby konstrukcja `for` zajęła się zewnętrznym kontekstem i pozwoliła nam
+skupić się modyfikacji zagnieżdżonej wartości typu `Option`. 
 Ukrywaniem zewnętrznego kontekstu zajmują się tzw. transformatory monad (_monad transformers_), 
 a Scalaz dostarcza nam implementacje tychże dla typów `Option` i `Either` nazywające się 
 odpowiednio `OptionT` oraz `EitherT`.
@@ -524,7 +525,7 @@ odpowiednio `OptionT` oraz `EitherT`.
 Kontekst zewnętrzny może być dowolnym kontekstem który sam w sobie kompatybilny jest z konstrukcją `for`,
 musi jedynie pozostać niezmienny.
 
-Tworzymy instancję `OptionT` z kadego wywołania metody, zmieniając tym samym kontekst z `Future[Option[_]]` 
+Tworzymy instancję `OptionT` z każdego wywołania metody, zmieniając tym samym kontekst z `Future[Option[_]]` 
 na `OptionT[Future, _]`.
 
 {lang="text"}
@@ -544,8 +545,8 @@ na `OptionT[Future, _]`.
   res: Future[Option[Int]] = Future(<not completed>)
 ~~~~~~~~
 
-Transformatory monad pozwalają nam mieszać wywołania funkcji zwracajacych `Future[Option[_]]` z
-funkcjami zwracajacymi po prostu `Future` poprzes `.liftM[OptionT]` (pochodzące ze scalaz):
+Transformatory monad pozwalają nam mieszać wywołania funkcji zwracających `Future[Option[_]]` z
+funkcjami zwracającymi po prostu `Future` poprzez `.liftM[OptionT]` (pochodzące ze scalaz):
 
 {lang="text"}
 ~~~~~~~~
@@ -573,7 +574,7 @@ Dodatkowo możemy mieszać wartości typu `Option` poprzez wywołanie
   result: OptionT[Future, Int] = OptionT(Future(<not completed>))
 ~~~~~~~~
 
-Znów zrobił sie bałagan, ale i tak jest lepiej niż gdybyśmy musieli ręcznie pisać zagnieżdżone 
+Znów zrobił się bałagan, ale i tak jest lepiej niż gdybyśmy musieli ręcznie pisać zagnieżdżone 
 wywołania metod `flatMap` oraz `map`. Możemy nieco uprzątnąć za pomocą  DSLa który obsłuży
 wszystkie wymagane konwersje
 
@@ -586,7 +587,7 @@ wszystkie wymagane konwersje
 ~~~~~~~~
 
 w połączeniu z operatorem `|>`, który aplikuje funkcje podaną po prawej stronie na argumencie 
-podanym z lewej strony, możemy wizualnie oddzielić logikę od tranformacji.
+podanym z lewej strony, możemy wizualnie oddzielić logikę od transformacji.
 
 {lang="text"}
 ~~~~~~~~
@@ -603,24 +604,24 @@ podanym z lewej strony, możemy wizualnie oddzielić logikę od tranformacji.
 A> `|>` jest często nazywany *operatorem drozda* z powodu jego podobieństwa do tego słodkiego ptaka.
 A> Ci, który nie lubią operatorów symbolicznych mogą użyć aliasu `.into`. 
 
-To podejście działa również dla `Either` (i innych) ale w ich przypadku metody pomocniczne są bardziej skomplikowane
+To podejście działa również dla `Either` (i innych) ale w ich przypadku metody pomocnicze są bardziej skomplikowane
 i wymagają dodatkowy parametrów. Scalaz dostarcza wiele transformatorów
 monad dla typów które definiuje, więc zawsze 
-warto sprawdzić czy ten którego potrzebujemy jest dostepny.
+warto sprawdzić czy ten którego potrzebujemy jest dostępny.
 
 
 # Projektowanie Aplikacji
 
 W tym rozdziale napiszemy logikę biznesową oraz testy dla czysto funkcyjnej aplikacji serwerowej.
-Kod źródłowy tej aplikacji dostępny jest wraz ze źródłami tej ksiązki w katalogu `example`.
-Nie mniej lepiej nie zagłebiać się w niego zanim nie dotrzemy do ostatniego rozdziału, gdyż
-wraz z poznawanie technik FP będziemy go istotnie zmieniać.
+Kod źródłowy tej aplikacji dostępny jest wraz ze źródłami tej książki w katalogu `example`.
+Nie mniej lepiej nie zagłębiać się w niego zanim nie dotrzemy do ostatniego rozdziału, gdyż
+wraz z poznawaniem technik FP będziemy go istotnie zmieniać.
 
 ## Specyfikacja
 
-Nasza aplikacja będzie zarządzać farmą serwerów, tworzoną na bazie zapotrzebowania i operującą na możliwie niskim
-budżecie. Będzie ona nasłuchiwać wiadomości od serwera CI [Drone](https://github.com/drone/drone) i uruchamiać
-agentów (maszyny robocze) używając [Google Container Engine](https://cloud.google.com/container-engine/) (GKE), tak aby 
+Nasza aplikacja będzie zarządzać farmą serwerów, tworzoną na bazie zapotrzebowania i operującą z możliwie niskim
+budżetem. Będzie ona nasłuchiwać wiadomości od serwera CI [Drone](https://github.com/drone/drone) i uruchamiać
+agenty (maszyny robocze) używając [Google Container Engine](https://cloud.google.com/container-engine/) (GKE), tak aby 
 zaspokoić potrzeby kolejki zadań.
 
 {width=60%}
@@ -630,14 +631,14 @@ Drone otrzymuje pracę do wykonania kiedy kontrybutor zgłasza pull request w ob
 Drone przydziela pracę swoim agentom, gdzie każdy z nich przetwarza jedno zadanie w danym momencie.
 
 Zadaniem naszej aplikacji jest zagwarantować że zawsze jest dość agentów aby wykonać potrzebną pracę, 
-jednocześnie dbajac aby ich liczba nie przekroczyła okreslonej granicy i minimalizując całkowite koszta.
-Nasza aplikacja muszi znać liczbę elementów w *kolejce* i liczbę dostepnych *agentów*.
+jednocześnie dbając aby ich liczba nie przekroczyła określonej granicy i minimalizując całkowite koszta.
+Nasza aplikacja musi znać liczbę elementów w *kolejce* i liczbę dostępnych *agentów*.
 
 Google potrafi tworzyć węzły (_nodes_), każdy z nich może być gospodarzem dla wielu agentów równocześnie.
 Agent podczas startu rejestruje się w serwerze, który od tej pory kontroluje jego cykl życia (wliczając 
 cykliczne weryfikowanie czy agent jest nadal aktywny).
 
-GKE pobiera opłatę za każdą minutę działania węzła, zaokrąglając czas do najbliższej godziny. Aby osiagnąć maksymalną 
+GKE pobiera opłatę za każdą minutę działania węzła, zaokrąglając czas do najbliższej godziny. Aby osiągnąć maksymalną 
 efektywność nie możemy po prostu tworzyć nowych węzłów dla każdego zadania. Zamiast tego powinniśmy reużywać
 wcześniej stworzone węzły i utrzymywać je do 58 minuty ich działania. 
 
@@ -649,17 +650,17 @@ czy aktualnie wykonuje on jakąś pracę dla serwera. Jeśli przypadkowo zatrzym
 jest to niewygodne, gdyż wymaga ludzkiej interakcji i ponownego startu zadania.
 
 Kontrybutorzy mogą ręcznie dodawać agentów do farmy, tak więc liczba agentów i węzłów może być różna. Nie musimy
-dostarczać węzłów jeśli dostępni sa wolni agenci.
+dostarczać węzłów jeśli dostępni są wolni agenci.
 
-W przypadku awari powinnismy zawsze wybierać najtańszą opcję.
+W przypadku awarii powinniśmy zawsze wybierać najtańszą opcję.
 
 Zarówno Drone jak i GKE udostępniają JSONowe REST API zabezpieczone OAuth 2.0.
 
 
 ## Interfejsy / Algebry
 
-Spróbujmy teraz zkodyfikować diagram architektury z poprzedniego rozdziału. Po pierwsze powinniśmy zdefiniować
-prosty typ danych do przechowywania zacznik czasu z dokładnaściową do milisekund. Niestety typ taki nie
+Spróbujmy teraz skodyfikować diagram architektury z poprzedniego rozdziału. Po pierwsze powinniśmy zdefiniować
+prosty typ danych do przechowywania znacznika czasu z dokładnością do milisekund. Niestety typ taki nie
 jest dostępny w bibliotece standardowej Javy ani Scali.
 
 {lang="text"}
@@ -672,13 +673,13 @@ jest dostępny w bibliotece standardowej Javy ani Scali.
   }
 ~~~~~~~~
 
-W FP *algebra* przyjmuje miejsce *interfejsu* z Javy lub zbioru poprawnych wiadomości obsługiwanych
+W FP *algebra* zajmuje miejsce *interfejsu* z Javy lub zbioru poprawnych wiadomości obsługiwanych
 przez aktora z Akki. W tej właśnie warstwie definiujemy wszystkie operacje naszego systemu które 
 prowadzą do komunikacji ze światem zewnętrznym a tym samym do efektów ubocznych.
 
 Istnieje ścisła więź między algebrami a logiką biznesową. Często przechodzić będziemy przez kolejne iteracje,
 w których próbujemy zamodelować nasz problem, następnie implementujemy rozwiązanie, tylko po to aby przekonać się
-że nasz model i zrozumienie problemu wcale nie było takie zupełne.
+że nasz model i zrozumienie problemu wcale nie było tak kompletne jak nam się wydawało.
 
 {lang="text"}
 ~~~~~~~~
@@ -697,27 +698,27 @@ w których próbujemy zamodelować nasz problem, następnie implementujemy rozwi
   }
 ~~~~~~~~
 
-Uzyliśmy typu `NonEmptyList`, który można łatwo utworzyć wywołując metodę `.toNel` na standardowej liście, która zwraca
+Użyliśmy typu `NonEmptyList`, który można łatwo utworzyć wywołując metodę `.toNel` na standardowej liście, która zwraca
 `Option[NonEmptyList]`. Poza tym wszystko powinno być jasne.
 
 
 A> Dobrą praktyką w FP jest zakodowanie ograniczeń (_constraints_) zarówno w typach przyjmowanych **jak i** zwracanych z 
-A> funkcji --- oznacza to że nigdy nie musimy obsługiwać sytuacji, które nie mają prawa się zdażyć. Jednocześnie
+A> funkcji --- oznacza to że nigdy nie musimy obsługiwać sytuacji, które nie mają prawa się zdążyć. Jednocześnie
 A> podejście to kłóci się z *prawem Postela* (_Postel's law_) "bądź liberalny względem tego co przyjmujesz od innych"[^postel].
 A>
 A> I chociaż zgadzamy się że typy parametrów powinny być tak ogólne jak to tylko możliwe, to nie zgadzamy się
 A> że funkcja powinna przyjmować typ `Seq` jeśli nie potrafi obsłużyć pustej kolekcji tego typu. Inaczej zmuszeni jesteśmy
-A> wyrzucić wyjątek tym samym tracąc totalność funkcji i powodując efekt uboczony. 
+A> wyrzucić wyjątek tym samym tracąc totalność funkcji i powodując efekt uboczny. 
 A>
 A> Dlatego też wybieramy `NonEmptyList` nie dlatego że jest to lista, ale dlatego że gwarantuje ona nam obecność 
-A> przynajmniej jednego elementu. Kiedy lepiej poznamy hierarchie typclass ze Scalaz poznamy również lepszy sposób na
+A> przynajmniej jednego elementu. Kiedy lepiej poznamy hierarchie typeclass ze Scalaz poznamy również lepszy sposób na
 A> wyrażenie tej gwarancji.
 
 [^postel]: _Be conservative in what you do, be liberal in what you accept from others_
 
 ## Logika Biznesowa
 
-Teraz przyszedł czas na napisanie logiki biznesowej, która definuje zachowanie naszej aplikacji.
+Teraz przyszedł czas na napisanie logiki biznesowej, która definiuje zachowanie naszej aplikacji.
 Na razie rozpatrywać będziemy tylko szczęśliwy scenariusz (_happy path_).
 
 Potrzebujemy klasy `WorldView` która przechowywać będzie zrzut naszej wiedzy o świecie. 
@@ -739,10 +740,10 @@ oraz dodaje pole `pending` aby śledzić nieobsłużone jeszcze żądania.
   )
 ~~~~~~~~
 
-Teraz gotowi jesteśmy aby zacząć pisać naszą logikę biznesową, ale musimy zadeklarować że zależy ona
+Teraz prawie gotowi jesteśmy aby zacząć pisać naszą logikę biznesową, ale musimy zadeklarować że zależy ona
 od algebr `Drone` in `Machines`.
 
-Możemy zacząc od interfejsu dla naszej logiki
+Możemy zacząć od interfejsu dla naszej logiki
 
 {lang="text"}
 ~~~~~~~~
@@ -754,7 +755,7 @@ Możemy zacząc od interfejsu dla naszej logiki
 ~~~~~~~~
 
 i zaimplementować go za pomocą *modułu*. Moduł zależy wyłącznie od innych modułów, algebr i czystych funkcji oraz 
-postrafi abtrahować nad `F`. Jeśli implementacja algebraicznego interfejsu zależy od konkretnego typu, np. `IO`,
+potrafi abstrahować nad `F`. Jeśli implementacja algebraicznego interfejsu zależy od konkretnego typu, np. `IO`,
 nazywamy ją *interpreterem*.
 
 {lang="text"}
@@ -764,9 +765,9 @@ nazywamy ją *interpreterem*.
 ~~~~~~~~
 
 Ograniczenie kontekstu (_context bound_) poprzez typ `Monad` oznacza że `F` jest *monadyczne*, pozwalając nam tym samym na używanie
-metod `map`, `pure`, i oczyświście, `flatmap` wewnątrz konstrukcji `for`.
+metod `map`, `pure`, i oczywiście, `flatmap` wewnątrz konstrukcji `for`.
 
-Mamy dostęp do algebr `Drone` i `Machines` poprzez `D` i `M`. Używanie pojedyńczych wielkich liter jest popularną konwencją
+Mamy dostęp do algebr `Drone` i `Machines` poprzez `D` i `M`. Używanie pojedynczych wielkich liter jest popularną konwencją
 dla implementacji algebr i monad.
 
 Nasza logika biznesowa działać będzie wewnątrz nieskończonej pętli (pseudokod)
@@ -796,11 +797,11 @@ instancji `WorldView`.  Pole `pending` domyślnie jest puste.
   } yield WorldView(db, da, mm, ma, Map.empty, mt)
 ~~~~~~~~
 
-Przypomnij sobie, jak w Rodziale 1 mówiliśmy, że `flatMap` (używany wraz z generatorem `<-`)
+Przypomnij sobie, jak w Rozdziale 1 mówiliśmy, że `flatMap` (używany wraz z generatorem `<-`)
 pozwala nam operować na wartościach dostępnych w czasie wykonania. Kiedy zwracamy `F[_]` to tak na prawdę
-zwracamy kolejny program który zostanie zinterpretowany w czasie wykonania. Na takim włąśnie programie wywołujemy `flatMap`.
+zwracamy kolejny program który zostanie zinterpretowany w czasie wykonania. Na takim programie wywołujemy `flatMap`.
 Tak właśnie możemy sekwencyjnie łączyć kod, który powoduje efekty uboczne, jednocześnie mogąc używać zupełnie czystej
-(pozbawionej tychże efektów) implementacji w czasie testowania. FP może być przez to widziane jako Extremalane Mockowanie.
+(pozbawionej tychże efektów) implementacji w czasie testowania. FP może być przez to widziane jako Ekstremalne Mockowanie.
 
 
 ### update
@@ -833,7 +834,7 @@ testować w izolacji. Z radością testować będziemy tylko metody publiczne, c
 ### act
 
 Metoda `act` jest nieco bardziej skomplikowana, więc dla zwiększenia czytelności podzielimy ją na dwie części:
-wykrywanie akcji które należy wykonać oraz wykonywanie tych akcji. To uproszczenie sprawia że możemy wykonać tylko 
+wykrywanie akcji które należy wykonać oraz wykonywanie tychże akcji. To uproszczenie sprawia że możemy wykonać tylko 
 jedną akcje per wywołanie, ale jest to całkiem rozsądne biorąc pod uwagę że możemy lepiej kontrolować wykonywane akcje
 oraz wywoływać `act` tak długo aż nie pozostanie żadna akcja do wykonania.
 
@@ -878,7 +879,7 @@ Jako zabezpieczenie finansowe zakładamy że żaden węzeł nie może żyć dłu
   }
 ~~~~~~~~
 
-Gdy już zdefiniowaliśmy scenariusze, które nas interesują możemy przejśc do implementacji metody `act`. 
+Gdy już zdefiniowaliśmy scenariusze, które nas interesują możemy przejść do implementacji metody `act`. 
 Gdy chcemy aby węzeł został uruchomiony lub zatrzymany, dodajemy go do listy `pending` wraz z zapisem
 czasu w którym tę akcję zaplanowaliśmy.
 
@@ -904,24 +905,24 @@ czasu w którym tę akcję zaplanowaliśmy.
 ~~~~~~~~
 
 Ponieważ `NeedsAgent` i `Stale` nie pokrywają wszystkich możliwych sytuacji musimy również zdefiniować
-zachowanie domyślne, które nie robi nic. Przypomnie z Rozdziału 2: `.pure` tworzy (monadyczny) kontekst używany 
-wenątrz `for`z prostej wartości.
+zachowanie domyślne, które nie robi nic. Przypomnienie z Rozdziału 2: `.pure` tworzy (monadyczny) kontekst używany 
+wewnątrz `for` z prostej wartości.
 
 `foldLeftM` działa podobnie do `foldLeft`, z tą różnicą że przyjmowana funkcja może zwracać wartość opakowaną w kontekst.
-W naszym przypadku, każda iteracja zwraca `F[WorldView]`. `M` w nazwie jest krótem od _Monadic_. Niedługo dowiemy się
-wiecej o tego typu *wyniesionych* (_lifted_) funkcjach, która zachowują się tak jak byśmy oczekiwali ale przyjmują
+W naszym przypadku, każda iteracja zwraca `F[WorldView]`. `M` w nazwie jest skrótem od _Monadic_. Niedługo dowiemy się
+więcej o tego typu *wyniesionych* (_lifted_) funkcjach, która zachowują się tak jak byśmy oczekiwali ale przyjmują
 funkcje zwracające wartości monadyczne zamiast zwykłych wartości.
 
 
 ## Testy Jednostkowe
 
-Podejśce funkcyjne do pisania aplikacji jest marzeniem projektanta: można skupić się na logice biznesowej pozostawiając
+Podejście funkcyjne do pisania aplikacji jest marzeniem projektanta: można skupić się na logice biznesowej pozostawiając
 implementacji algebr pozostałym członkom zespołu.
 
 Nasza aplikacja bardzo silnie zależy od upływu czasu oraz zewnętrznych webserwisów. Gdyby była to tradycyjna aplikacja
 napisania w duchu OOP, stworzylibyśmy mocki dla wszystkich wywołań lub testowych aktorów dla wysyłanych wiadomości.
 Mockowanie w FP jest równoznaczne z dostarczeniem alternatywnej implementacji algebr od których zależymy. Algebry 
-izolują części systemu, które muszą zostać *zamockowane*, czyli poprostu inaczej interpretowane w kontekscie testów 
+izolują części systemu, które muszą zostać *zamockowane*, czyli po prostu inaczej interpretowane w kontekście testów 
 jednostkowych.
 
 Zaczniemy od przygotowania danych testowych
@@ -962,7 +963,7 @@ A> ~~~~~~~~
 Implementujemy algebry poprzez rozszerzenie interfejsów `Drone` i `Machines` podając konkretny kontekst monadyczny,
 w najprostszym przypadku `Id`.
 
-Nasza "mockowa" implementacja zwyczajnie odtwarza wczesniej przygotowany `WorldView`. 
+Nasza "mockowa" implementacja zwyczajnie odtwarza wcześniej przygotowany `WorldView`. 
 Stan naszego systemu został wyizolowany, więc możemy użyć `var` do jego przechowywania:
 
 {lang="text"}
@@ -987,7 +988,7 @@ Stan naszego systemu został wyizolowany, więc możemy użyć `var` do jego prz
   }
 ~~~~~~~~
 
-A> Powrócimy do tego kodu trochę póżniej i zamienimy `var` na coś bezpieczniejszego.
+A> Powrócimy do tego kodu trochę później i zamienimy `var` na coś bezpieczniejszego.
 
 Kiedy piszemy testy jednostkowe (używając `FlatSpec` z biblioteki Scalatest), tworzymy instancje `Mutable` 
 i importujemy wszystkie jej pola i metody.
@@ -995,7 +996,7 @@ i importujemy wszystkie jej pola i metody.
 Nasze `drone` i `machines` używają `Id` jako kontekstu wykonania przez co interpretacja naszego programu
 zwraca `Id[WoldView]` na którym możemy wykonywać asercje.
 
-W tym trywialnym scenariuszy sprawdzamy czy `initial` zwraca tę sama wartość, której użylismy 
+W tym trywialnym scenariuszy sprawdzamy czy `initial` zwraca tę sama wartość, której użyliśmy 
 w naszej statycznej implementacji:
 
 {lang="text"}
@@ -1009,7 +1010,7 @@ w naszej statycznej implementacji:
 ~~~~~~~~
 
 Możemy też stworzyć bardziej skomplikowane testy dla metod `update` i `act`,
-które pomoga nam znaleźć błędy i dopracować wymagania:
+które pomogą nam znaleźć błędy i dopracować wymagania:
 
 {lang="text"}
 ~~~~~~~~
@@ -1043,34 +1044,34 @@ Przejście przez pełen komplet testów byłby dość nudny. Poniższe testy mo�
 samego podejścia:
 
 - nie proś o nowych agentów gdy kolejka oczekujących jest niepusta
-- nie wyłaczaj agentów jeśli węzły są zbyt młode
-- wyłacz agenty gdy backlog jest pusty a węzły wkrótce wygenerują nowe koszta
+- nie wyłączaj agentów jeśli węzły są zbyt młode
+- wyłącz agenty gdy backlog jest pusty a węzły wkrótce wygenerują nowe koszta
 - nie wyłączaj agentów gdy obecne są oczekujące akcje
-- wyłacz agenty gdy backlog jest pusty a ci są zbyt starzy
-- wyłacz agenty nawet jeśli wykonują prace jeśli są zbyt starzy
+- wyłącz agenty gdy backlog jest pusty a ci są zbyt starzy
+- wyłącz agenty nawet jeśli wykonują prace jeśli są zbyt starzy
 - zignoruj nieodpowiadające oczekujące akcje podczas aktualizacji
 
 Wszystkie te testy są synchroniczne i działają na wątku uruchamiającym testy (i mogą być uruchamiane równolegle).
-Gdybyśmy zaprojektowali nasze testy z użyciem Akki, narażone byłyby na arbitralne timeouty a błedy ukryte byłyby 
+Gdybyśmy zaprojektowali nasze testy z użyciem Akki, narażone byłyby na arbitralne timeouty a błędy ukryte byłyby 
 w logach.
 
-Cięzko jest przecenić wwiększenie produktywności wynikające z prostych testów logiki biznesowej. Weż pod uwagę, że
+Ciężko jest przecenić zwiększenie produktywności wynikające z prostych testów logiki biznesowej. Weź pod uwagę, że
 90% czasu programisty podczas interakcji z klientem poświęcone jest na ulepszanie, aktualizowanie i poprawianie 
 tych właśnie reguł. Wszystko inne to tylko szczegół implementacyjny.
 
 
 ## Równolegle
 
-Aplikacja którą stowrzyliśmy uruchamia każdą z algebraicznych metod sekwencyjnie. Jednak jest kilka oczywistych miejsc
+Aplikacja którą stworzyliśmy uruchamia każdą z algebraicznych metod sekwencyjnie. Jednak jest kilka oczywistych miejsc
 w których praca może być wykonywana równolegle.
 
 ### initial
 
-W naszej definicji metody `initial` moglibyśmy zarządać wszystkich informacji równocześnie zamiast wykonywać tylko jedno
+W naszej definicji metody `initial` moglibyśmy zarządzać wszystkich informacji równocześnie zamiast wykonywać tylko jedno
 zapytanie na raz.
 
 W przeciwieństwie do metody `flatMap` która działa sekwencyjnie, Scalaz dostarcza składnie `Apply` 
-przewidzianą do operacji rownoległych:
+przewidzianą do operacji równoległych:
 
 {lang="text"}
 ~~~~~~~~
@@ -1085,7 +1086,7 @@ możemy również użyć notacji infiksowej (_infix_):
 ~~~~~~~~
 
 Jeśli każda z operacji równoległych zwraca ten sam kontekst, możemy wywołać funkcję w momencie gdy wszystkie one zwrócą
-wynik. Przepiszmy `initial` aby skorzystac z tej możliwości:
+wynik. Przepiszmy `initial` aby skorzystać z tej możliwości:
 
 {lang="text"}
 ~~~~~~~~
@@ -1098,12 +1099,12 @@ wynik. Przepiszmy `initial` aby skorzystac z tej możliwości:
 
 ### act
 
-W aktualnej implementacji `act` zatrzymujemy każdy z węzłów sekwencyjnie, czekając na wynik i kontunując pracę 
+W aktualnej implementacji `act` zatrzymujemy każdy z węzłów sekwencyjnie, czekając na wynik i kontynuując pracę 
 dopiero gdy operacja się zakończy. Moglibyśmy jednak zatrzymać wszystkie węzły równolegle i na koniec zaktualizować
 nasz obraz świata.
 
-Wadą tego rozwiązania jest fakt, że bład w którejkolwiek akcji sposoduje zwarcie zanim zdążymy zaktualizować pole
-`pending`. Wydaje się to być rozsądnym kompromisem, gdyż nasza metoda `update` poradzi sobie z sytacją w której
+Wadą tego rozwiązania jest fakt, że błąd w którejkolwiek akcji spowoduje zwarcie zanim zdążymy zaktualizować pole
+`pending`. Wydaje się to być rozsądnym kompromisem, gdyż nasza metoda `update` poradzi sobie z sytuacją w której
 węzeł niespodziewanie się zatrzyma.
 
 Potrzebujemy metody która operuje na typie `NonEmptyList` i pozwoli nam prze`map`ować każdy element na
@@ -1119,7 +1120,7 @@ wywołamy `flatMap` otrzymamy wartość typu `NonEmptyList[MachineNode]` z któr
   } yield update
 ~~~~~~~~
 
-Prawdopodobnie wersja ta jest łątwiejsza do zrozumienia niż wersja sekwencyjna.
+Prawdopodobnie wersja ta jest łatwiejsza do zrozumienia niż wersja sekwencyjna.
 
 
 ## Podsumowanie
@@ -1127,7 +1128,7 @@ Prawdopodobnie wersja ta jest łątwiejsza do zrozumienia niż wersja sekwencyjn
 1. *algebry* definiują interfejsy między systemami
 2. *moduły* implementują algebry używając innych algebr
 3. *interpretery* to konkretne implementacje algebr dla określonego `F[_]`
-4. Intepretery testowe mogą zamienić części systemu wyołujące efekty uboczne, dając nam wysokie pokrycie testami.
+4. Interpretery testowe mogą zamienić części systemu wywołujące efekty uboczne, dając nam wysokie pokrycie testami.
 
 
 # Data and Functionality
