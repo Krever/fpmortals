@@ -603,8 +603,9 @@ podanym z lewej strony, możemy wizualnie oddzielić logikę od tranformacji.
 A> `|>` jest często nazywany *operatorem drozda* z powodu jego podobieństwa do tego słodkiego ptaka.
 A> Ci, który nie lubią operatorów symbolicznych mogą użyć aliasu `.into`. 
 
-To podejście działa również dla `EitherT` (i innych) ale w ich przypadku metody pomocniczne są bardziej skomplikowane
-i wymagają dodatkowy parametrów. Scalaz dostarcza wiele transformatorów monad dla typów które definiuje, więc zawsze 
+To podejście działa również dla `Either` (i innych) ale w ich przypadku metody pomocniczne są bardziej skomplikowane
+i wymagają dodatkowy parametrów. Scalaz dostarcza wiele transformatorów
+monad dla typów które definiuje, więc zawsze 
 warto sprawdzić czy ten którego potrzebujemy jest dostepny.
 
 
