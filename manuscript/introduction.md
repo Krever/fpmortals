@@ -41,7 +41,7 @@ które odkryjemy w tej książce.
 
 Scala wprowadza również typ `Future`, sprawiając że pisanie aplikacji asynchronicznych staje się dużo łatwiejsze.
 Jednak gdy tylko `Future` pojawi się w typie zwracanym z funkcji, *wszystko* musi zostać przepisane i dostosowane,
-wliczając testy, które teraz narażone są na arbitralne _timeouty_[^timeout]
+wliczając testy, które teraz narażone są na arbitralne _timeouty_[^timeout].
 
 [^timeout]: Wielokrotnie w tej książce pojawią się spolszczone wyrażenia angielskie w miejscach w których nie ma dla nich dobrego
     polskiego odpowiednika. Uznaliśmy że dużo lepiej użyć wyrażenia które być może brzmi dziwnie, ale pozwala w łatwy sposób zrozumieć

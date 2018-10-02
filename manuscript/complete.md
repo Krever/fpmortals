@@ -10,7 +10,7 @@ również w aplikacjach niefunkcyjnych.
 
 ## Syntax Sugar
 
-Konstrukcja `for` w Scali jest prostą reguła przepisania (_rewrite rule_), zwaną również *syntax sugar*[^synntaxsugar], 
+Konstrukcja `for` w Scali jest prostą reguła przepisania (_rewrite rule_), zwaną również *syntax sugar*[^syntaxsugar], 
 i nie wnosi żadnych dodatkowych informacji do naszego programu.
 
 [^syntaxsugar]: Tłumaczenie _cukier składniowy_ jest tak niedorzeczne, że zdecydowaliśmy pozostać przy wersji angielskiej.
@@ -220,7 +220,7 @@ niezależnie kompilowane. Gdyby taki interfejs istniał wyglądałby mniej więc
 ~~~~~~~~
 
 Jeśli kontekst (`C[_]`) konstrukcji `for` nie dostarcza swoich własnych metod `map` i `flatMap` 
-to nie wszystko jeszcze stracone. Jeśli dostępna jest domniemana (_implicit_)  instancja typu `scalaz.Bind[T]` dla `T`
+to nie wszystko jeszcze stracone. Jeśli dostępna jest niejawna (_implicit_)  instancja typu `scalaz.Bind[T]` dla `T`
 to dostarczy ona potrzebne metody `map` oraz `flatMap`.
 
 A> Developerzy często zaskakiwani są faktem, że operacje oparte o typ `Future` i zdefiniowane wewnątrz konstrukcji `for`
@@ -1131,48 +1131,49 @@ Prawdopodobnie wersja ta jest łatwiejsza do zrozumienia niż wersja sekwencyjna
 4. Interpretery testowe mogą zamienić części systemu wywołujące efekty uboczne, dając nam wysokie pokrycie testami.
 
 
-# Data and Functionality
+# Dane i Funkcjonalności
 
-From OOP we are used to thinking about data and functionality
-together: class hierarchies carry methods, and traits can demand that
-data fields exist. Runtime polymorphism of an object is in terms of
-"is a" relationships, requiring classes to inherit from common
-interfaces. This can get messy as a codebase grows. Simple data types
-become obscured by hundreds of lines of methods, trait mixins suffer
-from initialisation order errors, and testing / mocking of highly
-coupled components becomes a chore.
+Przychodząc ze świata obiektowego przyzwyczajeni jesteśmy do myślenia o danych i funkcjonalnościach jako jednym:
+hierarchie klas zawierają metody a traity mogą wymagać obecności konkretnych pól (danych). Polimorfizm obiektu w czasie wykonania,
+bazujący na relacji "jest" (_is a_), wymaga od klas aby dziedziczyły po wspólnym interfejsie. Rozwiązanie to może wywołać spory 
+bałagan gdy tylko ilość naszego kodu zacznie się istotnie zwiększać. Proste struktury danych zostają przysłonięte setkami linii
+kodu implementującego kolejne metody, traity które wmiksowujemy do naszych klas zaczynają cierpieć na problemy związane z kolejnością
+inicjalizacji, a testowanie i mockowanie ściśle powiązanych komponentów staje się katorgą.
 
-FP takes a different approach, defining data and functionality
-separately. In this chapter, we will cover the basics of data types
-and the advantages of constraining ourselves to a subset of the Scala
-language. We will also discover *typeclasses* as a way to achieve
-compiletime polymorphism: thinking about functionality of a data
-structure in terms of "has a" rather than "is a" relationships.
+FP podchodzi inaczej do tego problemu, rozdzielając definicje funkcjonalności i danych. W tym rozdziale poznamy podstawowe
+typy danych i zalety ograniczenia się do podzbioru funkcjonalności oferowanych przez Scalę. Odkryjemy również *typeklasy* 
+jako sposób na osiągnięcie polimorfizmu już na etapie kompilacji: zaczniemy myśleć o strukturach danych w kategoriach relacji
+"ma" (_has a_) zamiast "jest".
 
 
-## Data
+## Dane
 
-The fundamental building blocks of data types are
+Podstawowymi materiałami używanymi do budowania typów danych są:
 
--   `final case class` also known as *products*
--   `sealed abstract class` also known as *coproducts*
--   `case object` and `Int`, `Double`, `String` (etc) *values*
+- `final case class` znane również jako *produkty* (_products_)
+- `sealed abstract class` znane również jako *koprodukty* (_coproducts_)
+- `case object` oraz typy proste takie jak `Int`, `Double`, `String` to *wartości* (_values_)[^values]
 
-with no methods or fields other than the constructor parameters. We prefer
-`abstract class` to `trait` in order to get better binary compatibility and to
-discourage trait mixing.
+[^values]: Chodzi tutaj o wartości na poziomie typów (_type level_). Dla przykładu: produktem na poziomie wartości (_value level_),
+jest nowa wartość złożona z wielu wartości, np. `(1,2,3)`. Produktem na poziomie typów jest nowy typ złożony z wielu typów 
+(czyli wartości na poziomie typów), np `(Int, String, Int)`. Może to wydawać się zawiłe ale nie ma potrzeby się tym przejmować.
+Ważne jest aby zrozumieć że mamy 2 poziomy na których możemy definiować byty: poziom typów i poziom wartości, 
+i że w tym wypadku mówimy o wartościach na poziomie typów.
 
-The collective name for *products*, *coproducts* and *values* is
-*Algebraic Data Type* (ADT).
+z tym ograniczeniem, że nie mogą one mieć żadnych metod ani pól innych niż parametry konstruktora. Preferujemy
+`abstract class` nad `trait` aby zyskać lepszą kompatybilność binarną i nie zachęcać do wmiksowywania traitów.
 
-We compose data types from the `AND` and `XOR` (exclusive `OR`)
-Boolean algebra: a product contains every type that it is composed of,
-but a coproduct can be only one. For example
+Wspólna nazwa dla *produktów*, *koproduktów* i *wartości* to *Algebraiczny Typ Danych*[^adt] (ADT).
 
--   product: `ABC = a AND b AND c`
--   coproduct: `XYZ = x XOR y XOR z`
+[^adt]: _Algebraic Data Type_
 
-written in Scala
+Składamy typy danych analogicznie do algebra Boole’a opartej na operacjach `AND` i `XOR` (wykluczający `OR`):
+produkt zawiera wszystkie typy z których się składa a koprodukt jest jednym z nich. Na przykład
+
+-   produkt: `ABC = a AND b AND c`
+-   koprodukt: `XYZ = x XOR y XOR z`
+
+zapisane w Scali
 
 {lang="text"}
 ~~~~~~~~
@@ -1192,12 +1193,12 @@ written in Scala
 ~~~~~~~~
 
 
-### Recursive ADTs
+### Rekursywne ADT
 
-When an ADT refers to itself, we call it a *Recursive Algebraic Data Type*.
+Kiedy ADT odnosi się to samego siebie przyjmuje nazwę *Rekursywny Algebraiczny Typ Danych*.
 
-`scalaz.IList`, a safe alternative to the stdlib `List`, is recursive because
-`ICons` contains a reference to `IList`.:
+`scalaz.IList`, bezpieczna alternatywa dla typu `List` z biblioteki standardowej, jest rekursywna ponieważ
+`ICons` zawiera referencje do `IList`.:
 
 {lang="text"}
 ~~~~~~~~
@@ -1207,39 +1208,36 @@ When an ADT refers to itself, we call it a *Recursive Algebraic Data Type*.
 ~~~~~~~~
 
 
-### Functions on ADTs
+### Funkcje w ADT
 
-ADTs can contain *pure functions*
+ADT mogą zawierać *czyste funkcje*
 
 {lang="text"}
 ~~~~~~~~
   final case class UserConfiguration(accepts: Int => Boolean)
 ~~~~~~~~
 
-But ADTs that contain functions come with some caveats as they don't
-translate perfectly onto the JVM. For example, legacy `Serializable`,
-`hashCode`, `equals` and `toString` do not behave as one might
-reasonably expect.
+Ale ADT, które zawierają funkcje nie są tak oczywiste jak mogłoby się wydawać, gdyż wyrażenie ich na JVMie
+jest nieidealne. Dla przykładu, `Serializable`, `hashCode`, `equals` i `toString` nie zachowują się tak jak
+byśmy się tego spodziewali.
 
-Unfortunately, `Serializable` is used by popular frameworks, despite
-far superior alternatives. A common pitfall is forgetting that
-`Serializable` may attempt to serialise the entire closure of a
-function, which can crash production servers. A similar caveat applies
-to legacy Java classes such as `Throwable`, which can carry references
-to arbitrary objects.
+Niestety, `Serializable` używany jest przez wiele frameworków mimo istnienia dużo lepszych alternatyw. Częstą
+pułapką jest zapomnienie że `Serializable` może próbować zserializować całe domknięcie (_closure_) funkcji,
+co może np. zabić produkcyjny serwer na którym aplikacja jest uruchomiona. Podobnymi problemami obciążone są inne typy Javowe
+takie jak na przykład `Throwable`, który niesie w sobie referencje do arbitralnych obiektów.
 
-We will explore alternatives to the legacy methods when we discuss the
-Scalaz library in the next chapter, at the cost of losing
-interoperability with some legacy Java and Scala code.
+Zbadamy dostępne alternatywy gdy pochylimy się nad biblioteka Scalaz w następnym rozdziale. Kosztem tych alternatyw będzie 
+poświęcenie interoperacyjności (_interoperability_) z częścią ekosystemu Javy i Scali.
 
 
-### Exhaustivity
+### Wyczerpywalność[^exhaustivity]
 
-It is important that we use `sealed abstract class`, not just
-`abstract class`, when defining a data type. Sealing a `class` means
-that all subtypes must be defined in the same file, allowing the
-compiler to know about them in pattern match exhaustivity checks and
-in macros that eliminate boilerplate. e.g.
+[^exhaustivity]: _Exhaustivity_
+
+Istotne jest że definiując typy danych używamy konstrukcji `sealed abstract class`, a nie `abstract class`. Zapieczętowanie
+(_sealing_) klasy oznacza że wszystkie podtypy (_subtypes_) muszą być zdefiniowane w tym samym pliku, pozwalając tym samym
+kompilatorowi na sprawdzanie czy pattern matching jest wyczerpujący. Dodatkowo informacja ta może być wykorzystana przez makra
+które pomagają nam eliminować boilerplate.
 
 {lang="text"}
 ~~~~~~~~
@@ -1256,12 +1254,11 @@ in macros that eliminate boilerplate. e.g.
                                ^
 ~~~~~~~~
 
-This shows the developer what they have broken when they add a new
-product to the codebase. We're using `-Xfatal-warnings`, otherwise
-this is just a warning.
+Jak widzimy kompilator jest w stanie pokazać deweloperowi co zostało zepsute gdy ten dodał nowy wariant do koproduktu
+lub pominął już istniejący. Używamy tutaj flagi kompilatora `-Xfatal-warnings`, w innym przypadku błąd ten jest jedynie ostrzeżeniem.
 
-However, the compiler will not perform exhaustivity checking if the
-`class` is not sealed or if there are guards, e.g.
+Jednakże kompilator nie jest w stanie wykonać koniecznych sprawdzeń gdy klasa nie jest zapieczętowana lub gdy używamy 
+dodatkowych ograniczeń (_guards_), np.:
 
 {lang="text"}
 ~~~~~~~~
@@ -1274,31 +1271,32 @@ However, the compiler will not perform exhaustivity checking if the
     at .thing(<console>:15)
 ~~~~~~~~
 
-To remain safe, don't use guards on `sealed` types.
+Aby zachować bezpieczeństwo, nie używaj ograniczeń na zapieczętowanych typach.
 
-The [`-Xstrict-patmat-analysis`](https://github.com/scala/scala/pull/5617) flag has been proposed as a language
-improvement to perform additional pattern matcher checks.
+Nowa flaga, [`-Xstrict-patmat-analysis`](https://github.com/scala/scala/pull/5617), została zaproponowana aby dodatkowo
+wzmocnić bezpieczeństwo pattern matchingu.
 
 
-### Alternative Products and Coproducts
+### Alternatywne Produkty i Koprodukty
 
-Another form of product is a tuple, which is like an unlabelled `final
-case class`.
+Inną formą wyrażenia produktu jest tupla (krotka, ang. _tuple_), która przypomina finalną case klasę, ale pozbawioną etykiet.
 
-`(A.type, B, C)` is equivalent to `ABC` in the above example but it is best to
-use `final case class` when part of an ADT because the lack of names is awkward
-to deal with, and `case class` has much better performance for primitive values.
+`(A.type, B, C)` jest równoznaczna z `ABC` z wcześniejszego przykładu, ale do konstruowania ADT 
+najlepiej używać jest klas, gdyż brak nazw jest kłopotliwe w praktyce. Dodatkowo case klasy są zdecydowanie bardziej wydajne
+przy operowaniu na wartościach typów prostych (_primitive values_).
 
-Another form of coproduct is when we nest `Either` types. e.g.
+Inną formą wyrażenia koproduktu jest zagnieżdżanie typu `Either`, np.
 
 {lang="text"}
 ~~~~~~~~
   Either[X.type, Either[Y.type, Z]]
 ~~~~~~~~
 
-equivalent to the `XYZ` sealed abstract class. A cleaner syntax to define
-nested `Either` types is to create an alias type ending with a colon,
-allowing infix notation with association from the right:
+jest równoznaczny z zapieczętowaną klasą abstrakcyjną `XYZ`. Aby uzyskać czystszą składnię do definiowania zagnieżdżonych
+typów `Either`, możemy zdefiniować alias typu zakończony dwukropkiem, co sprawi że używając notacji infiksowej będzie on wiązał
+argument po prawej stronie jako pierwszy[^eitherright].
+
+[^eitherright]: A więc `String |: Int |: Double` rozumiany jest jako `String |: (Int |: Double)` a nie `(String |: Int) |: Double`.
 
 {lang="text"}
 ~~~~~~~~
@@ -1307,16 +1305,15 @@ allowing infix notation with association from the right:
   X.type |: Y.type |: Z
 ~~~~~~~~
 
-This is useful to create anonymous coproducts when we cannot put all
-the implementations into the same source file.
+Anonimowe koprodukty przydatne są gdy nie jesteśmy w stanie umieścić wszystkich typów w jednym pliku.
 
 {lang="text"}
 ~~~~~~~~
   type Accepted = String |: Long |: Boolean
 ~~~~~~~~
 
-Yet another alternative coproduct is to create a custom `sealed abstract class`
-with `final case class` definitions that simply wrap the desired type:
+Alternatywnym sposobem jest zdefiniowanie nowej zapieczętowanej klasy, której podtypy owijają potrzebne nam (zewnętrzne) typy.
+
 
 {lang="text"}
 ~~~~~~~~
@@ -1326,27 +1323,27 @@ with `final case class` definitions that simply wrap the desired type:
   final case class AcceptedBoolean(value: Boolean) extends Accepted
 ~~~~~~~~
 
-Pattern matching on these forms of coproduct can be tedious, which is why [Union
-Types](https://contributors.scala-lang.org/t/733) are being explored in the Dotty next-generation Scala compiler. Macros
-such as [totalitarian](https://github.com/propensive/totalitarian) and [iotaz](https://github.com/frees-io/iota) exist as alternative ways of encoding anonymous
-coproducts.
+Pattern matching na tych formach koproduktów jest dość mozolny, dlatego też w Dottym (kompilator Scali następnej generacji) 
+dostępne są [Unie](https://contributors.scala-lang.org/t/733) (_union types_). Istnieją również biblioteki (oparte o makra), 
+takie jak [totalitarian](https://github.com/propensive/totalitarian) czy [iota](https://github.com/frees-io/iota),
+które dostarczają kolejne sposoby na wyrażanie koproduktów.
 
 
-### Convey Information
+### Przekazywanie Informacji
 
-Besides being a container for necessary business information, data
-types can be used to encode constraints. For example,
+Typy danych, oprócz pełnienia funkcji kontenerów na kluczowe informacje biznesowe, pozwalają nam również
+wyrażać ograniczenia dla tychże danych. Na przykład:
 
 {lang="text"}
 ~~~~~~~~
   final case class NonEmptyList[A](head: A, tail: IList[A])
 ~~~~~~~~
 
-can never be empty. This makes `scalaz.NonEmptyList` a useful data type despite
-containing the same information as `IList`.
+nigdy nie będzie pusta. Sprawia to że `scalaz.NonEmptyList` jest użytecznym typem danych mimo tego, że
+zawiera dokładnie te same dane jak `IList`.
 
-Product types often contain types that are far more general than is allowed. In
-traditional OOP this would be handled with input validation through assertions:
+Produkty często zawierają typy które są dużo bardziej ogólne niż powinno być dozwolone. W tradycyjnym podejściu
+zorientowanym obiektowo moglibyśmy obsłużyć taki przypadek poprzez walidację danych za pomocą asercji:
 
 {lang="text"}
 ~~~~~~~~
@@ -1355,9 +1352,8 @@ traditional OOP this would be handled with input validation through assertions:
   }
 ~~~~~~~~
 
-Instead, we can use the `Either` data type to provide `Right[Person]` for valid
-instances and protect invalid instances from propagating. Note that the
-constructor is `private`:
+Zamiast tego, możemy użyć typu `Either` i zwracać `Right[Person]` dla poprawnych instancji, zapobiegając tym samym przed
+propagacją niepoprawnych instancji. Zauważ, że konstruktor jest prywatny: 
 
 {lang="text"}
 ~~~~~~~~
@@ -1378,18 +1374,19 @@ constructor is `private`:
 ~~~~~~~~
 
 
-#### Refined Data Types
+#### Rafinowane Typy Danych[^refined]
 
-A clean way to restrict the values of a general type is with the `refined`
-library, providing a suite of restrictions to the contents of data. To install
-refined, add the following to `build.sbt`
+[^refined]: _Refined Data Types_
+
+Prostym sposobem ograniczenie zbioru możliwych wartości ogólnego typu jest użycie biblioteki [refined](https://github.com/fthomas/refined).
+Aby zainstalować `refined` dodaj poniższą linie do pliku `build.sbt`.
 
 {lang="text"}
 ~~~~~~~~
   libraryDependencies += "eu.timepit" %% "refined-scalaz" % "0.9.2"
 ~~~~~~~~
 
-and the following imports
+oraz poniższe importy
 
 {lang="text"}
 ~~~~~~~~
@@ -1397,13 +1394,12 @@ and the following imports
   import refined.api.Refined
 ~~~~~~~~
 
-`Refined` allows us to define `Person` using adhoc refined types to capture
-requirements exactly, written `A Refined B`.
+`Refined` pozawala nam zdefiniować klasę `Person` używając rafinacji ad-hoc aby zapisać dokładne wymagania co do typu.
+Rafinację taką wyrażamy jako `A Refined B`.
 
-A> All types with two parameters can be written *infix* in Scala. For example,
-A> `Either[String, Int]` is the same as `String Either Int`. It is conventional for
-A> `Refined` to be written infix since `A Refined B` can be read as "an `A` that
-A> meets the requirements defined in `B`".
+A> Wszystkie dwuparametrowe typy w Scali można zapisać w sposób inifksowy. Na przykład, `Either[String, Int]`
+A> jest tym samym co `String Either Int`. Istnieje konwencja aby używać `Refined` w ten właśnie sposób,
+A> gdyż `A Refined B` może być czytane jako "takie `A`, które spełnia wymagania zdefiniowane w `B`".
 
 {lang="text"}
 ~~~~~~~~
@@ -1416,8 +1412,8 @@ A> meets the requirements defined in `B`".
   )
 ~~~~~~~~
 
-The underlying value can be obtained with `.value`. We can construct a
-value at runtime using `.refineV`, returning an `Either`
+Dostęp do oryginalnej wartości odbywa się poprzez `.value`. Aby skonstruować instancje rafinowanego typu 
+w czasie działa programu możemy użyć metody `.refineV`, która zwróci nam `Either`.
 
 {lang="text"}
 ~~~~~~~~
@@ -1429,15 +1425,14 @@ value at runtime using `.refineV`, returning an `Either`
   Right(Sam)
 ~~~~~~~~
 
-If we add the following import
+Jeśli dodamy poniższy import
 
 {lang="text"}
 ~~~~~~~~
   import refined.auto._
 ~~~~~~~~
 
-we can construct valid values at compiletime and get an error if the provided
-value does not meet the requirements
+możemy konstruować poprawne wartości z walidacją w czasie kompilacji
 
 {lang="text"}
 ~~~~~~~~
@@ -1448,8 +1443,8 @@ value does not meet the requirements
   <console>:21: error: Predicate isEmpty() did not fail.
 ~~~~~~~~
 
-More complex requirements can be captured, for example we can use the built-in
-rule `MaxSize` with the following imports
+Możemy również wyrażać bardziej skomplikowane wymagania, np za pomocą gotowej reguły `MaxSize` dostępnej
+po dodaniu poniższych importów
 
 {lang="text"}
 ~~~~~~~~
@@ -1458,8 +1453,7 @@ rule `MaxSize` with the following imports
   import refined.collection.MaxSize
 ~~~~~~~~
 
-capturing the requirement that the `String` must be both non-empty and have a
-maximum size of 10 characters:
+Wyrażenie wymagania co do typu `String`, aby był jednocześnie niepusty i nie dłuższy niż 10 znaków:
 
 {lang="text"}
 ~~~~~~~~
@@ -1471,18 +1465,17 @@ maximum size of 10 characters:
   )
 ~~~~~~~~
 
-A> The `W` notation is short for "witness". This syntax will be much simpler in
-A> Scala 2.13, which has support for *literal types*:
+A> Notacja `W` jest skrótem od angielskiego "witness". Składania ta stanie się zdecydowanie prostsza w Scali 2.13,
+A> która niesie wsparcie dla *typów literałowych* (_literal types_):
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
 A>   type Name = NonEmpty And MaxSize[10]
 A> ~~~~~~~~
 
-It is easy to define custom requirements that are not covered by the refined
-library. For example in `drone-dynamaic-agents` we will need a way of ensuring
-that a `String` contains `application/x-www-form-urlencoded` content. We can
-create a `Refined` rule using the Java regular expression library:
+Łatwo jest zdefiniować własne ograniczenia które nie są dostępne bezpośrednio w bibliotece. Na przykład
+w naszej aplikacji `drone-dynamic-agents` potrzebować będziemy sposobu aby upewnić się, że `String` jest wiadomością
+zgodną z formatem `application/x-www-form-urlencoded`. Stwórzmy więc regułę używając wyrażeń regularnych:
 
 {lang="text"}
 ~~~~~~~~
@@ -1501,92 +1494,81 @@ create a `Refined` rule using the Java regular expression library:
 ~~~~~~~~
 
 
-### Simple to Share
+### Dzielenie się Jest Łatwe
 
-By not providing any functionality, ADTs can have a minimal set of
-dependencies. This makes them easy to publish and share with other
-developers. By using a simple data modelling language, it makes it
-possible to interact with cross-discipline teams, such as DBAs, UI
-developers and business analysts, using the actual code instead of a
-hand written document as the source of truth.
+Przez to, że ADT nie dostarczają żadnych funkcjonalności mają minimalny zbiór zależności. Sprawia to, że dzielenie 
+tychże typów z innymi deweloperami jest nad wyraz łatwe. Używając prostego jeżyka modelowania danych, komunikacja oparta o kod, a 
+nie specjalnie przygotowane dokumenty, staje się możliwa nawet wewnątrz zespołów interdyscyplinarnych (a więc 
+składających się dodatkowo z np. administratorów baz danych, specjalistów od UI czy analityków biznesowych).
 
-Furthermore, tooling can be more easily written to produce or consume
-schemas from other programming languages and wire protocols.
+Dodatkowo, łatwiejsze staje się tworzenie narzędzi, które pomogą w konsumowaniu i produkowaniu
+schematów danych dla innych języków danych albo łączeniu protokołów komunikacji.
 
 
-### Counting Complexity
+### Wyliczanie Złożoności
 
-The complexity of a data type is the count of values that can exist. A good data
-type has the least amount of complexity it needs to hold the information it
-conveys, and no more.
+Złożoność typu danych to liczba możliwych do stworzenia wartości. Dobry typ danych ma najmniejszą możliwą
+złożoność, która pozwala mu przechować potrzebne informacje
 
-Values have a built-in complexity:
+Wartości mają wbudowaną złożoność:
 
--   `Unit` has one value (why it is called "unit")
--   `Boolean` has two values
--   `Int` has 4,294,967,295 values
--   `String` has effectively infinite values
+-   `Unit` ma dokładnie jedną wartość (dlatego nazywa się "jednostką")
+-   `Boolean` ma dwie wartości
+-   `Int` ma 4,294,967,295 wartości
+-   `String` ma efektywnie nieskończenie wiele wartości
 
-To find the complexity of a product, we multiply the complexity of
-each part.
+Aby policzyć złożoność produktu wystarczy pomnożyć złożoności jego składowych.
 
--   `(Boolean, Boolean)` has 4 values (`2*2`)
--   `(Boolean, Boolean, Boolean)` has 8 values (`2*2*2`)
+-   `(Boolean, Boolean)` ma 4 wartości (`2*2`)
+-   `(Boolean, Boolean, Boolean)` ma wartości (`2*2*2`)
 
-To find the complexity of a coproduct, we add the complexity of each
-part.
+Aby policzyć złożoność koproduktu sumujemy złożoności poszczególnych wariantów.
 
--   `(Boolean |: Boolean)` has 4 values (`2+2`)
--   `(Boolean |: Boolean |: Boolean)` has 6 values (`2+2+2`)
+-   `(Boolean |: Boolean)` ma 4 wartości (`2+2`)
+-   `(Boolean |: Boolean |: Boolean)` ma 6 wartości (`2+2+2`)
 
-To find the complexity of a ADT with a type parameter, multiply each part by the
-complexity of the type parameter:
+Aby określić złożoność ADT sparametryzowanego typem, mnożymy każdą z części przez złożoność parametru:
 
--   `Option[Boolean]` has 3 values, `Some[Boolean]` and `None` (`2+1`)
+-   `Option[Boolean]` ma 3 wartości, `Some[Boolean]` i `None` (`2+1`)
 
-In FP, functions are *total* and must return an value for every
-input, no `Exception`. Minimising the complexity of inputs and outputs
-is the best way to achieve totality. As a rule of thumb, it is a sign
-of a badly designed function when the complexity of a function's
-return value is larger than the product of its inputs: it is a source
-of entropy.
+W FP funkcje są *totalne* i muszą zwracać wartość dla każdego wejścia, bez *wyjątków*. Zmniejszanie złożoności
+wejścia i wyjścia jest najlepszą droga do osiągnięcia totalności. Jako zasadę kciuk, przyjąć można, że funkcja jest
+źle zaprojektowana jeśli złożoność jej wyjścia jest większa niż złożoność produktu jej wejść: w takim przypadku staje się 
+ona źródłem entropii.
 
-The complexity of a total function is the number of possible functions that can
-satisfy the type signature: the output to the power of the input.
+Złożoność funkcji totalnej jest liczbą możliwych funkcji które pasują do danej sygnatury typu (_type signature_): a więc
+złożoność wyjścia do potęgi równej złożoności wejścia.
 
--   `Unit => Boolean` has complexity 2
--   `Boolean => Boolean` has complexity 4
--   `Option[Boolean] => Option[Boolean]` has complexity 27
--   `Boolean => Int` is a mere quintillion going on a sextillion.
--   `Int => Boolean` is so big that if all implementations were assigned a unique
-    number, each would require 4 gigabytes to represent.
+-   `Unit => Boolean` ma złożoność 2
+-   `Boolean => Boolean` ma złożoność 4
+-   `Option[Boolean] => Option[Boolean]` ma złożoność 27
+-   `Boolean => Int` to zaledwie trylion kombinacji
+-   `Int => Boolean` ma złożoność tak wielką, że gdyby każdej implementacji przypisać liczbę, to każda z tych liczb wymagałaby
+4 gigabajtów pamięci aby ją zapisać
 
-In reality, `Int => Boolean` will be something simple like `isOdd`, `isEven` or
-a sparse `BitSet`. This function, when used in an ADT, could be better replaced
-with a coproduct labelling the limited set of functions that are relevant.
+W rzeczywistości `Int => Boolean` będzie czymś tak trywialnym jak sprawdzenie parzystości lub rzadkie (_sparse_) 
+wyrażenie zbioru bitów (`BitSet`). Funkcja taka w ADT powinna być raczej zastąpiona koproduktem istotnych funkcji.
 
-When our complexity is "infinity in, infinity out" we should introduce
-restrictive data types and validation closer to the point of input with
-`Refined` from the previous section.
+Gdy nasza złożoność to "nieskończoność na wejściu, nieskończoność na wyjściu" powinniśmy wprowadzić bardziej restrykcyjne typy
+i walidacje wejścia używając konstrukcji `Refined` wspomnianej w poprzedniej sekcji.
 
-The ability to count the complexity of a type signature has one other practical
-application: we can find simpler type signatures with High School algebra! To go
-from a type signature to its algebra of complexity, simply replace
+Zdolność do wyliczania złożoności sygnatury typu ma jeszcze jedno praktyczne zastosowanie:
+możemy odszukać prostsze sygnatury przy pomocy matematyki na poziomie szkoły średniej! Aby przejść od sygnatury
+do jej złożoności po prostu zamień
 
--   `Either[A, B]` with `a + b`
--   `(A, B)` with `a * b`
--   `A => B` with `b ^ a`
+-   `Either[A, B]` na `a + b`
+-   `(A, B)` na `a * b`
+-   `A => B` na `b ^ a`
 
-do some rearranging, and convert back. For example, say we've designed a
-framework based on callbacks and we've managed to work ourselves into the
-situation where we have created this type signature:
+poprzestawiaj i zamień z powrotem. Dla przykładu, powiedzmy że zaprojektowaliśmy framework oparty na callbackach i 
+dotarliśmy do miejsca, w którym potrzebujemy takiej sygnatury:
 
 {lang="text"}
 ~~~~~~~~
   (A => C) => ((B => C) => C)
 ~~~~~~~~
 
-We can convert and rearrange
+Możemy ją przekonwertować i przetransformować
 
 {lang="text"}
 ~~~~~~~~
@@ -1595,39 +1577,36 @@ We can convert and rearrange
   = c ^ (c ^ (a + b))
 ~~~~~~~~
 
-then convert back to types and get
+a następnie zamienić z powrotem aby otrzymać
 
 {lang="text"}
 ~~~~~~~~
   (Either[A, B] => C) => C
 ~~~~~~~~
 
-which is much simpler: we only need to ask the users of our framework to provide
-a `Either[A, B] => C`.
+która jest zdecydowanie prostsza: wystarczy że użytkownik dostarczy nam `Either[A, B] => C`.
 
-The same line of reasoning can be used to prove that
+Ta sama metoda może być użyta aby udowodnić, że
 
 {lang="text"}
 ~~~~~~~~
   A => B => C
 ~~~~~~~~
 
-is equivalent to
+jest równoznaczna z
 
 {lang="text"}
 ~~~~~~~~
   (A, B) => C
 ~~~~~~~~
 
-also known as *Currying*.
+co znane jest jako  *Currying*.
 
 
-### Prefer Coproduct over Product
+### Preferuj koprodukty nad produkty
 
-An archetypal modelling problem that comes up a lot is when there are
-mutually exclusive configuration parameters `a`, `b` and `c`. The
-product `(a: Boolean, b: Boolean, c: Boolean)` has complexity 8
-whereas the coproduct
+Archetypowym problemem, który pojawia się bardzo często, są wzajemnie wykluczające się parametry konfiguracyjne
+`a`, `b` i `c`. Produkt `(a: Boolean, b: Boolean, c: Boolean)` ma złożoność równą 8, podczas gdy złożoność koproduktu
 
 {lang="text"}
 ~~~~~~~~
@@ -1639,35 +1618,32 @@ whereas the coproduct
   }
 ~~~~~~~~
 
-has a complexity of 3. It is better to model these configuration
-parameters as a coproduct rather than allowing 5 invalid states to
-exist.
+to zaledwie 3. Lepiej jest zamodelować opisany scenariusz jako koprodukt niż pozwolić na wyrażenie 5 zupełnie nieprawidłowych
+przypadków.
 
-The complexity of a data type also has implications on testing. It is
-practically impossible to test every possible input to a function, but it is
-easy to test a sample of values with the [Scalacheck](https://www.scalacheck.org/) property testing framework.
-If a random sample of a data type has a low probability of being valid, it is a
-sign that the data is modelled incorrectly.
+Złożoność typu danych wpływa również na testowanie kodu na nim opartego. Praktycznie niemożliwym jest przetestowanie wszystkich
+możliwych wejść do funkcji, ale za to całkiem łatwo jest przetestować próbkę wartości za pomocą biblioteki do
+testowania właściwości[^ppt] [Scalacheck](https://www.scalacheck.org/). Jeśli prawdopodobieństwo poprawności losowej próbki danych
+jest niskie, jest to znak, że dane są niepoprawnie zamodelowane.
 
-
-### Optimisations
-
-A big advantage of using a simplified subset of the Scala language to
-represent data types is that tooling can optimise the JVM bytecode
-representation.
-
-For example, we could pack `Boolean` and `Option` fields into an `Array[Byte]`,
-cache values, memoise `hashCode`, optimise `equals`, use `@switch` statements
-when pattern matching, and much more.
-
-These optimisations are not applicable to OOP `class` hierarchies that
-may be managing state, throwing exceptions, or providing adhoc method
-implementations.
+[^ppt]: _Property based testing_.
 
 
-## Functionality
+### Optymalizacja
 
-Pure functions are typically defined as methods on an `object`.
+Dużą zaletą używania jedynie podzbioru języka Scala do definiowania typów danych jest to, że narzędzia mogą 
+optymalizować bytecode potrzebny do reprezentacji tychże.
+
+Na przykład, możemy spakować pola typu `Boolean` i `Option` do tablicy bajtów, cache'ować wartości,
+memoizować `hashCode`, optymalizować `equals`, używać wyrażeń `@switch` przy pattern matchingu i wiele wiele więcej.
+
+Optymalizacje te nie mogą być zastosowane do hierarchii klas w stylu OOP, które to mogą przechowywać wewnętrzny stan,
+rzucać wyjątki lub dostarczać doraźne implementacje metod.
+
+
+## Funkcjonalności
+
+Czyste funkcje są najczęściej definiowane jako metody wewnątrz obiektu (definicji typu `object`).
 
 {lang="text"}
 ~~~~~~~~
@@ -1679,20 +1655,18 @@ Pure functions are typically defined as methods on an `object`.
   math.sin(1.0)
 ~~~~~~~~
 
-However, it can be clunky to use `object` methods since it reads
-inside-out, not left to right. In addition, a function on an `object`
-steals the namespace. If we were to define `sin(t: T)` somewhere else
-we get *ambiguous reference* errors. This is the same problem as
-Java's static methods vs class methods.
+Jednakże, używanie obiektów może być nieco niezręczne, gdyż wymaga od programisty czytania kodu od wewnątrz do zewnątrz
+zamiast do lewej do prawej. Dodatkowo, funkcje z obiektu zawłaszczają przestrzeń nazw. Jeśli chcielibyśmy zdefiniować
+funkcje `sin(t: T)` gdzieś indziej napotkalibyśmy błędy niejednoznacznych referencji (_ambigous reference_). Jest
+to ten sam problem, który spotykamy w Javie gdy wybieramy między między metodami statycznymi i tymi definiowanymi w klasie.
 
-W> The sort of developer who puts methods on a `trait`, requiring users to mix it
-W> with the *cake pattern*, is going straight to hell. It leaks internal
-W> implementation detail to public APIs, bloats bytecode, makes binary
-W> compatibility basically impossible, and confuses IDE autocompleters.
+W> Deweloperzy, którzy umieszczają swoje metody w `trait`ach, a następnie oczekują od użytkowników wmiksowywania tych traitów
+W> w sposób znany jako *cake pattern*, po śmierci trafią prosto do piekła. Stanie się tak, ponieważ API zaimplementowane w
+W> ten sposób ujawnia swoje szczegóły implementacyjne, rozdyma generowany bytecode, sprawia, że zachowanie kompatybilności 
+W> binarnej jest praktycznie niemożliwe oraz myli funkcje autopodpowiadania w IDE.
 
-With the `implicit class` language feature (also known as *extension
-methodology* or *syntax*), and a little boilerplate, we can get the
-familiar style:
+Korzystając z konstrukcji `implicit class` (znanej również jako *extension methodology* lub *syntax*) i odrobiny boilerplate'u
+możemy uzyskać znaną nam składnię:
 
 {lang="text"}
 ~~~~~~~~
@@ -1704,8 +1678,7 @@ familiar style:
   res: Double = 0.8414709848078965
 ~~~~~~~~
 
-Often it is best to just skip the `object` definition and go straight
-for an `implicit class`, keeping boilerplate to a minimum:
+Często dobrze jest pominąć definiowanie obiektu i od razu sięgnąć po klasę niejawną (`implicit class`), ograniczając boilerplate do minimum:
 
 {lang="text"}
 ~~~~~~~~
@@ -1714,7 +1687,7 @@ for an `implicit class`, keeping boilerplate to a minimum:
   }
 ~~~~~~~~
 
-A> `implicit class` is syntax sugar for an implicit conversion:
+A> `implicit class` to tak naprawdę jedynie wygodniejsza składnia do definiowania niejawnych konwersji (_implicit conversion_):
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -1724,12 +1697,11 @@ A>     def sin: Double = java.lang.Math.sin(x)
 A>   }
 A> ~~~~~~~~
 A> 
-A> Which unfortunately has a runtime cost: each time the extension method
-A> is called, an intermediate `DoubleOps` will be constructed and then
-A> thrown away. This can contribute to GC pressure in hotspots.
+A> Co niestety ma swój koszt: za każdym razem gdy wywołujemy metodę dodaną w ten sposób tworzony i usuwany jest obiekt
+A> klasy `DoubleOps`. Może to powodować zwiększony koszt sprzątania śmieci (_garbage collecting_).
 A> 
-A> There is a slightly more verbose form of `implicit class` that avoids
-A> the allocation and is therefore preferred:
+A> Istnieje nieco bardziej rozwlekła forma klas niejawnych, która pozwala uniknąć zbędnej alokacji, przez co jest 
+A> formą zalecaną:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -1739,34 +1711,33 @@ A>   }
 A> ~~~~~~~~
 
 
-### Polymorphic Functions
+### Funkcje Polimorficzne
 
-The more common kind of function is a polymorphic function, which
-lives in a *typeclass*. A typeclass is a trait that:
+Bardziej popularnym rodzajem funkcji są funkcje polimorficzne, które żyją wewnątrz *typeklas*[^tc]. Typeklasa to trait, który:
 
--   holds no state
--   has a type parameter
--   has at least one abstract method (*primitive combinators*)
--   may contain *generalised* methods (*derived combinators*)
--   may extend other typeclasses
+- nie ma wewnętrznego stanu
+- ma parametr typu
+- ma przynajmniej jedną metodą abstrakcyjną (*kombinator prymitywny* (_primitive combinator_))
+- może mieć metody uogólnione (*kombinatory pochodne* (_derived combinators_))
+- może rozszerzać inne typeklasy
 
-There can only be one implementation of a typeclass for any given type
-parameter, a property known as *typeclass coherence*. Typeclasses look
-superficially similar to algebraic interfaces from the previous chapter, but
-algebras do not have to be coherent.
+[^tc]: Ten potworek to spolszczona wersja słowa _typeclass_. Tłumaczenie tego terminu jako "klasa typu" jest rozwlekłe
+i odbiegające dość daleko od wersji angielskiej. Zdecydowaliśmy się więc pozostać przy wersji angielskiej 
+dostosowując jedynie pisownie... dla własnej wygody.
 
-A> Typeclass coherence is primarily about consistency, and the consistency gives us
-A> the confidence to use `implicit` parameters. It would be difficult to reason
-A> about code that performs differently depending on the implicit imports that are
-A> in scope. Typeclass coherence effectively says that imports should not impact
-A> the behaviour of the code.
+Dla każdego typu może istnieć tylko jedna instancja typeklasy, właściwość ta nazywa się *koherencją* lub *spójnością* *typeklas* (_typeclass coherence_).
+Typeklasy mogą na pierwszy rzut oka wydawać się bardzo podobne do algebraicznych interfejsów, różnią się jednak tym że algebry
+nie muszą zachowywać spójności.
+
+A> W spójności typeklas chodzi głównie o konsekwencję, która zwiększa nasze zaufanie do niejawnych parametrów.
+A> Analizowanie i rozumowanie na temat kodu, który zachowuje się inaczej zależnie od zaimportowanych symboli
+A> byłoby bardzo trudne. Spójność typeklas w praktyce sprawia, że możemy uznać, że importy nie wpływają na zachowanie programu.
 A> 
-A> Additionally, typeclass coherence allows us to globally cache implicits at
-A> runtime and save memory allocations, gaining performance improvements from
-A> reduced pressure on the garbage collector.
+A> Dodatkowo, właściwość ta pozwala nam globalnie cache'ować niejawne wartości w czasie wykonania programu, 
+A> oszczędzając tym samym pamięć i zwiększając wydajność poprzez zmniejszenie ilości pracy wykonywanej przez garbage collector.
 
-Typeclasses are used in the Scala stdlib. We will explore a simplified
-version of `scala.math.Numeric` to demonstrate the principle:
+Typeklasy używane się m.in w bibliotece standardowej Scali. Przyjrzymy się uproszczonej wersji `scala.math.Numeric`
+aby zademonstrować zasadę działania tej konstrukcji:
 
 {lang="text"}
 ~~~~~~~~
@@ -1787,18 +1758,16 @@ version of `scala.math.Numeric` to demonstrate the principle:
   }
 ~~~~~~~~
 
-We can see all the key features of a typeclass in action:
+Możemy zaobserwować wszystkie kluczowe cechy typeklasy w praktyce:
 
--   there is no state
--   `Ordering` and `Numeric` have type parameter `T`
--   `Ordering` has abstract `compare` and `Numeric` has abstract `plus`,
-    `times`, `negate` and `zero`
--   `Ordering` defines generalised `lt` and `gt` based on `compare`,
-    `Numeric` defines `abs` in terms of `lt`, `negate` and `zero`.
--   `Numeric` extends `Ordering`
+-   nie ma wewnętrznego stanu
+-   `Ordering` i `Numeric` mają parametr typu `T`
+-   `Ordering` definiuje abstrakcyjną metodą `compare` a `Numeric` metody `plus`, `times`, `negate` i `zero`
+-   `Ordering` definiuje uogólnione `lt` i `gt` bazujące na `compare`, `Numeric` robi to samo z `abs` 
+    bazując na `lt`, `negate` oraz `zero`
+-   `Numeric` rozszerza `Ordering`
 
-We can now write functions for types that "have a" `Numeric`
-typeclass:
+Możemy teraz napisać funkcję dla typów które "posiadają" instancję typeklasy `Numeric`:
 
 {lang="text"}
 ~~~~~~~~
@@ -1808,37 +1777,32 @@ typeclass:
   }
 ~~~~~~~~
 
-We are no longer dependent on the OOP hierarchy of our input types,
-i.e. we don't demand that our input "is a" `Numeric`, which is vitally
-important if we want to support a third party class that we cannot
-redefine.
+Nie zależymy już od hierarchii klas w stylu OOP! Oznacza to że wejście do naszej funkcji nie musi być instancją typu 
+`Numeric`, co jest niezwykle ważne kiedy chcemy zapewnić wsparcie dla klas zewnętrznych, których definicji nie jesteśmy
+w stanie zmienić.
 
-Another advantage of typeclasses is that the association of
-functionality to data is at compiletime, as opposed to OOP runtime
-dynamic dispatch.
+Inną zaletą typeklas jest to, że dane wiązane są z funkcjonalnościami na etapie kompilacji, a nie za pomocą dynamicznej 
+dyspozycji (_dynamic dispatch_) w czasie działania programu, jak ma to miejsce w OOP.
 
-For example, whereas the `List` class can only have one implementation
-of a method, a typeclass method allows us to have a different
-implementation depending on the `List` contents and therefore offload
-work to compiletime instead of leaving it to runtime.
+Dla przykładu, tam gdzie klasa `List` może mieć tylko jedną implementację danej metody, używając typeklas możemy
+używać różnych implementacji zależnie od typu elementów zawartych wewnątrz. Ty samym wykonujemy część pracy 
+w czasie kompilacji zamiast zostawiać ją do czasu wykonania.
 
 
-### Syntax
+### Składnia
 
-The syntax for writing `signOfTheTimes` is clunky, there are some
-things we can do to clean it up.
+Składnia użyta to zapisania `signOfTheTimes` jest nieco niezgrabna, ale jest kilka rzeczy, które możemy poprawić. 
 
-Downstream users will prefer to see our method use *context bounds*,
-since the signature reads cleanly as "takes a `T` that has a
-`Numeric`"
+Użytkownicy chcieliby aby nasza metoda używała *wiązania kontekstu* (_context bounds_), ponieważ wtedy
+sygnaturę można przeczytać w prost jako "przyjmuje `T`, dla którego istnieje `Numeric`"
 
 {lang="text"}
 ~~~~~~~~
   def signOfTheTimes[T: Numeric](t: T): T = ...
 ~~~~~~~~
 
-but now we have to use `implicitly[Numeric[T]]` everywhere. By
-defining boilerplate on the companion of the typeclass
+niestety, teraz musielibyśmy wszędzie używać `implicitly[Numeric[T]]`. Możemy pomóc sobie definiując
+metodę pomocniczą w obiekcie towarzyszącym typeklasy
 
 {lang="text"}
 ~~~~~~~~
@@ -1847,7 +1811,7 @@ defining boilerplate on the companion of the typeclass
   }
 ~~~~~~~~
 
-we can obtain the implicit with less noise
+aby uzyskać dostęp do jej instancji w bardziej zwięzły sposób
 
 {lang="text"}
 ~~~~~~~~
@@ -1858,9 +1822,9 @@ we can obtain the implicit with less noise
   }
 ~~~~~~~~
 
-But it is still worse for us as the implementors. We have the
-syntactic problem of inside-out static methods vs class methods. We
-deal with this by introducing `ops` on the typeclass companion:
+Nadal jednak jest to, dla nas, implementatorów, problem. Zmuszeni jesteśmy używać czytanej od wewnątrz do zewnątrz składni
+metod statycznych zamiast czytanej od lewej do prawej składni tradycyjnej. Możemy sobie z tym poradzić poprzez
+definicję obiektu `ops` wewnątrz obiektu towarzyszącego typeklasy:
 
 {lang="text"}
 ~~~~~~~~
@@ -1882,9 +1846,8 @@ deal with this by introducing `ops` on the typeclass companion:
   }
 ~~~~~~~~
 
-Note that `-x` is expanded into `x.unary_-` by the compiler's syntax
-sugar, which is why we define `unary_-` as an extension method. We can
-now write the much cleaner:
+Zauważ, że zapis `-x` rozwijany jest przez kompilator do `x.unary_-`, dlatego też definiujemy rozszerzającą metodę (_extension method_)
+`unary_-`. Możemy teraz zapisać naszą funkcję w sposób zdecydowanie czystszy:
 
 {lang="text"}
 ~~~~~~~~
@@ -1892,11 +1855,10 @@ now write the much cleaner:
   def signOfTheTimes[T: Numeric](t: T): T = -(t.abs) * t
 ~~~~~~~~
 
-The good news is that we never need to write this boilerplate because
-[Simulacrum](https://github.com/mpilquist/simulacrum) provides a `@typeclass`
-macro annotation that automatically generates the `apply` and `ops`. It even
-allows us to define alternative (usually symbolic) names for common methods. In
-full:
+Dobra wiadomość jest taka, że nie musimy pisać całego tego boilerplatu własnoręcznie, ponieważ
+[Simulacrum](https://github.com/mpilquist/simulacrum) dostarcza makro anotacje `@typeclass`, która automatycznie
+generuje dla nas metodę `apply` i obiekt `ops`. Dodatkowo pozwala nam nawet zdefiniować alternatywne (zazwyczaj symboliczne)
+nazwy dla metod. Całość:
 
 {lang="text"}
 ~~~~~~~~
@@ -1920,15 +1882,13 @@ full:
   def signOfTheTimes[T: Numeric](t: T): T = -(t.abs) * t
 ~~~~~~~~
 
-When there is a custom symbolic `@op`, it can be pronounced like its method
-name. e.g. `<` is pronounced "less than", not "left angle bracket".
+Kiedy używamy operatora symbolicznego, możemy czytać (nazywać) go jak odpowiadającą mu metodę. Np. `<` przeczytamy
+jako "less then",a nie "left angle bracket".
 
+### Instancje
 
-### Instances
-
-*Instances* of `Numeric` (which are also instances of `Ordering`) are
-defined as an `implicit val` that extends the typeclass, and can
-provide optimised implementations for the generalised methods:
+*Instancje* typu `Numeric` (które są również instancjami `Ordering`) są definiowane jako `implicit val` i rozszerzają
+typeklasę, mogąc tym samym dostarczać bardziej optymalne implementacje uogólnionych metod:
 
 {lang="text"}
 ~~~~~~~~
@@ -1946,15 +1906,13 @@ provide optimised implementations for the generalised methods:
   }
 ~~~~~~~~
 
-Although we are using `+`, `*`, `unary_-`, `<` and `>` here, which are
-the ops (and could be an infinite loop!), these methods exist already
-on `Double`. Class methods are always used in preference to extension
-methods. Indeed, the Scala compiler performs special handling of
-primitives and converts these method calls into raw `dadd`, `dmul`,
-`dcmpl` and `dcmpg` bytecode instructions, respectively.
+Mimo że używamy tutaj `+`, `*`, `unary_-`, `<` i `>`, które zdefiniowane są też przy użyciu `@ops` (i mogłyby spowodować
+nieskończoną pętlę wywołań), są one również zdefiniowane bezpośrednio dla typu `Double`. Metody klasy są używane w 
+pierwszej kolejności, a dopiero w przypadku ich braku kompilator szuka metod rozszerzających. W rzeczywistości kompilator Scali
+obsługuje wywołania tych metod w specjalny sposób i zamienia je bezpośrednio na instrukcje bytecodu, odpowiednio `dadd`, `dmul`, `dcmpl` i `dcmpg`.
 
-We can also implement `Numeric` for Java's `BigDecimal` class (avoid
-`scala.BigDecimal`, [it is fundamentally broken](https://github.com/scala/bug/issues/9670))
+Możemy również zaimplementować `Numeric` dla Javowego `BigDecimal` (unikaj `scala.BigDecimal`, 
+[jest całkowicie zepsuty](https://github.com/scala/bug/issues/9670)).
 
 {lang="text"}
 ~~~~~~~~
@@ -1969,15 +1927,15 @@ We can also implement `Numeric` for Java's `BigDecimal` class (avoid
   }
 ~~~~~~~~
 
-We could create our own data structure for complex numbers:
+Możemy też zdefiniować nasz własny typ danych do reprezentowania liczb zespolonych:
 
 {lang="text"}
 ~~~~~~~~
   final case class Complex[T](r: T, i: T)
 ~~~~~~~~
 
-And derive a `Numeric[Complex[T]]` if `Numeric[T]` exists. Since these
-instances depend on the type parameter, it is a `def`, not a `val`.
+I uzyskać `Numeric[Complex[T]]` jeśli istnieje `Numeric[T]`. Instancje te zależą od typu `T` a więc definiujemy
+je jako `def`, a nie `val`.
 
 {lang="text"}
 ~~~~~~~~
@@ -1997,124 +1955,108 @@ instances depend on the type parameter, it is a `def`, not a `val`.
     }
 ~~~~~~~~
 
-The observant reader may notice that `abs` is not at all what a
-mathematician would expect. The correct return value for `abs` should
-be `T`, not `Complex[T]`.
+Uważny czytelnik zauważy, że `abs` jest czymś zupełnie innym niż oczekiwałby matematyk. Poprawna wartość zwracana
+z tej metody powinna być typu `T` a nie `Complex[T]`.
 
-`scala.math.Numeric` tries to do too much and does not generalise
-beyond real numbers. This is a good lesson that smaller, well defined,
-typeclasses are often better than a monolithic collection of overly
-specific features.
+`scala.math.Numeric` stara się robić zbyt wiele i nie uogólnia ponad liczby rzeczywiste. Pokazuje nam to, że 
+małe, dobrze zdefiniowane typeklasy są często lepsze niż monolityczne kolekcje szczegółowych funkcjonalności.
 
 
-### Implicit Resolution
+### Niejawne rozstrzyganie[^implres]
 
-We've discussed implicits a lot: this section is to clarify what
-implicits are and how they work.
+[^implres] _Implicit resolution_
 
-*Implicit parameters* are when a method requests that a unique
-instance of a particular type is in the *implicit scope* of the
-caller, with special syntax for typeclass instances. Implicit
-parameters are a clean way to thread configuration through an
-application.
+Wielokrotnie używaliśmy wartości niejawnych: ten rozdział ma na celu doprecyzować czym one są i jak tak na prawdę działają.
 
-In this example, `foo` requires that typeclass instances of `Numeric` and
-`Typeable` are available for `A`, as well as an implicit `Handler` object that
-takes two type parameters
+O *parametrach niejawnych* (_implicit parameters_) mówimy gdy metoda żąda aby unikalna instancja określonego typu znajdowała się
+w *niejawnym zakresie* (_implicit scope_) wywołującego. Może do tego używać specjalnej składni ograniczeń kontekstu.
+Parametry niejawne są dobrym sposobem na przekazywanie konfiguracji poprzez warstwy aplikacji.
+
+W tym przykładzie `foo` wymaga aby dostępne były instancje typeklas `Numeric` i `Typeable` dla A, oraz instancja typu
+`Handler`, który przyjmuje dwa parametry typu.
 
 {lang="text"}
 ~~~~~~~~
   def foo[A: Numeric: Typeable](implicit A: Handler[String, A]) = ...
 ~~~~~~~~
 
-*Implicit conversion* is when an `implicit def` exists. One such use
-of implicit conversions is to enable extension methodology. When the
-compiler is resolving a call to a method, it first checks if the
-method exists on the type, then its ancestors (Java-like rules). If it
-fails to find a match, it will search the *implicit scope* for
-conversions to other types, then search for methods on those types.
+*Konwersje niejawne* pojawiają się gdy używamy `implicit def`. Jednym z użyć niejawnych konwersji jest stosowanie 
+metod rozszerzających. Kiedy kompilator próbuje odnaleźć metodę która ma zostać wywołana na obiekcie przegląda metody zdefiniowane 
+w klasie tego obiektu a następnie wszystkie klasy po których ona dziedziczy (reguła podobna do tych znanych 
+z Javy). Jeśli takie poszukiwanie się nie powiedzie kompilator zaczyna przeglądać *zakres niejawny* w poszukiwaniu
+konwersji do innych typów, a następnie szuka wspomnianej metody zdefiniowanej na tychże typach.
 
-Another use for implicit conversions is *typeclass derivation*. In the
-previous section we wrote an `implicit def` that derived a
-`Numeric[Complex[T]]` if a `Numeric[T]` is in the implicit scope. It
-is possible to chain together many `implicit def` (including
-recursively) which is the basis of *typeful programming*, allowing for
-computations to be performed at compiletime rather than runtime.
+Inny przykładem użycia niejawnych konwersji jest *derywacja typeklas* (_typeclass derivation_). W poprzednim rozdziale
+napisaliśmy metodę niejawną która tworzyła instancję `Numeric[Complex[T]]` jeśli dostępna była instancja `Numeric[T]`.
+Możemy w ten sposób łączyć wiele niejawnych metod (również rekurencyjnie), dochodząc tym samym do metody zwanej
+"typeful programming", która pozwala nam wykonywać obliczenia na etapie kompilacji a nie w czasie działania programu.
 
-The glue that combines implicit parameters (receivers) with implicit
-conversion (providers) is implicit resolution.
+Część która łączy niejawne parametry (odbiorców) z niejawnymi konwersjami i wartościami (dostawcami) nazywa się niejawnym rozstrzyganiem.
 
-First, the normal variable scope is searched for implicits, in order:
+Najpierw w poszukiwaniu wartości niejawnych przeszukiwany jest standardowy zakres zmiennych, wg kolejności:
 
--   local scope, including scoped imports (e.g. the block or method)
--   outer scope, including scoped imports (e.g. members in the class)
--   ancestors (e.g. members in the super class)
--   the current package object
--   ancestor package objects (when using nested packages)
--   the file's imports
+-   zakres lokalny, wliczając lokalne importy (np. ciało bloku lub metody)
+-   zakres zewnętrzny, wliczając lokalne importy (np. ciało klasy)
+-   przodkowie (np. ciało klasy po której dziedziczymy)
+-   aktualny obiekt pakietu (_package object_)
+-   obiekty pakietów nadrzędnych (kiedy używamy zagnieżdżonych pakietów)
+-   importy globalne zdefiniowane w pliku
 
-If that fails to find a match, the special scope is searched, which
-looks for implicit instances inside a type's companion, its package
-object, outer objects (if nested), and then repeated for ancestors.
-This is performed, in order, for the:
+Jeśli nie uda się odnaleźć pasującej metody przeszukiwany jest zakres specjalny, składający się z:
+wnętrza obiektu towarzyszącego danego typu, jego obiektu pakietu, obiektów pakietów zewnętrznych (jeśli jest zagnieżdżony)),
+a w przypadku porażki to samo powtarzane jest dla typów po których nasza klasa dziedziczy. Operacje te wykonywane są kolejno dla:
 
--   given parameter type
--   expected parameter type
--   type parameter (if there is one)
+-   typu zadanego parametru
+-   oczekiwanego typu parametru
+-   parametru typu (jeśli istnieje)
 
-If two matching implicits are found in the same phase of implicit
-resolution, an *ambiguous implicit* error is raised.
+Jeśli w tej samej fazie poszukiwań znalezione zostaną dwie pasujące wartości niejawne, zgłaszany jest błąd niejednoznaczności
+*ambigous implicit error*.
 
-Implicits are often defined on a `trait`, which is then extended by an
-object. This is to try and control the priority of an implicit
-relative to another more specific one, to avoid ambiguous implicits.
+Wartości niejawne często definiowane są wewnątrz traitów, które następnie rozszerzane są przez obiekty. 
+Praktyka ta podyktowana jest próbą kontrolowania priorytetów wg. których kompilator dobiera pasującą wartość, unikając
+jednocześnie błędów niejednoznaczności.
 
-The Scala Language Specification is rather vague for corner cases, and
-the compiler implementation is the *de facto* standard. There are some
-rules of thumb that we will use throughout this book, e.g. prefer
-`implicit val` over `implicit object` despite the temptation of less
-typing. It is a [quirk of implicit resolution](https://github.com/scala/bug/issues/10411) that `implicit object` on
-companion objects are not treated the same as `implicit val`.
+Specyfikacja języka Scala jest dość nieprecyzyjna jeśli chodzi o przypadki skrajne, co sprawia że aktualna implementacja
+kompilatora staje się standardem. Są pewne reguły, którymi będziemy się kierować w tej książce, jak na przykład
+używanie `implicit val` zamiast `implicit object`, mimo że ta druga opcja jest bardziej zwięzła. [Kaprys 
+kompilatora](https://github.com/scala/bug/issues/10411) sprawia, że wartości definiowane jako `implicit object` 
+wewnątrz obiektu towarzyszącego są traktowane inaczej niż te definiowane za pomocą `implicit val`.
 
-Implicit resolution falls short when there is a hierarchy of typeclasses, like
-`Ordering` and `Numeric`. If we write a function that takes an implicit
-`Ordering`, and we call it for a primitive type which has an instance of
-`Numeric` defined on the `Numeric` companion, the compiler will fail to find it.
+Niejawne rozstrzyganie zawodzi kiedy typeklasy tworzą hierarchię, tak jak w przypadku klas `Ordering` i `Numeric`.
+Jeśli napiszemy funkcję, która przyjmuje niejawny parametr typu `Ordering` i zawołamy ją z typem prymitywnym, który
+posiada instancję `Numeric` zdefiniowaną w obiekcie towarzyszącym typu `Numeric`, kompilator rzeczonej instancji nie znajdzie.
 
-Implicit resolution is particularly hit-or-miss [if type aliases are used](https://github.com/scala/bug/issues/10582) where
-the *shape* of the implicit parameters are changed. For example an implicit
-parameter using an alias such as `type Values[A] = List[Option[A]]` will
-probably fail to find implicits defined as raw `List[Option[A]]` because the
-shape is changed from a *thing of things* of `A` to a *thing* of `A`.
+Niejawne rozstrzyganie staje się prawdziwą loterią gdy w grze [pojawią się aliasy typu](https://github.com/scala/bug/issues/10582)
+które zmieniają *kształt* parametru. Dla przykładu, parametr niejawny używający aliasu `type Values[A] = List[Option[A]]` 
+prawdopodobnie nie zostanie połączony z niejawną wartością zdefiniowaną dla typu  `List[Option[A]]` ponieważ kształt
+zmienia się z *kolekcji kolekcji* elementów typu `A` na *kolekcję* elementów typu `A`.
 
 
-## Modelling OAuth2
+## Modelowanie OAuth2
 
-We will finish this chapter with a practical example of data modelling
-and typeclass derivation, combined with algebra / module design from
-the previous chapter.
+Zakończymy ten rozdział praktycznym przykładem modelowania danych i derywacji typeklas połączonych z projektowaniem
+algebr i modułów, o którym mówiliśmy w poprzednim rozdziale.
 
-In our `drone-dynamic-agents` application, we must communicate with Drone and
-Google Cloud using JSON over REST. Both services use [OAuth2](https://tools.ietf.org/html/rfc6749) for authentication.
-There are many ways to interpret OAuth2, but we will focus on the version that
-works for Google Cloud (the Drone version is even simpler).
+W naszej aplikacje `drone-dynamic-agents` chcielibyśmy komunikować się z serwerem Drone i Google Cloud używając JSONa poprzez
+REST. Obie usługi używają [OAuth2](https://tools.ietf.org/html/rfc6749) do uwierzytelniania użytkowników. Istnieje
+wiele interpretacji OAuth2, ale my skupimy się na tej która działa z Google Cloud (wersja współpracująca z Drone 
+jest jeszcze prostsza).
 
 
-### Description
+### Opis
 
-Every Google Cloud application needs to have an *OAuth 2.0 Client Key*
-set up at
+Każda aplikacja komunikująca się z Google Cloud musi mieć skonfigurowany *Klucz Kliencki OAuth 2.0* (_OAuth 2.0 Client Key_) poprzez
 
 {lang="text"}
 ~~~~~~~~
   https://console.developers.google.com/apis/credentials?project={PROJECT_ID}
 ~~~~~~~~
 
-Obtaining a *Client ID* and a *Client secret*.
+co da nam dostęp do *ID Klienta* (_Client ID_) oraz *Sekretu Klienta* (_Client secret_).
 
-The application can then obtain a one time *code* by making the user
-perform an *Authorization Request* in their browser (yes, really, **in
-their browser**). We need to make this page open in the browser:
+Aplikacja może wtedy uzyskać jednorazowy *kod* poprzez sprawienie aby użytkownik wykonał *Prośbę o Autoryzację* (_Authorization Request_)
+w swojej przeglądarce (tak, naprawdę, **w swojej przeglądarce**). Musimy więc otworzyć poniższą stronę w przeglądarce:
 
 {lang="text"}
 ~~~~~~~~
@@ -2127,11 +2069,10 @@ their browser**). We need to make this page open in the browser:
     client_id={CLIENT_ID}
 ~~~~~~~~
 
-The *code* is delivered to the `{CALLBACK_URI}` in a `GET` request. To
-capture it in our application, we need to have a web server listening
-on `localhost`.
+*Kod* dostarczony zostanie pod `{CALLBACK_URI}` w postaci żądania `GET`. Aby go odebrać musimy posiadać serwer http
+słuchający na interfejsie `localhost`.
 
-Once we have the *code*, we can perform an *Access Token Request*:
+Gdy zdobędziemy *kod*, możemy wykonać *Żądanie o Token Dostępu* (_Access Token Request_):
 
 {lang="text"}
 ~~~~~~~~
@@ -2148,7 +2089,7 @@ Once we have the *code*, we can perform an *Access Token Request*:
     grant_type=authorization_code
 ~~~~~~~~
 
-which gives a JSON response payload
+na które odpowiedzią będzie dokument JSON
 
 {lang="text"}
 ~~~~~~~~
@@ -2160,8 +2101,8 @@ which gives a JSON response payload
   }
 ~~~~~~~~
 
-*Bearer tokens* typically expire after an hour, and can be refreshed
-by sending an HTTP request with any valid *refresh token*:
+*Tokeny posiadacza* (_Bearer tokens_) zazwyczaj wygasają po godzinie i mogą być odświeżone poprzez
+wykonanie kolejnego żądania http z użyciem *tokenu odświeżającego* (_refresh token_):
 
 {lang="text"}
 ~~~~~~~~
@@ -2176,7 +2117,7 @@ by sending an HTTP request with any valid *refresh token*:
     client_id={CLIENT_ID}
 ~~~~~~~~
 
-responding with
+na który odpowiedzią jest
 
 {lang="text"}
 ~~~~~~~~
@@ -2187,32 +2128,28 @@ responding with
   }
 ~~~~~~~~
 
-All userland requests to the server should include the header
+Wszystkie żądania do serwera powinny zwierać nagłówek
 
 {lang="text"}
 ~~~~~~~~
   Authorization: Bearer BEARER_TOKEN
 ~~~~~~~~
 
-after substituting the actual `BEARER_TOKEN`.
+z podstawioną rzeczywistą wartością `BEARER_TOKEN`.
 
-Google expires all but the most recent 50 *bearer tokens*, so the
-expiry times are just guidance. The *refresh tokens* persist between
-sessions and can be expired manually by the user. We can therefore
-have a one-time setup application to obtain the refresh token and then
-include the refresh token as configuration for the user's install of
-the headless server.
+Google wygasza wszystkie tokeny oprócz najnowszych 50, a więc czas odświeżania to tylko wskazówka. *Tokeny odświeżające*
+trwają pomiędzy sesjami i mogą być wygaszone ręcznie przez użytkownika. Tak więc możemy mieć jednorazową aplikację
+do pobierania tokenu odświeżającego, który następnie umieścimy w konfiguracji drugiej aplikacji.
 
-Drone doesn't implement the `/auth` endpoint, or the refresh, and simply
-provides a `BEARER_TOKEN` through their user interface.
+Drone nie implementuje endpointu `/auth` ani tokenów odświeżających, a jedynie dostarcza `BEARER_TOKEN` poprzez
+interfejs użytkownika.
 
 
-### Data
+### Dane
 
-The first step is to model the data needed for OAuth2. We create an ADT with
-fields having exactly the same name as required by the OAuth2 server. We will
-use `String` and `Long` for brevity, but we could use refined types if they leak
-into our business models.
+Pierwszym krokiem będzie zamodelowanie danych potrzebnych do implementacji OAuth2. Tworzymy więc ADT z dokładnie takimi
+samymi polami jak te wymagane przez serwer OAuth2. Użyjemy typów `String` i `Long` dla zwięzłości, ale moglibyśmy użyć typów 
+rafinowanych gdyby wyciekały one do naszego modelu biznesowego.
 
 {lang="text"}
 ~~~~~~~~
@@ -2254,32 +2191,29 @@ into our business models.
   )
 ~~~~~~~~
 
-W> Avoid using `java.net.URL` at all costs: it uses DNS to resolve the
-W> hostname part when performing `toString`, `equals` or `hashCode`.
-W> 
-W> Apart from being insane, and **very very** slow, these methods can throw
-W> I/O exceptions (are not *pure*), and can change depending on the
-W> network configuration (are not *deterministic*).
-W> 
-W> The refined type `String Refined Url` allows us to perform equality checks based
-W> on the `String` and we can safely construct a `URL` only if it is needed by a
-W> legacy API.
-W> 
-W> That said, in high performance code we would prefer to skip `java.net.URL`
-W> entirely and use a third party URL parser such as [jurl](https://github.com/anthonynsimon/jurl), because even the safe
-W> parts of `java.net.*` are extremely slow at scale.
+W> Za wszelką cenę unikaj używania typu `java.net.URL`: wykonuje on zapytanie do serwera DNS 
+W> gdy używamy `toString`, `equals` lub `hashCode`.
+W>
+W> Oprócz tego że jest to szalone i **bardzo bardzo** wolne, metody te mogą wyrzucić wyjątek I/O (nie są *czyste*) oraz
+W> mogą zmieniać swoje zachowanie w zależności od konfiguracji sieciowej (nie są *deterministyczne*).
+W>
+W> Rafinowany typ `String Refined Url` pozwala nam porównywać instancje bazując na typie `String` oraz
+W> w bezpieczny sposób budować `URL` jeśli wymaga od nas tego zastane API.
+W>
+W> Nie mniej, w kodzie który wymaga wysokiej wydajności wolelibyśmy zamienić `java.net.URL` na zewnętrzny parser
+W> URLi, np. [jurl](https://github.com/anthonynsimon/jurl), gdyż nawet bezpieczne części `java.net.*` stają się
+W> niezwykle wolne gdy używane są na dużą skalę.
 
 
-### Functionality
+### Funkcjonalność
 
-We need to marshal the data classes we defined in the previous section into
-JSON, URLs and POST-encoded forms. Since this requires polymorphism, we will
-need typeclasses.
+Musimy przetransformować klasy zdefiniowane w poprzedniej sekcji do JSONa, URLi i formy znanej z żądań HTTP POST.
+Ponieważ aby to osiągnąć niezbędny jest polimorfizm, potrzebować będziemy typeklas.
 
-[`jsonformat`](https://github.com/scalaz/scalaz-deriving/tree/master/examples/jsonformat/src) is a simple JSON library that we will study in more detail in a
-later chapter, as it has been written with principled FP and ease of readability
-as its primary design objectives. It consists of a JSON AST and encoder /
-decoder typeclasses:
+[`jsonformat`](https://github.com/scalaz/scalaz-deriving/tree/master/examples/jsonformat/src) to prosta biblioteka do 
+pracy z JSONem, którą poznamy dokładniej w jednym z następnych rozdziałów. Została ona stworzona stawiając na 
+pierwszym miejscu pryncypia programowania funkcyjnego i czytelność kodu. Składa się ona z AST do opisu JSONa 
+oraz typeklas do jego kodowania i dekodowania:
 
 {lang="text"}
 ~~~~~~~~
@@ -2303,16 +2237,16 @@ decoder typeclasses:
   }
 ~~~~~~~~
 
-A> `\/` is Scalaz's `Either` and has a `.flatMap`. We can use it in `for`
-A> comprehensions, whereas stdlib `Either` does not support `.flatMap` prior to
-A> Scala 2.12. It is spoken as *disjunction*, or *angry rabbit*.
-A> 
-A> `scala.Either` was [contributed to
-A> the Scala standard library](https://issues.scala-lang.org/browse/SI-250) by the creator of Scalaz, Tony Morris, in 2007.
-A> `\/` was created when unsafe methods were added to `Either`.
+A> `\/` to wersja typu `Either` z biblioteki Scalaz, wyposażona w metodę `.flatMap`. Możemy używać tego typu
+A> w konstrukcji `for`, podczas gdy `Either` umożliwia to dopiero od wersji Scali 2.12. Czytamy go jako 
+*dysjunkcja" (_disjunction_) lub *wsciekły zając* (_angry rabbit_).
+A>
+A> `scala.Either` został [dodany do biblioteki standardowej](https://issues.scala-lang.org/browse/SI-250) przez 
+A> twórcę Scalaz, Tony'ego Morrisa, w 2017 roku. Typ `\/` został stworzony gdy
+A> do typu `Either` dodane zostały niebezpieczne (_unsafe_) metody.
 
-We need instances of `JsDecoder[AccessResponse]` and `JsDecoder[RefreshResponse]`.
-We can do this by making use of a helper function:
+Potrzebować będziemy instancji `JsDecoder[AccessResponse]` i `JsDecoder[RefreshResponse]`. Możemy je zbudować
+używają funkcji pomocniczej:
 
 {lang="text"}
 ~~~~~~~~
@@ -2321,8 +2255,7 @@ We can do this by making use of a helper function:
   }
 ~~~~~~~~
 
-We put the instances on the companions of our data types, so that they are
-always in the implicit scope:
+Umieścimy je w obiektach towarzyszących naszych typów danych aby zawsze znajdowały się w zakresie niejawnym:
 
 {lang="text"}
 ~~~~~~~~
@@ -2348,7 +2281,7 @@ always in the implicit scope:
   }
 ~~~~~~~~
 
-We can then parse a string into an `AccessResponse` or a `RefreshResponse`
+Możemy teraz sparsować ciąg znaków do typu `AccessResponse` lub `RefreshResponse`
 
 {lang="text"}
 ~~~~~~~~
@@ -2366,8 +2299,8 @@ We can then parse a string into an `AccessResponse` or a `RefreshResponse`
   AccessResponse(BEARER_TOKEN,Bearer,3600,REFRESH_TOKEN)
 ~~~~~~~~
 
-We need to write our own typeclasses for URL and POST encoding. The
-following is a reasonable design:
+Musimy stworzyć nasze własne typeklasy do kodowania danych w postaci URLi i żądań POST. 
+Poniżej widzimy całkiem rozsądny design:
 
 {lang="text"}
 ~~~~~~~~
@@ -2383,7 +2316,7 @@ following is a reasonable design:
   }
 ~~~~~~~~
 
-We need to provide typeclass instances for basic types:
+Musimy zapewnić instancje dla typów podstawowych:
 
 {lang="text"}
 ~~~~~~~~
@@ -2409,15 +2342,14 @@ We need to provide typeclass instances for basic types:
   }
 ~~~~~~~~
 
-We use `Refined.unsafeApply` when we can logically deduce that the contents of
-the string are already url encoded, bypassing any further checks.
+Używamy `Refined.unsafeApply` kiedy jesteśmy pewni, że zawartość stringa jest już poprawnie zakodowana i możemy 
+pominąć standardową weryfikację.
 
-`ilist` is an example of simple typeclass derivation, much as we derived
-`Numeric[Complex]` from the underlying numeric representation. The
-`.intercalate` method is like `.mkString` but more general.
+`ilist` jest przykładem prostej derywacji typeklasy, w sposób podobny do tego którego użyliśmy przy `Numeric[Complex]`.
+Metoda `.intercalate` to bardziej ogólna wersja `.mkString`.
 
-A> `UrlEncodedWriter` is making use of the *Single Abstract Method* (SAM types)
-A> Scala language feature. The full form of the above is
+A> `UrlEncodedWriter` wykorzystuje funkcjonalność *Pojedynczych Metod Abstrakcyjnych_* (SAM, _Single Abstract Method_) 
+A> języka Scala. Pełna forma powyższego zapisu to:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -2427,12 +2359,11 @@ A>       override def toUrlEncoded(s: String): String = ...
 A>     }
 A> ~~~~~~~~
 A> 
-A> When the Scala compiler expects a class (which has a single abstract
-A> method) but receives a lambda, it fills in the boilerplate
-A> automatically.
+A> Kiedy kompilator Scali oczekuje klasy, która posiada jedną metodę abstrakcyjną, a otrzyma lambdę, dopisuje on 
+A> automatycznie niezbędny boilerplate.
 A> 
-A> Prior to SAM types, a common pattern was to define a method named
-A> `instance` on the typeclass companion
+A> Zanim funkcjonalność ta została dodana, powszechnym było definiowanie metody `instance` w obiekcie
+A> towarzyszącym typeklasy
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -2442,32 +2373,28 @@ A>       override def toUrlEncoded(t: T): String = f(t)
 A>     }
 A> ~~~~~~~~
 A> 
-A> allowing for
+A> pozwalającej na
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
 A>   implicit val string: UrlEncodedWriter[String] = instance { s => ... }
 A> ~~~~~~~~
 A> 
-A> This pattern is still used in code that must support older versions of
-A> Scala, or for typeclasses instances that need to provide more than one
-A> method.
+A> Praktyka ta nadal stosowana jest w projektach, które muszą wspierać starsze wersje języka lub dla typeklas
+A> które wymagają więcej niż jednej metody.
 A> 
-A> Note that there are a lot of bugs around SAM types, as they do not interact with
-A> all the language features. Revert to the non-SAM variant if there are any
-A> strange compiler crashes.
+A> Warto pamiętać że istnieje wiele błędów związanych z typami SAM, ponieważ nie współdziałają one ze wszystkimi 
+A> funkcjonalnościami języka. Jeśli napotkasz dziwne błędy kompilatora, warto zrezygnować z tego udogodnienia.
 
-In a dedicated chapter on *Typeclass Derivation* we will calculate instances of
-`UrlQueryWriter` automatically, as well as clean up what
-we have already written, but for now we will write the boilerplate for the types
-we wish to convert:
+W rozdziale poświęconym *Derywacji Typeklas* pokażemy jak stworzyć instancję `UrlQueryWriter` automatycznie, oraz jak
+oczyścić nieco kod, który już napisaliśmy. Na razie jednak napiszmy boilerplate dla typów których chcemy używać:
 
 {lang="text"}
 ~~~~~~~~
   import UrlEncodedWriter.ops._
   object AuthRequest {
     implicit val query: UrlQueryWriter[AuthRequest] = { a =>
-      UriQuery(List(
+      UrlQuery(List(
         ("redirect_uri"  -> a.redirect_uri.value),
         ("scope"         -> a.scope),
         ("client_id"     -> a.client_id),
@@ -2501,16 +2428,14 @@ we wish to convert:
 ~~~~~~~~
 
 
-### Module
+### Moduł
 
-That concludes the data and functionality modelling required to implement
-OAuth2. Recall from the previous chapter that we define components that need to
-interact with the world as algebras, and we define business logic in a module,
-so it can be thoroughly tested.
+Tym samym zakończyliśmy modelowanie danych i funkcjonalności niezbędnych do implementacji protokołu OAuth2.
+Przypomnij sobie z poprzedniego rozdziału, że komponenty które interagują ze światem zewnętrznym definiujemy jako algebry,
+a logikę biznesową jako moduły, aby pozwolić na gruntowne jej przetestowanie.
 
-We define our dependency algebras, and use context bounds to show that our
-responses must have a `JsDecoder` and our `POST` payload must have a
-`UrlEncodedWriter`:
+Definiujemy algebry, na których bazujemy oraz używamy ograniczeń kontekstu aby pokazać, że nasze odpowiedzi muszą posiadać
+instancję `JsDecoder`, a żądania `UrlEncodedWriter`:
 
 {lang="text"}
 ~~~~~~~~
@@ -2528,19 +2453,17 @@ responses must have a `JsDecoder` and our `POST` payload must have a
   }
 ~~~~~~~~
 
-Note that we only define the happy path in the `JsonClient` API. We will get
-around to error handling in a later chapter.
+Zauważ że definiujemy jedynie szczęśliwy scenariusz w API klasy `JsonClient`. Obsługą błędów zajmiemy się w jednym
+z kolejnych rozdziałów.
 
-Obtaining a `CodeToken` from the Google `OAuth2` server involves
+Pozyskanie `CodeToken` z serwera Google `OAuth2` wymaga
 
-1.  starting an HTTP server on the local machine, and obtaining its port number.
-2.  making the user open a web page in their browser, which allows them to log in
-    with their Google credentials and authorise the application, with a redirect
-    back to the local machine.
-3.  capturing the code, informing the user of next steps, and closing the HTTP
-    server.
+1. wystartowania serwera HTTP na lokalnej maszynie i odczytanie numeru portu na którym nasłuchuje.
+2. otworzenia strony internetowej w przeglądarce użytkownika, tak aby mógł zalogować się do usług Google swoimi danymi
+i uwierzytelnić aplikacje
+3. przechwycenia kodu, poinformowania użytkownika o następnych krokach i zamknięcia serwera HTTP.
 
-We can model this with three methods on a `UserInteraction` algebra.
+Możemy zamodelować to jako trzy metody wewnątrz algebry `UserInteraction`.
 
 {lang="text"}
 ~~~~~~~~
@@ -2553,9 +2476,9 @@ We can model this with three methods on a `UserInteraction` algebra.
   }
 ~~~~~~~~
 
-It almost sounds easy when put like that.
+Ujęte w ten sposób wydaje się to niemal proste.
 
-We also need an algebra to abstract over the local system time
+Potrzebujemy również algebry pozwalającej abstrahować nam nad lokalnym czasem systemu
 
 {lang="text"}
 ~~~~~~~~
@@ -2564,7 +2487,7 @@ We also need an algebra to abstract over the local system time
   }
 ~~~~~~~~
 
-And introduce data types that we will use in the refresh logic
+oraz typu danych, którego użyjemy w implementacji logiki odświeżania tokenów
 
 {lang="text"}
 ~~~~~~~~
@@ -2580,7 +2503,7 @@ And introduce data types that we will use in the refresh logic
   final case class BearerToken(token: String, expires: Epoch)
 ~~~~~~~~
 
-Now we can write an OAuth2 client module:
+Możemy teraz napisać nasz moduł klienta OAuth2:
 
 {lang="text"}
 ~~~~~~~~
@@ -2630,20 +2553,18 @@ Now we can write an OAuth2 client module:
 ~~~~~~~~
 
 
-## Summary
+## Podsumowanie
 
--   *algebraic data types* (ADTs) are defined as *products* (`final case class`)
-    and *coproducts* (`sealed abstract class`).
--   `Refined` types enforce constraints on values.
--   concrete functions can be defined in an `implicit class` to maintain
-    left-to-right flow.
--   polymorphic functions are defined in *typeclasses*. Functionality is provided
-    via "has a" *context bounds*, rather than "is a" class hierarchies.
--   typeclass *instances* are implementations of a typeclass.
--   `@simulacrum.typeclass` generates `.ops` on the companion, providing
-    convenient syntax for typeclass functions.
--   *typeclass derivation* is compiletime composition of typeclass
-    instances.
+-  *algebraiczne typy danych* (ADT) są definiowane jako *produkty* (`final case class`) i *koprodukty* 
+    (`sealed abstract class`).
+-   Typy `Refined` egzekwują ograniczenia na zbiorze możliwych wartości.
+-   konkretne funkcje mogą być definiowane wewnątrz klas niejawnych (`implicit class`) aby zachować
+    kierunek czytania od lewej do prawej.
+-   funkcje polimorficzne definiowane są wewnątrz *typeklas*. Funkcjonalności zapewniane są poprzez 
+    *ograniczenia kontekstu* wyrażające relacje "ma", a nie hierarchie klas wyrażające relacje "jest".
+-   anotacja `@simulacrum.typeclass` generuje obiekt `.ops` wewnątrz towarzysza typu, zapewniając wygodniejszą
+    składnię dla metod typeklasy.
+-   *derywacja typeklas* to kompozycja typeklas odbywająca się w czasie kompilacji.
 
 
 # Scalaz Typeclasses

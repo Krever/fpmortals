@@ -102,13 +102,18 @@ najprawdopodobniej odbywać się będą z użyciem języka angielskiego. Dlatego
 najbardziej zbliżonych do wersji oryginalnych, co poskutkowało tym że duża ich część może brzmieć śmiesznie, dziwnie lub
 nawet absurdalnie. W wielu miejscach używamy form potocznych i słowotwórstwa, które nie znalazły by miejsca w 
 poważnej literaturze technicznej. Dodatkowo, w momencie gdy wprowadzamy tłumaczenie, dla którego odtworzenie 
-wersji oryginalnej może być nieoczywiste, podajemy tęże wersje wprost, w nawiasach bądź przypisach.
+wersji oryginalnej może być nieoczywiste, podajemy tęże wersje wprost, w nawiasach bądź przypisach. 
 
 Należy również pamiętać, że jest to tłumaczenie amatorskie, motywowane jedynie chęcią popularyzacji Scali i 
 programowania funkcyjnego, a nie zyskiem, dlatego też w wielu miejscach odbiegać ono może od profesjonalnych
 standardów. Użycie liczby mnogiej, w tej nocie i późniejszych przypisach, wynika z kolei jedynie z megalomanii 
 tłumacza a nie z faktu że stoi za nimi zespół profesjonalistów.
 
+Warto również wspomnieć, że część tłumaczeń może nie pokrywać się (z różnych powodów) z tłumaczeniami tych samych terminów
+wprowadzonymi przez innych autorów. Wynika to z 2 rzeczy: po pierwsze, jak wspomniano wyżej, wierzymy że 
+to terminy oryginalne są najistotniejsze, a polskie tłumaczenie jest tutaj jedynie pomocą obniżającą próg wejścia, po drugie,
+jak również wspomniano powyżej, jest to tłumaczenie realizowane minimalnym wysiłkiem bez zasobów potrzebnych na analizę
+wcześniejszych prac i tłumaczeń. Mamy nadzieję, że mimo to lektura sprawi wam przyjemność.
 
 
 # Aspekty praktyczne
