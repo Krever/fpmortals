@@ -19,7 +19,7 @@ Książka ta uzasadnia każdy koncept praktycznym przykładem, wliczając w to s
 webowej.
 
 Niniejsza książka używa [Scalaz 7.2](https://github.com/scalaz/scalaz), najpopularniejszej, najstabilniejszej,
-najpryncypialnej[^principled] i najbardziej kompleksowej biblioteki do Programowania Funkcyjnego w Scali.
+najbardziej pryncypialnej[^principled] i najbardziej kompleksowej biblioteki do Programowania Funkcyjnego w Scali.
 
 [^principled]: _the most principled_
 
@@ -30,7 +30,7 @@ aby później przejść do Riemanna / Einsteina / Maxwella jeśli zechcemy studi
 
 Komputer nie jest niezbędny aby podążać za treścią, ale zachęcamy do zgłębienia kodu źródłowego Scalaz. Niektóre z bardziej
 skomplikowanych fragmentów kodu są dostępne wraz z [źródłami tej książki](https://github.com/fommil/fpmortals/)  a
-ci, którzy rządni są praktycznych ćwiczeń powinni spróbować (zre-)implementować Scalaz (oraz przykładową aplikację)
+ci, którzy żądni są praktycznych ćwiczeń powinni spróbować (zre-)implementować Scalaz (oraz przykładową aplikację)
 używając częściowych opisów zaprezentowanych w tej książce.
 
 Polecamy również [Czerwoną Książkę](https://www.manning.com/books/functional-programming-in-scala)[^redbook] jako kolejny krok. 
@@ -102,7 +102,7 @@ najprawdopodobniej odbywać się będą z użyciem języka angielskiego. Dlatego
 najbardziej zbliżonych do wersji oryginalnych, co poskutkowało tym że duża ich część może brzmieć śmiesznie, dziwnie lub
 nawet absurdalnie. W wielu miejscach używamy form potocznych i słowotwórstwa, które nie znalazły by miejsca w 
 poważnej literaturze technicznej. Dodatkowo, w momencie gdy wprowadzamy tłumaczenie, dla którego odtworzenie 
-wersji oryginalnej może być nieoczywiste, podajemy tęże wersje wprost, w nawiasach bądź przypisach. 
+wersji oryginalnej może być nieoczywiste, podajemy tę wersję wprost, w nawiasach bądź przypisach.
 
 Należy również pamiętać, że jest to tłumaczenie amatorskie, motywowane jedynie chęcią popularyzacji Scali i 
 programowania funkcyjnego, a nie zyskiem, dlatego też w wielu miejscach odbiegać ono może od profesjonalnych
@@ -110,8 +110,8 @@ standardów. Użycie liczby mnogiej, w tej nocie i późniejszych przypisach, wy
 tłumacza a nie z faktu że stoi za nimi zespół profesjonalistów.
 
 Warto również wspomnieć, że część tłumaczeń może nie pokrywać się (z różnych powodów) z tłumaczeniami tych samych terminów
-wprowadzonymi przez innych autorów. Wynika to z 2 rzeczy: po pierwsze, jak wspomniano wyżej, wierzymy że 
-to terminy oryginalne są najistotniejsze, a polskie tłumaczenie jest tutaj jedynie pomocą obniżającą próg wejścia, po drugie,
+wprowadzonymi przez innych autorów. Wynika to z 2 rzeczy. Po pierwsze, jak wspomniano wyżej, wierzymy że
+to terminy oryginalne są najistotniejsze, a polskie tłumaczenie jest tutaj jedynie pomocą obniżającą próg wejścia. Po drugie,
 jak również wspomniano powyżej, jest to tłumaczenie realizowane minimalnym wysiłkiem bez zasobów potrzebnych na analizę
 wcześniejszych prac i tłumaczeń. Mamy nadzieję, że mimo to lektura sprawi wam przyjemność.
 
