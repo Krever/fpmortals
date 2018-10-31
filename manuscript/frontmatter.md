@@ -68,7 +68,7 @@ jedynie fragmenty zawarte w książce dostępne są bez ograniczeń.
 Dla Diego Esteban Alonso Blas, Raúl Raja Martínez i Peter Neyens z 47
 degrees, Rúnar Bjarnason, Tony Morris, John de Goes i Edward Kmett
 za ich pomoc w tłumaczeniu zasad FP. Kenji Yoshida i
-Jason Zaugg za stworzenie pierwszej wersji Scalaz, oraz Paul Chuisano /
+Jason Zaugg za stworzenie pierwszej wersji Scalaz, oraz Paul Chiusano /
 Miles Sabin naprawienie krytycznego błędu w kompilatorze Scali([SI-2712](https://issues.scala-lang.org/browse/SI-2712)).
 
 Dziękuje też czytelnikom, którzy doradzali przy pierwszych szkicach tej książki.
