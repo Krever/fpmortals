@@ -13,9 +13,9 @@
 
 # O niniejszej książce
 
-Książka ta jest kierowana do typowego programisty Scali, prawdopodobnie z
-doświadczenie Javowym, który zaciekawiony jest paradygmatem **Programowania Funkcyjnego** (FP).
-Książka ta uzasadnia każdy koncept praktycznym przykładem, wliczając w to stworzenie w pełni funkcjonalnej aplikacji
+Książka ta jest kierowana do zwykłego programisty Scali, prawdopodobnie z
+doświadczeniem z Javy, który zaciekawiony jest paradygmatem **Programowania Funkcyjnego** (FP).
+Każdy koncept uzasadniony jest praktycznym przykładem, wliczając w to stworzenie w pełni funkcjonalnej aplikacji
 webowej.
 
 Niniejsza książka używa [Scalaz 7.2](https://github.com/scalaz/scalaz), najpopularniejszej, najstabilniejszej,
