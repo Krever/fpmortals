@@ -5904,7 +5904,7 @@ ze specyficznych dla implementacji wywołań batchowych.
 Cichym bohaterem tej opowieści jest `Applicative`, a `Const` pozwala nam pokazać co jest dzięki niemu możliwe.
 Jeśli musielibyśmy zmienić nasz program tak aby wymagał `Monad`y, nie moglibyśmy wtedy użyć `Const`, a zamiast tego zmuszeni 
 bylibyśmy do napisania pełnoprawnych mocków aby zweryfikować jakie funkcje zostały wywołane dla danych argumentów.
-*Reguła Najmniejsze Mocy* (_Rule of Least Power_) wymaga od nas abyśmy używali `Applicative` zamiast `Monad` kiedy tylko możemy.
+*Reguła Najmniejszej Mocy* (_Rule of Least Power_) wymaga od nas abyśmy używali `Applicative` zamiast `Monad` kiedy tylko możemy.
 
 
 ## Kolekcje
@@ -6931,56 +6931,46 @@ regularnie, pokazując nowe podejścia do znanych problemów. Implementacja nowy
 to dobry sposób na swój własny wkład do ekosystemu Scalaz.
 
 
-# Advanced Monads
+# Zaawansowane Monady
 
-You have to know things like Advanced Monads in order to be an advanced
-functional programmer.
+Znajomość Zaawansowanych Monad to element obowiązkowy, aby móc nazwać się zaawansowanym programistą funkcyjnym.
 
-However, we are developers yearning for a simple life, and our idea of
-"advanced" is modest. To put it into context: `scala.concurrent.Future` is more
-complicated and nuanced than any `Monad` in this chapter.
+Jednocześnie jestesteśmy deweloperami, którzy nieustannie pragną prostego życia, a więc i nasza definicja "zaawansowania"
+jest raczej skromna. Dla porównania: `scala.concurrent.Future` jest strukturą dużo bardziej skomplikowaną niż jakakolwiek
+z prezentowanych w tym rozdziale `Monad`.
 
-In this chapter we will study some of the most important implementations of
-`Monad`.
+## Always in motion is the `Future`[^yoda]
 
+[^yoda]: Cytat z Mistrza Yody.
 
-## Always in motion is the `Future`
+Największym problemem z `Future` jest to, że rozpoczyna obliczenia w momencie stworzenia, tym samym łącząc definiowanie
+programu z jego interpretacją (czyli np. uruchomieniem).
 
-The biggest problem with `Future` is that it eagerly schedules work during
-construction. As we discovered in the introduction, `Future` conflates the
-definition of a program with *interpreting* it (i.e. running it).
+`Future` jest też nienajlepszym wyborem ze względów wydajnościowych: za każdym razem, gdy wywołujemy `.flatMap`
+domknięcie jest przekazywane do `Executor`a, wywołując planowanie wątków i zmiany kontekstu. Nie jest niczym
+nadzwyczajnym aby 50% mocy obliczeniowej CPU wykorzystywane było na te własnie operacje zamiast rzeczywistej pracy.
+W efekcie program zrównoleglony za pomocą `Future` może okazać się *wolniejszy* od swojego sekwencyjnego odpowiendnika.
 
-`Future` is also bad from a performance perspective: every time `.flatMap` is
-called, a closure is submitted to an `Executor`, resulting in unnecessary thread
-scheduling and context switching. It is not unusual to see 50% of our CPU power
-dealing with thread scheduling, instead of doing the work. So much so that
-parallelising work with `Future` can often make it *slower*.
+Zachłanna ewaluacja w połączeniu ze odwołaniami do executora sprawia że niemożliwym jest określenie kiedy
+zadanie się rozpoczęło, kiedy sie zakończyło ani jakie pod-zadania zostały rozpoczęte. Zatem nie powinno nas dziwić,
+że "rozwiązania" do monitorowania wydajności frameworków opartych o `Future` są solidnym źródłem utrzymania
+dla nowoczesnych odpowiedników sprzedawców "cudownych remediów".
 
-Combined, eager evaluation and executor submission means that it is impossible
-to know when a job started, when it finished, or the sub-tasks that were spawned
-to calculate the final result. It should not surprise us that performance
-monitoring "solutions" for `Future` based frameworks are a solid earner for the
-modern day snake oil merchant.
+Co więcej, `Future.flatMap` wymaga niejawnego przekazania parametru typu `ExecutionContext`, zmuszając
+użytkownika do myślenia o logice biznesowej i semantyce uruchomienia w tym samym momencie.
 
-Furthermore, `Future.flatMap` requires an `ExecutionContext` to be in implicit
-scope: users are forced to think about business logic and execution semantics at
-the same time.
-
-A> If `Future` was a Star Wars character, it would be Anakin Skywalker: the fallen
-A> chosen one, rushing in and breaking things without thinking.
+A> Jeśli `Future` ma swój odpowiednik w sadze Star Wars, to jest nim Anakin Skywalker: upadły
+A> wybraniec, który wbiega i niszczy wszystko bez zastnowienia.
 
 
-## Effects and Side Effects
+## Efekty i efekty uboczne
 
-If we cannot call side-effecting methods in our business logic, or in `Future`
-(or `Id`, or `Either`, or `Const`, etc), **when can** we write them? The answer
-is: in a `Monad` that delays execution until it is interpreted at the
-application's entrypoint. We can now refer to I/O and mutation as an *effect* on
-the world, captured by the type system, as opposed to having a hidden
-*side-effect*.
+Jeśli nie możemy wywołać metod z efektami ubocznymi w naszej logice biznesowej, ani w `Future` (ani `Id`, `Either`, 
+`Const`, itd.), to **kiedy możemy** je wywołać? Odpowiedź brzmi: wewnątrz `Monad`y, która opóźnia wykonanie 
+do czasu interpretacji w punkcie wejścia do aplikacji. W takiej sytuacji możemy odnosić się do operacji I/O i mutacji
+jako *efektów*, które widoczne są wprost w systemie typów, odwrotnie niż ukryte i nieoczywiste *efekty uboczne*.
 
-The simplest implementation of such a `Monad` is `IO`, formalising the version
-we wrote in the introduction:
+Najprostszą implementacją takiej `Monad`y jest jest `IO`
 
 {lang="text"}
 ~~~~~~~~
@@ -6995,43 +6985,39 @@ we wrote in the introduction:
   }
 ~~~~~~~~
 
-The `.interpret` method is only called once, in the entrypoint of an
-application:
+Metoda `.interpret` wywoływana jest tylko raz, na wejściu do naszej aplikacji:
 
 {lang="text"}
 ~~~~~~~~
   def main(args: Array[String]): Unit = program.interpret()
 ~~~~~~~~
 
-However, there are two big problems with this simple `IO`:
+Niemniej, taka prosta implementacja niesie ze sobą dwa duże problemy:
 
-1.  it can stack overflow
-2.  it doesn't support parallel computations
+1. może spowodować przepełnienie stosu
+1. nie umożliwia równoległego wykonywania obliczeń
 
-Both of these problems will be overcome in this chapter. However, no matter how
-complicated the internal implementation of a `Monad`, the principles described
-here remain true: we're modularising the definition of a program and its
-execution, such that we can capture effects in type signatures, allowing us to
-reason about them, and reuse more code.
+Oba te problemy zostaną przezwyciężone w tym rozdziale. Jednocześnie musimy pamiętać, 
+że niezależnie jak skomplikowana jest wewnętrzna implementacja `Monad`y, zasady tutaj opisane zachowują moc:
+modularyzujemy definicję programu i jego wykonanie, tak aby móc wyrazić efekty w sygnaturach typów, sprawiając tym samym
+że rozumowanie o nich staje się możliwe, a reużycie kodu łatwiejsze.
 
-A> The Scala compiler will happily allow us to call side-effecting methods from
-A> unsafe code blocks. The [Scalafix](https://scalacenter.github.io/scalafix/) linting tool can ban side-effecting methods at
-A> compiletime, unless called from inside a deferred `Monad` like `IO`.
+A> Kompilator Scali z radością pozwoli nam wywołać metody ze skutkami ubocznymi poza bezpiecznym kontekstem. 
+A> Linter [Scalafix](https://scalacenter.github.io/scalafix/) może sprawić, że takie wywołania będą możliwe jedynie
+A> z wewnątrz `Monad`y odraczającej wykonanie, jak np. `IO`.
 
 
-## Stack Safety
+## Bezpieczeństwo Stosu
 
-On the JVM, every method call adds an entry to the call stack of the `Thread`,
-like adding to the front of a `List`. When the method completes, the method at
-the `head` is thrown away. The maximum length of the call stack is determined by
-the `-Xss` flag when starting up `java`. Tail recursive methods are detected by
-the Scala compiler and do not add an entry. If we hit the limit, by calling too
-many chained methods, we get a `StackOverflowError`.
+Na JVMie każde wywołanie metody dodaje wpis do stosu wywołań aktualnego wątku (`Thread`), tak jakbyśmy
+dopisywali element na początek `List`y. Kiedy metoda kończy działanie, wierzchni wpis jest usuwany. Maksymalna długość
+stosu wywołań determinowana jest przez flagę `-Xss` ustawianą przy uruchomieniu polecenia `java`. Wywołania
+ogonowo-rekursywne są wykrywane przez kompilator Scali i nie dodają wpisów do stosu. Kiedy przekroczymy dozwolony
+limit poprzez zawołanie zbyt wielu metod napotkamy `StackOverflowError`.
 
-Unfortunately, every nested call to our `IO`'s `.flatMap` adds another method
-call to the stack. The easiest way to see this is to repeat an action forever,
-and see if it survives for longer than a few seconds. We can use `.forever`,
-from `Apply` (a parent of `Monad`):
+Niestety, każde zagnieżdzone wywołanie na naszym `IO`, jak np. `.flatMap`, dodaje kolejne wywołania do stosu.
+Najprostszym sposobem aby zaobserwować to zjawisko, jest powtórzenie akcji w nieskończoność i sprawdzenie czy 
+taki program przeżyje dłużej niż kilka sekund. Możemy użyć metody `.forever` pochodzącej z `Apply` (rodzica `Monad`y):
 
 {lang="text"}
 ~~~~~~~~
@@ -7051,8 +7037,8 @@ from `Apply` (a parent of `Monad`):
       at ...
 ~~~~~~~~
 
-Scalaz has a typeclass that `Monad` instances can implement if they are stack
-safe: `BindRec` requires a constant stack space for recursive `bind`:
+Scalaz definiuje typeklasę `BindRec`, którą mogą implementować `Monad`y niezagrożające przeładowywaniem stosu (_stack safe_):. 
+Wymaga ona zachowywania stałego rozmiaru stosu przy rekurencyjnych wywołaniach `bind`:
 
 {lang="text"}
 ~~~~~~~~
@@ -7063,11 +7049,9 @@ safe: `BindRec` requires a constant stack space for recursive `bind`:
   }
 ~~~~~~~~
 
-We don't need `BindRec` for all programs, but it is essential for a general
-purpose `Monad` implementation.
+Nie dla wszystkich programów potrzebujemy jej instancji, ale jest ona istotna dla `Monad` ogólnego przeznaczenia.
 
-The way to achieve stack safety is to convert method calls into references to an
-ADT, the `Free` monad:
+Aby osiągnąć wspomniane bezpieczeństwo, należy zamienić wywołania metod na referencje do ADT, czyli monadę `Free`:
 
 {lang="text"}
 ~~~~~~~~
@@ -7083,28 +7067,25 @@ ADT, the `Free` monad:
   }
 ~~~~~~~~
 
-A> `SUSPEND`, `RETURN` and `GOSUB` are a tip of the hat to the `BASIC` commands of
-A> the same name: pausing, completing, and continuing a subroutine, respectively.
+A> `SUSPEND`, `RETURN` i `GOSUB` to ukłon w stonę poleceń z języka `BASIC` o tych samych nazwach, 
+A> służących odpowiednio do zatrzymywania, zakańczania i kontynuowania podprogramu.
 
-The `Free` ADT is a natural data type representation of the `Monad` interface:
+ADT `Free` to naturalna reprezentacja metod z interfejsu `Monad`:
 
-1.  `Return` represents `.point`
-2.  `Gosub` represents `.bind` / `.flatMap`
+1. `Return` reprezentuje `.point`
+2. `Gosub` reprezentuje `.bind` / `.flatMap`
 
-When an ADT mirrors the arguments of related functions, it is called a *Church
-encoding*.
+Kiedy ADT odwzorowuje argumenty powiązanej funkcji, nazywamy to *kodowaniem Church'a* (_Church encodnig_).
 
-`Free` is named because it can be *generated for free* for any `S[_]`. For
-example, we could set `S` to be the `Drone` or `Machines` algebras from Chapter
-3 and generate a data structure representation of our program. We will return to
-why this is useful at the end of this chapter.
+Typ `Free` to skrót od `FreeMonad` i nazywa się tak ponieważ pozwala *wygenerować za darmo* monadę dla dowolnego `S[_]`. Moglibyśmy
+na przykład wskazać algebrę `Drone` lub `Machines` z rozdziału 3 jako `S` i wygenerować struktury danych reprezentujące nasz program.
+Zastanowimy się jak może nam się to przydać pod koniec tego rozdziału.
 
 
 ### `Trampoline`
 
-`Free` is more general than we need for now. Setting the algebra `S[_]` to `()
-=> ?`, a deferred calculation or *thunk*, we get `Trampoline` and can implement
-a stack safe `Monad`
+`Free` jest typem bardziej ogólnym niż w tym momencie potrzebujemy. Ustawiając algebrę `S[_]` na `() => ?`, czyli odroczone wykonanie
+znane jako *thunk*, otrzymamy typ `Trampoline`, który pozwoli nam zaimplementować bezpieczną instancję `Monad`y
 
 {lang="text"}
 ~~~~~~~~
@@ -7126,19 +7107,17 @@ a stack safe `Monad`
   }
 ~~~~~~~~
 
-The `BindRec` implementation, `.tailrecM`, runs `.bind` until we get a `B`.
-Although this is not technically a `@tailrec` implementation, it uses constant
-stack space because each call returns a heap object, with delayed recursion.
+`.tailrecM` pochodząca z `BindRec` uruchamia `.bind` tak długo aż otrzymamy `B`. Mimo że technicznie rzecz biorąc
+nie jest to implementacja, którą spełnia wymagania anotacji `@tailrec`, to zachowuje stałą wielkość stosu, ponieważ
+każde wywołanie zwraza obiekt ze sterty (_heap_), a rekurencja zostaje odroczona.
 
-A> Called `Trampoline` because every time we `.bind` on the stack, we *bounce* back
-A> to the heap.
-A> 
-A> The only Star Wars reference involving bouncing is Yoda's duel with Dooku. We
-A> shall not speak of this again.
+A> Nazwa `Trampoline` wynika z faktu, że za każdym razem gdy odkładamy `.bind` na stosie *odbijamy się* spowrotem
+A> na stertę.
+A>
+A> Jedynym odwołaniem do odbijania sie w sadze Star Wars jest pojedynek Yody z Dooku. Nie rozmawiajmy o tym.
 
-Convenient functions are provided to create a `Trampoline` eagerly (`.done`) or
-by-name (`.delay`). We can also create a `Trampoline` from a by-name
-`Trampoline` (`.suspend`):
+Dostępne są funkcje ułatwiające tworzenie `Trampoline` zarówno zachłannie (`.done`) jak i przez nazwę (`.delay`). 
+Możemy też stworzyć instancję `Trampoline` przekazując inną jej instację poprzez nazwę (`.suspend`):
 
 {lang="text"}
 ~~~~~~~~
@@ -7151,16 +7130,13 @@ by-name (`.delay`). We can also create a `Trampoline` from a by-name
   }
 ~~~~~~~~
 
-When we see `Trampoline[A]` in a codebase we can always mentally substitute it
-with `A`, because it is simply adding stack safety to the pure computation. We
-get the `A` by interpreting `Free`, provided by `.run`.
+Kiedy widzimy w naszym kodzie `Trampoline[A]` możemy w głowie podstawić w jej miejsce `A`, ponieważ
+jej jedyną funkcją jest sprawienie że nie przeładujemy stosu. Możemy uzyskać `A` interpretując `Free` za pomocą `.run`.
 
-A> It is instructive, although not necessary, to understand how `Free.run` is
-A> implemented: `.resume` evaluates a single layer of the `Free`, and `go` runs it
-A> to completion.
+A> Pouczające, acz nie niezbędne, jest zrozumienie jak jest zaimplementowane jest `Free.run`: `.resume` wykonuje pojedynczą
+A> warstwę `Free`, a `.go` prowadzi je do zakończenia.
 A> 
-A> In the following `Trampoline[A]` is used as a synonym for `Free[() => ?, A]` to
-A> make the code easier to read.
+A> W poniższym przykładzie `Trampoline[A]` jest użyte jako synonim `Free[() => ?, A]` dla zwiększenia czytelności.
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -7186,14 +7162,13 @@ A>     ...
 A>   }
 A> ~~~~~~~~
 A> 
-A> The case that is most likely to cause confusion is when we have nested `Gosub`:
-A> apply the inner function `g` then pass it to the outer one `f`, it is just
-A> function composition.
+A> Najbardziej zagmatwany jest przypadek zagnieżdżonych `Gosub`. W rzeczywistości wykonujemy zwykłe złożenie funkcji:
+A> wykonaj funkcję `g` i przekaż wynik do zewnętrznej funkcji `f`.
 
 
-### Example: Stack Safe `DList`
+### Przykład: Bezpieczne `DList`
 
-In the previous chapter we described the data type `DList` as
+W poprzednim rozdziale przedstawiliśmy typ danych `DList` jako
 
 {lang="text"}
 ~~~~~~~~
@@ -7204,7 +7179,7 @@ In the previous chapter we described the data type `DList` as
   }
 ~~~~~~~~
 
-However, the actual implementation looks more like:
+Jednak w rzeczywistości jego implementacja przypomina bardziej:
 
 {lang="text"}
 ~~~~~~~~
@@ -7215,15 +7190,14 @@ However, the actual implementation looks more like:
   }
 ~~~~~~~~
 
-Instead of applying nested calls to `f` we use a suspended `Trampoline`. We
-interpret the trampoline with `.run` only when needed, e.g. in `toIList`. The
-changes are minimal, but we now have a stack safe `DList` that can rearrange the
-concatenation of a large number lists without blowing the stack!
+Zamiast aplikować zagnieżdżone wywołanie `f` używamy wstrzymanej `Trampoline`, którą interpretujemy za pomocą `.run`
+kiedy zajdzie taka potrzeba, np. w `toIList`. Zmiany są minimalne, ale w efekcie otrzymaliśmy bezpieczną wersję `DList`,
+która nie przepełni stosu niezależnie do tego jak duże będą przetwarzane listy.
 
 
-### Stack Safe `IO`
+### Bezpieczne `IO`
 
-Similarly, our `IO` can be made stack safe thanks to `Trampoline`:
+Używając `Trampoline` możemy w podobny sposób zabezpieczyć nasze `IO`:
 
 {lang="text"}
 ~~~~~~~~
@@ -7243,13 +7217,13 @@ Similarly, our `IO` can be made stack safe thanks to `Trampoline`:
   }
 ~~~~~~~~
 
-A> We heard you like `Monad`, so we made you a `Monad` out of a `Monad`, so you can
-A> monadically bind when you are monadically binding.
+A> Słyszeliśmy, że lubisz `Monad`y, więc zrobiliśmy dla ciebie `Monad`ę z `Monad`y, żebyś mógł
+A> bindować monadycznie gdy bindujesz monadycznie.
 
-The interpreter, `.unsafePerformIO()`, has an intentionally scary name to
-discourage using it except in the entrypoint of the application.
+Interpreter, `unsafePerformIO()`, specjalnie został nazwany w tak odstrzający sposób, aby zniechęcić
+do używania go poza punktem wejścia naszej aplikacji.
 
-This time, we don't get a stack overflow error:
+Tym razem nie zobaczymy `StackOverflowError`:
 
 {lang="text"}
 ~~~~~~~~
@@ -7263,45 +7237,40 @@ This time, we don't get a stack overflow error:
   hello
 ~~~~~~~~
 
-Using a `Trampoline` typically introduces a performance regression vs a regular
-reference. It is `Free` in the sense of *freely generated*, not *free as in
-beer*.
+Używanie `Trampoline` zazwyczaj wiąże się ze spadkiem wydajności w porównaniu do używania zwykłej referencji.
+Okazuje się, że `Free` nie jest tak do końca za darmo.
 
-A> Always benchmark instead of accepting sweeping statements about performance: it
-A> may well be the case that the garbage collector performs better for an
-A> application when using `Free` because of the reduced size of retained objects in
-A> the stack.
+A> Zawsze wykonuj benchmarki i nie akceptuj ogólnych stwierdzeń na temat wydajności. Może np. okazać się
+A> że garbage collector będzie działał szybciej gdy użyjemy `Free` z powodu zmiejszonego rozmiaru obiektów
+A> przechowywanych na stosie.
 
 
-## Monad Transformer Library
+## Biblioteka Tranformatorów Monad
 
-Monad transformers are data structures that wrap an underlying value and provide
-a monadic *effect*.
+Transformatory monad to struktury danych, które opakowują wewnętrzną wartość i dostarczają monadyczny *efekt*.
 
-For example, in Chapter 2 we used `OptionT` to let us use `F[Option[A]]` in a
-`for` comprehension as if it was just a `F[A]`. This gave our program the effect
-of an *optional* value. Alternatively, we can get the effect of optionality if
-we have a `MonadPlus`.
+W Rozdziale 2 używaliśmy `OptionT` aby móc użyć wartości typu `F[Option[A]]` w konstrukcji `for` tak jakby była to 
+po prostu instancja `F[A]`. Uzyskaliśmy w ten sposób *efekt* opcjonalnej wartości. Aby osiągnąć ten sam rezultat
+moglibyśmy też użyć `MonadPlus`.
 
-This subset of data types and extensions to `Monad` are often referred to as the
-*Monad Transformer Library* (MTL), summarised below. In this section, we will
-explain each of the transformers, why they are useful, and how they work.
+Poniższy zbiór typów danych często nazywany jest Biblioteką Transformatorów Monad (_Monad Transformer Library_, _MTL_).
+W tym podrozdziale opiszemy każdy z nich, zwracając uwagę na to do czego mogą być przydatne i jak są zbudowane. 
 
-| Effect               | Underlying            | Transformer | Typeclass     |
-|-------------------- |--------------------- |----------- |------------- |
-| optionality          | `F[Maybe[A]]`         | `MaybeT`    | `MonadPlus`   |
-| errors               | `F[E \/ A]`           | `EitherT`   | `MonadError`  |
-| a runtime value      | `A => F[B]`           | `ReaderT`   | `MonadReader` |
-| journal / multitask  | `F[(W, A)]`           | `WriterT`   | `MonadTell`   |
-| evolving state       | `S => F[(S, A)]`      | `StateT`    | `MonadState`  |
-| keep calm & carry on | `F[E \&/ A]`          | `TheseT`    |               |
-| control flow         | `(A => F[B]) => F[B]` | `ContT`     |               |
+| Efekt                     | Wnętrze               | Transformator | Typeklasa     |
+|--------------------       |---------------------  |-----------    |-------------  |
+| opcjonalność              | `F[Maybe[A]]`         | `MaybeT`      | `MonadPlus`   |
+| błędy                     | `F[E \/ A]`           | `EitherT`     | `MonadError`  |
+| wartość czasu wykonania   | `A => F[B]`           | `ReaderT`     | `MonadReader` |
+| dziennik/wielozadaniowość | `F[(W, A)]`           | `WriterT`     | `MonadTell`   |
+| zmienijący się stan       | `S => F[(S, A)]`      | `StateT`      | `MonadState`  |
+| zachowaj spokój i idź dalej | `F[E \&/ A]`        | `TheseT`      |               |
+| kontrola przepływu        | `(A => F[B]) => F[B]` | `ContT`       |               |
 
 
 ### `MonadTrans`
 
-Each transformer has the general shape `T[F[_], A]`, providing at least an
-instance of `Monad` and `Hoist` (and therefore `MonadTrans`):
+Każdy transformator ma ogólny kształt `T[F[_], A]`, dostarczając instancje co najmniej
+`Monad`y oraz `Hoist`(a więc i `MonadTrans`):
 
 {lang="text"}
 ~~~~~~~~
@@ -7314,32 +7283,30 @@ instance of `Monad` and `Hoist` (and therefore `MonadTrans`):
   }
 ~~~~~~~~
 
-A> `T[_[_], _]` is another example of a higher kinded type. It says that `T` takes
-A> two type parameters: the first also takes a type parameter, written `_[_]`, and
-A> the second does not take any type parameters, written `_`.
+A> `T[_[_], _]` jest kolejnym przykładem typu wyższego rodzaju. Mówi on nam, że `T` przyjmuje dwa
+A> parametry typu: pierwszy z nich również przyjmuje parametry typu i wyrażony jest jako `_[_]`,
+A> drugi nie jest parametryzowany i zapisany jest jako `_`.
 
-`.liftM` lets us create a monad transformer if we have an `F[A]`. For example,
-we can create an `OptionT[IO, String]` by calling `.liftM[OptionT]` on an
-`IO[String]`.
+`.liftM` pozwala nam stworzyć instancję transformatora na podstawie `F[A]`, na przykład, aby zbudować
+`OptionT[IO, String]`, wystarczy wywołać `.liftM[OptionT]` na `IO[String]`.
 
-`.hoist` is the same idea, but for natural transformations.
+`.hoist` wyraża tą samą koncepcję ale dla transformacji naturalnych.
 
-Generally, there are three ways to create a monad transformer:
+W ogólności istnieją trzy sposoby na uzyskanie transformatora monady:
 
--   from the underlying, using the transformer's constructor
--   from a single value `A`, using `.pure` from the `Monad` syntax
--   from an `F[A]`, using `.liftM` from the `MonadTrans` syntax
+- z instancji typu wewnętrznego, używając konstruktora
+- z pojedyńczej instancji `A`, używają `.pure` z `Monad`y
+- z `F[A]`, używając `liftM` z `MonadTrans`
 
-Due to the way that type inference works in Scala, this often means that a
-complex type parameter must be explicitly written. As a workaround, transformers
-provide convenient constructors on their companion that are easier to use.
+Z racji tego jak działa inferencja typów w Scali, często oznacza to że dość skomplikowana
+sygnatura typu musi być zapisania explicite. Transformatory dostarczają nam trochę wygodniejsze
+konstruktory w swoich obiektach towarzyszących jako obejście tego problemu.
 
 
 ### `MaybeT`
 
-`OptionT`, `MaybeT` and `LazyOptionT` have similar implementations, providing
-optionality through `Option`, `Maybe` and `LazyOption`, respectively. We will
-focus on `MaybeT` to avoid repetition.
+`OptionT`, `MaybeT` i `LazyOptionT` są zaimplementowane w podobny sposób, zapewniając opcjonalność
+poprzez odpowiednio `Option`, `Maybe` i `LazyOption`. Skupimy się na `MaybeT` aby uniknąć powtarzania się.
 
 {lang="text"}
 ~~~~~~~~
@@ -7353,7 +7320,7 @@ focus on `MaybeT` to avoid repetition.
   }
 ~~~~~~~~
 
-providing a `MonadPlus`
+doastarcza `MonadPlus`
 
 {lang="text"}
 ~~~~~~~~
@@ -7367,15 +7334,15 @@ providing a `MonadPlus`
   }
 ~~~~~~~~
 
-This monad looks fiddly, but it is just delegating everything to the `Monad[F]`
-and then re-wrapping with a `MaybeT`. It is plumbing.
+Powyższa implementacja może wydawać się skomplikowana, ale w rzeczywistości jedyne co tutaj się dzieje, 
+to delegacja operacji do `Monad[F]` i opakowywanie wyniku w `MaybeT`.
+Sam klej i taśma.
 
-With this monad we can write logic that handles optionality in the `F[_]`
-context, rather than carrying around `Option` or `Maybe`.
+Z tą monadą możemy pisać logikę obsługującą opcjonalność wewnątrz kontekstu `F[_]`.
+Alternatywnie musilibyśmy wszędzie umieszczać `Option` lub `Maybe`.
 
-For example, say we are interfacing with a social media website to count the
-number of stars a user has, and we start with a `String` that may or may not
-correspond to a user. We have this algebra:
+Wyobraźmy sobie, że odpytujemy portal społecznościowy chcąć zliczyć liczbę gwazdek danego użytkownika,
+zaczynając od `String`a, który może, lub nie, wskazywać na konkretnego użytkownika. Oto nasza algebra:
 
 {lang="text"}
 ~~~~~~~~
@@ -7386,8 +7353,8 @@ correspond to a user. We have this algebra:
   def T[F[_]](implicit t: Twitter[F]): Twitter[F] = t
 ~~~~~~~~
 
-We need to call `getUser` followed by `getStars`. If we use `Monad` as our
-context, our function is difficult because we have to handle the `Empty` case:
+Musimy wywołać `getUser` a wynik przekazać do `getStars`. Jeśli użyjemy typeklasy `Monad`
+będzie to dość skomplikowane, bo musimy obsłużyć przypadek `Empty`:
 
 {lang="text"}
 ~~~~~~~~
@@ -7397,8 +7364,7 @@ context, our function is difficult because we have to handle the `Empty` case:
   } yield maybeStars
 ~~~~~~~~
 
-However, if we have a `MonadPlus` as our context, we can suck `Maybe` into the
-`F[_]` with `.orEmpty`, and forget about it:
+Jendak mając do dyspozyji `MonadPlus` możemy wessać `Maybe` do `F[_]` za pomocą `.orEmpty` i skupić się na ważniejszych rzeczach:
 
 {lang="text"}
 ~~~~~~~~
@@ -7408,10 +7374,11 @@ However, if we have a `MonadPlus` as our context, we can suck `Maybe` into the
   } yield stars
 ~~~~~~~~
 
-However adding a `MonadPlus` requirement can cause problems downstream if the
-context does not have one. The solution is to either change the context of the
-program to `MaybeT[F, ?]` (lifting the `Monad[F]` into a `MonadPlus`), or to
-explicitly use `MaybeT` in the return type, at the cost of slightly more code:
+Jednakże zwiększenie wymagań co do naszego kontekstu na typeklasę `MonadPlus`
+może spowodować problemy na późniejszym etapie, jeśli nie bedzie ona dostępna.
+Rozwiązaniem jest zmiana kontekstu na `MaybeT[F, ?]` (co automatycznie daje nam
+instancję `MonadPlus` dla dowolnej `Monad`y), albo użyć `MaybeT` w prost w zwracanym typie,
+za cene nieco większej ilości kodu:
 
 {lang="text"}
 ~~~~~~~~
@@ -7421,19 +7388,18 @@ explicitly use `MaybeT` in the return type, at the cost of slightly more code:
   } yield stars
 ~~~~~~~~
 
-The decision to require a more powerful `Monad` vs returning a transformer is
-something that each team can decide for themselves based on the interpreters
-that they plan on using for their program.
+Każdy zespół musi sam wybrać między tymi opcjami, na bazie tego jakich intepreterów
+planują używać dla swoich programów.
 
 
 ### `EitherT`
 
-An optional value is a special case of a value that may be an error, but we
-don't know anything about the error. `EitherT` (and the lazy variant
-`LazyEitherT`) allows us to use any type we want as the error value, providing
-contextual information about what went wrong.
+Wartość opcjonalna to tak na prawdę szczególny przypadek wartości, która może być błędem,
+ale nic o tym błędzie nie wiemy. `EitherT` (i jego leniwy wariant `LazyEitherT`) pozwalają nam
+użyć wartości dowolnego typu do wyrażenia błędu, który powie nam co poszło nie tak w naszych
+obliczeniach.
 
-`EitherT` is a wrapper around an `F[A \/ B]`
+W praktyce `EitherT` to opakowana wartość typu `F[A \/ B]`
 
 {lang="text"}
 ~~~~~~~~
@@ -7448,7 +7414,7 @@ contextual information about what went wrong.
   }
 ~~~~~~~~
 
-The `Monad` is a `MonadError`
+z instancją `MonadError`
 
 {lang="text"}
 ~~~~~~~~
@@ -7458,10 +7424,10 @@ The `Monad` is a `MonadError`
   }
 ~~~~~~~~
 
-`.raiseError` and `.handleError` are self-descriptive: the equivalent of `throw`
-and `catch` an exception, respectively.
+`.raiseError` i `.handleError` są samo-opisującymi się odpowiednikami `throw` i `catch`, które znamy 
+z pracy z wyjątkami.
 
-`MonadError` has some addition syntax for dealing with common problems:
+`MonadError` dostarcza również dodatkową składnię do rozwiązywania popularnych probelmów:
 
 {lang="text"}
 ~~~~~~~~
@@ -7472,15 +7438,14 @@ and `catch` an exception, respectively.
   }
 ~~~~~~~~
 
-`.attempt` brings errors into the value, which is useful for exposing errors in
-subsystems as first class values.
+`.attempt` przenosi błedy z kontekstu do wartości.
 
-`.recover` is for turning an error into a value for all cases, as opposed to
-`.handleError` which takes an `F[A]` and therefore allows partial recovery.
+`.recover` służy do zamiany błędów na wartości dla wszystkich przypadków, w przeciwieństwie do
+`.handleError`, która pozwala nam zwrócić `F[A]`, czyli tym samym częściowo obsłużyć błędy.
 
-`.emap`, *either* map, is to apply transformations that can fail.
+`.emap`, czyli *either* map, pozwala zaaplikować transformację, która sama w sobie może sie nie udać.
 
-The `MonadError` for `EitherT` is:
+`MonadError` dla `EitherT` wygląda następująco:
 
 {lang="text"}
 ~~~~~~~~
@@ -7501,8 +7466,8 @@ The `MonadError` for `EitherT` is:
   }
 ~~~~~~~~
 
-It should be of no surprise that we can rewrite the `MonadPlus` example with
-`MonadError`, inserting informative error messages:
+Nie powinno też dziwić, że możemy przepisać przykład z `MonadPlus` używając `MonadError` i dostarczając informacje
+o błędzie:
 
 {lang="text"}
 ~~~~~~~~
@@ -7513,7 +7478,7 @@ It should be of no surprise that we can rewrite the `MonadPlus` example with
   } yield stars
 ~~~~~~~~
 
-where `.orError` is a convenience method on `Maybe`
+gdzie `.orError` to funkcja pomocnicza zdefiniowana na `Maybe`.
 
 {lang="text"}
 ~~~~~~~~
@@ -7524,13 +7489,12 @@ where `.orError` is a convenience method on `Maybe`
   }
 ~~~~~~~~
 
-A> It is common to use `implicit` parameter blocks instead of context bounds when
-A> the signature of the typeclass has more than one parameter.
-A> 
-A> It is also common practice to name the implicit parameter after the primary
-A> type, in this case `F`.
+A> Często używa się bloków parametrów niejawnych zamiast ograniczeń kontekstu kiedy
+A> sygnatury typeklas mają więcej niż jeden parametr.
+A>
+A> Tak samo częstą praktyką jest nazywanie instancji tychże typeklas tak jak ich głównego parametru, w tym wypadku `F`.
 
-The version using `EitherT` directly looks like
+Wersja używająca `EitherT` bezpośrednio:
 
 {lang="text"}
 ~~~~~~~~
@@ -7540,8 +7504,8 @@ The version using `EitherT` directly looks like
   } yield stars
 ~~~~~~~~
 
-The simplest instance of `MonadError` is for `\/`, perfect for testing business
-logic that requires a `MonadError`. For example,
+Najprostszą instancją `MonadError` jest `\/`, idealnego typu do testowania logiki biznesowej wymagającej
+`MonadError`. Na przykład:
 
 {lang="text"}
 ~~~~~~~~
@@ -7557,7 +7521,7 @@ logic that requires a `MonadError`. For example,
   }
 ~~~~~~~~
 
-Our unit tests for `.stars` might cover these cases:
+Nasz test dla `.stars` może pokryć takie warianty:
 
 {lang="text"}
 ~~~~~~~~
@@ -7574,10 +7538,9 @@ Our unit tests for `.stars` might cover these cases:
   -\/(stars have been replaced by hearts)
 ~~~~~~~~
 
-As we've now seen several times, we can focus on testing the pure business logic
-without distraction.
+Tak jak zawsze możemy skupić się na testowaniu logiki biznesowej bez zbędnych dystrakcji.
 
-Finally, if we return to our `JsonClient` algebra from Chapter 4.3
+Możemy w końcu wrócić do naszego `JsonClient`a z Rozdziału 4.3
 
 {lang="text"}
 ~~~~~~~~
@@ -7590,10 +7553,9 @@ Finally, if we return to our `JsonClient` algebra from Chapter 4.3
   }
 ~~~~~~~~
 
-recall that we only coded the happy path into the API. If our interpreter for
-this algebra only works for an `F` having a `MonadError` we get to define the
-kinds of errors as a tangential concern. Indeed, we can have **two** layers of
-error if we define the interpreter for a `EitherT[IO, JsonClient.Error, ?]`
+gdzie w API zawarliśmy jedynie szczęsliwą ścieżkę wykonania. Jeśli nasz interpreter dla tej algebry
+działa jedynie dla `F` mających instancję `MonadError` musimy zdefiniować jakiego rodzaju błędy mogą się pojawić.
+I faktycznie, jeśli zdecydujemy się interpretować `EitherT[IO, JsonClient.Error, ?]`, to możemy mieć **dwie** warstwy błędów
 
 {lang="text"}
 ~~~~~~~~
@@ -7604,37 +7566,31 @@ error if we define the interpreter for a `EitherT[IO, JsonClient.Error, ?]`
   }
 ~~~~~~~~
 
-which cover I/O (network) problems, server status problems, and issues with our
-modelling of the server's JSON payloads.
+które pokrywają problemy z siecią, ze statusem odpowiedzi serwera oraz z naszym modelem obiektow otrzymywanych z serwera.
 
 
-#### Choosing an error type
+#### Wybieranie typu błędu
 
-The community is undecided on the best strategy for the error type `E` in
-`MonadError`.
+Społeczność jest podzielona co do najlepszej strategii wyrażania błędów za pomocą `E` w `MonadError`.
 
-One school of thought says that we should pick something general, like a
-`String`. The other school says that an application should have an ADT of
-errors, allowing different errors to be reported or handled differently. An
-unprincipled gang prefers using `Throwable` for maximum JVM compatibility.
+Jedna szkoła mówi, że powinnismy wybrać jakiś ogólny typ, np. `String`. Druga twierdzi, że każda aplikacja powinna mieć ADT 
+wyrażające błędy, aby każdy z nich mógł być raportowany i obsługiwany inaczej. Gang niepryncypialny woli używać `Throwable` dla maksymalnej
+kompatybilności z JVMem.
 
-There are two problems with an ADT of errors on the application level:
+Wprowadzenie wspomnianego ADT niesie za sobą dwa problemy:
 
--   it is very awkward to create a new error. One file becomes a monolithic
-    repository of errors, aggregating the ADTs of individual subsystems.
--   no matter how granular the errors are, the resolution is often the same: log
-    it and try it again, or give up. We don't need an ADT for this.
+- dodawanie nowych błędów jest niewygodne, a jeden z plików musi stać się monolitycznym repozytorium błędów, agregując
+  ADT z pojedynczych podsystemów.
+- niezależnie jak drobnoziarniste będą błędy, ich obsługa jest zazwyczaj taka sama: zaloguj i spróbuj ponownie albo przerwij przetwarzanie. 
+  Nie potrzebujemy do tego ADT.
 
-An error ADT is of value if every entry allows a different kind of recovery to
-be performed.
+ADT niesie ze sobą wartość jeśli każdy wariant pozwala na inną strategię obsługi.
 
-A compromise between an error ADT and a `String` is an intermediary format. JSON
-is a good choice as it can be understood by most logging and monitoring
-frameworks.
+Kompromisem między ADT i `String`iem jest format pośredni, jak np. JSON, który jest rozumiany przez większość
+bibliotek odpowiedzialnych za logowanie i monitoring.
 
-A problem with not having a stacktrace is that it can be hard to localise which
-piece of code was the source of an error. With [`sourcecode` by Li Haoyi](https://github.com/lihaoyi/sourcecode/), we can
-include contextual information as metadata in our errors:
+Brak stacktrace'a może znacznie utrudnić zlokalizowamie fragmentu kodu odpowiedzialnego za zgłoszenie danego błędu.
+Możemy rozwiązać ten problem używając biblioteki [`sourcecode` autorstwa Li Haoyi](https://github.com/lihaoyi/sourcecode/):
 
 {lang="text"}
 ~~~~~~~~
@@ -7649,11 +7605,9 @@ include contextual information as metadata in our errors:
   final case class Err(msg: String)(implicit val meta: Meta)
 ~~~~~~~~
 
-Although `Err` is referentially transparent, the implicit construction of a
-`Meta` does **not** appear to be referentially transparent from a natural reading:
-two calls to `Meta.gen` (invoked implicitly when creating an `Err`) will produce
-different values because the location in the source code impacts the returned
-value:
+Mimo że `Err` jest referencyjnie transparentny, jego niejawna konstrukcja już nie.
+Dwa wywołania `Meta.gen` wyprodukują różne wartości, ponieważ ich umieszczenie w kodzie
+wpływa na zwracaną wartość:
 
 {lang="text"}
 ~~~~~~~~
@@ -7664,9 +7618,9 @@ value:
   Meta(com.acme,<console>,11)
 ~~~~~~~~
 
-To understand this, we have to appreciate that `sourcecode.*` methods are macros
-that are generating source code for us. If we were to write the above explicitly
-it is clear what is happening:
+Aby zrozumieć czemu tak się dzieje musimy zdać sobie sprawę że metody `sourcecode.*` to tak
+na prawdę makra, które generują dla nas kod. Jeśli napiszemy tę samą logikę wprost, to
+wszystko stanie się jasne:
 
 {lang="text"}
 ~~~~~~~~
@@ -7677,19 +7631,18 @@ it is clear what is happening:
   Meta(com.acme,<console>,11)
 ~~~~~~~~
 
-Yes, we've made a deal with the macro devil, but we could also write the `Meta`
-manually and have it go out of date quicker than our documentation.
+Zgadza się, zawraliśmy pakt z diabłem pod postacią makr, ale jeśli mielibyśmy tworzyć obiekty
+`Meta` ręcznie to nasz kod zdezaktualizowywałby się szybciej niż nasza dokumentacja.
 
 
 ### `ReaderT`
 
-The reader monad wraps `A => F[B]` allowing a program `F[B]` to depend on a
-runtime value `A`. For those familiar with dependency injection, the reader
-monad is the FP equivalent of Spring or Guice's `@Inject`, without the XML and
-reflection.
+Monada `ReaderT` opakowuje `A => F[B]` pozwalając programowi `F[B]` zależeć od wartości `A` znanej dopiero w czasie wykonania.
+Dla tych zaznajomionych ze wsztrzykiwaniem zależności (_dependency injection_), jest to funkcyjny odpowiednik
+anotacji `@Inject` znanej ze Springa lub Guice'a, tyle że bez dodatku XMLa czy refleksji.
 
-`ReaderT` is just an alias to another more generally useful data type named
-after the mathematician *Heinrich Kleisli*.
+`ReaderT` jest w rzeczywistości jedynie aliasem do bardziej ogólnego typu danych
+nazwanego na cześć matematyka *Henryka Kleisli*.
 
 {lang="text"}
 ~~~~~~~~
@@ -7709,22 +7662,19 @@ after the mathematician *Heinrich Kleisli*.
   }
 ~~~~~~~~
 
-A> Some people call `>=>` the *fish operator*. There's always a bigger fish, hence
-A> `>==>`. They are also called *Kleisli arrows*.
+A> Niektórzy nazywają `>=>` *operatorem ryby* (_fish operator_). Zawsze jest też większa ryba, stąd i `>==>`. Inna nazwa to *strzałki Kleisli* (_Kleisli arrows_).
 
-An `implicit` conversion on the companion allows us to use a `Kleisli` in place
-of a function, so we can provide it as the parameter to a monad's `.bind`, or
-`>>=`.
+Niejawna konwersja widoczna w obiekcie towarzyszącym pozwala nam używać `Kelisli` tam gdzie spodziewamy się funkcji,
+w efekcie czego możemy przekazywać instancje tego typu jako parametr do `.bind` lub `>>=`.
 
-The most common use for `ReaderT` is to provide environment information to a
-program. In `drone-dynamic-agents` we need access to the user's Oauth 2.0
-Refresh Token to be able to contact Google. The obvious thing is to load the
-`RefreshTokens` from disk on startup, and make every method take a
-`RefreshToken` parameter. In fact, this is such a common requirement that Martin
-Odersky has proposed [implicit functions](https://www.scala-lang.org/blog/2016/12/07/implicit-function-types.html).
+Najpopularniejszym zastosowaniem `ReaderT` jest dostarcznieme informacji ze środowiska do naszego programu.
+W `drone-dynamic-agents` potrzebujemy dostępu do tokenu odświeżającego Oauth 2.0 dla naszego użytkownika, aby
+móc połączyć się z serwerm Google'a. Oczywistym wydaje się odczytanie `RefreshTokens` z dysku przy starcie aplikacji i
+dodanie parametru `RefreshToken` do każdej metody. Okazuje się że jest to problem na tyle częsty ze Martin Odersky
+zaproponował nowy mechanizm [funkcji niejawnych](https://www.scala-lang.org/blog/2016/12/07/implicit-function-types.html),
+które mogłyby nam tutaj pomóc.
 
-A better solution is for our program to have an algebra that provides the
-configuration when needed, e.g.
+Lepszym rozwiązaniem jest zdefiniowanie algebry, która dostarczy potrzebnej nam konfiguracji, np:
 
 {lang="text"}
 ~~~~~~~~
@@ -7733,8 +7683,8 @@ configuration when needed, e.g.
   }
 ~~~~~~~~
 
-We have reinvented `MonadReader`, the typeclass associated to `ReaderT`, where
-`.ask` is the same as our `.token`, and `S` is `RefreshToken`:
+Tym samym odkryliśmy typeklasę `MonadReader`, związaną z `ReaderT`, gdzie `.ask` jest tym samym
+co nasza metoda `.token`, a `S` to `RefreshToken`:
 
 {lang="text"}
 ~~~~~~~~
@@ -7745,7 +7695,7 @@ We have reinvented `MonadReader`, the typeclass associated to `ReaderT`, where
   }
 ~~~~~~~~
 
-with the implementation
+wraz z implementacją
 
 {lang="text"}
 ~~~~~~~~
@@ -7760,14 +7710,12 @@ with the implementation
   }
 ~~~~~~~~
 
-A law of `MonadReader` is that the `S` cannot change between invocations, i.e.
-`ask >> ask === ask`. For our usecase, this is to say that the configuration is
-read once. If we decide later that we want to reload configuration every time we
-need it, e.g. allowing us to change the token without restarting the
-application, we can reintroduce `ConfigReader` which has no such law.
+Prawa obowiązujące `MonadReader` zastrzegają, że `S` nie może zmieniać się między wywołaniami, a więc
+`ask >> ask === ask`. W naszym przypadku oznacza to, że konfiguracja jest czytana raz. Jeśli
+później zdecydujemy, że chcielibyśmy przeładowywać konfigurację za każdym razem gdy jest potrzebna,
+to możemy ponownie wprowadzić typ `ConfigReader`, który nie ma takich ograniczeń.
 
-In our OAuth 2.0 implementation we could first move the `Monad` evidence onto the
-methods:
+W naszej implementacji OAuth 2.0 możemy zaczać od przeniesienia parametru `Monad` do metod:
 
 {lang="text"}
 ~~~~~~~~
@@ -7775,7 +7723,7 @@ methods:
     for { ...
 ~~~~~~~~
 
-and then refactor the `refresh` parameter to be part of the `Monad`
+a następnie zamienić parametr `refresh` we fragment `Monad`y
 
 {lang="text"}
 ~~~~~~~~
@@ -7784,22 +7732,20 @@ and then refactor the `refresh` parameter to be part of the `Monad`
       refresh <- F.ask
 ~~~~~~~~
 
-Any parameter can be moved into the `MonadReader`. This is of most value to
-immediate callers when they simply want to thread through this information from
-above. With `ReaderT`, we can reserve `implicit` parameter blocks entirely for
-the use of typeclasses, reducing the mental burden of using Scala.
+W ten sposób możemy przenieść dowolny parametr do `MonadReader`, co niesie największą wartość
+dla wywołań, które tylko przekazują tę wartość z zewnątrz. 
 
-The other method in `MonadReader` is `.local`
+Druga metodą w `MonadReader`ze jest `.local`
 
 {lang="text"}
 ~~~~~~~~
   def local[A](f: S => S)(fa: F[A]): F[A]
 ~~~~~~~~
 
-We can change `S` and run a program `fa` within that local context, returning to
-the original `S`. A use case for `.local` is to generate a "stack trace" that
-makes sense to our domain. giving us nested logging! Leaning on the `Meta` data
-structure from the previous section, we define a function to checkpoint:
+Możemy zmodyfikować `S` i uruchomić `fa` wewnątrz takiego kontekstu. Przykładowym zastosowaniem `.local`
+może być generowanie "śladów stosu", które mają sens dla naszej domeny, pozwalając nam tym samym
+na zagnieżdżone logowanie! Polegając na typie `Meta` z poprzedniego rozdziału, możemy zdefiniować 
+poniższą funkcję:
 
 {lang="text"}
 ~~~~~~~~
@@ -7807,36 +7753,33 @@ structure from the previous section, we define a function to checkpoint:
     F.local(Meta.gen :: _)(fa)
 ~~~~~~~~
 
-and we can use it to wrap functions that operate in this context.
+i używać jej do opakowywania funkcji, które wymagają takiego kontekstu
 
 {lang="text"}
 ~~~~~~~~
   def foo: F[Foo] = traced(getBar) >>= barToFoo
 ~~~~~~~~
 
-automatically passing through anything that is not explicitly traced. A compiler
-plugin or macro could do the opposite, opting everything in by default.
+automatycznie przekazując dalej wszystko co nie jest oznaczone wprost. Plugin do kompilatora albo makro mogłoby
+działać odwrotnie, śledząc wszystko automatycznie.
 
-If we access `.ask` we can see the breadcrumb trail of exactly how we were
-called, without the distraction of bytecode implementation details. A
-referentially transparent stacktrace!
+Jeśli wywołamy `.ask` zobaczymy dokładne ślady prowadzące do naszego wywołania, bez detali implementacyjnych
+związanych z kodem bajtowym. Tym samym otrzymaliśmy referencyjnie transparenty ślad stosu!
 
-A defensive programmer may wish to truncate the `IList[Meta]` at a certain
-length to avoid the equivalent of a stack overflow. Indeed, a more appropriate
-data structure is `Dequeue`.
+Ostrożny programista mógłby chcieć w pewnym momencie przyciąć `IList[Meta]` aby uniknąć odpowiednika
+przepełnienia stosu. Tym samym bardziej odpowiednią strukturą danych była by `Dequeue`.
 
-`.local` can also be used to keep track of contextual information that is
-directly relevant to the task at hand, like the number of spaces that must
-indent a line when pretty printing a human readable file format, bumping it by
-two spaces when we enter a nested structure.
+`.local` może być użyte również do śledzenie informacji kontekstowych, które są bezpośrednio związane
+z aktualnie wykonywanym zadaniem, jak na przykład liczba spacji potrzebnych do wcięcia lini gdy wyświetlamy
+format przyjazny dla ludzi, zwiększając tę liczbę o dwa gdy zwiększamy zagnieżdżenie.
 
-A> Not four spaces. Not eight spaces. Not a TAB.
-A> 
-A> Two spaces. Exactly two spaces. This is a magic number we can hardcode, because
-A> every other number is **wrong**.
+A> Nie cztery. Nie osiem. Nie TAB.
+A>
+A> Dwie spacje. Dokładnie dwie spacje. To jest magiczna liczba, którą możemy zahardkodować, ponieważ
+A> wszystkie inne warianty są **błędne**.
 
-Finally, if we cannot request a `MonadReader` because our application does not
-provide one, we can always return a `ReaderT`
+W końcu, kiedy nie możemy zażądać instancji `MonadReader`, ponieważ nasza aplikacja nie umie takowej
+dostarczyć, możemy zawsze zwrócić `ReaderT`
 
 {lang="text"}
 ~~~~~~~~
@@ -7845,24 +7788,22 @@ provide one, we can always return a `ReaderT`
     ...
 ~~~~~~~~
 
-If a caller receives a `ReaderT`, and they have the `token` parameter to hand,
-they can call `access.run(token)` and get back an `F[BearerToken]`.
+Jeśli wywołujący otrzyma `ReaderT` i ma pod ręką parametr `token`, to wystarczy, że wywoła
+`access.run(token)` aby otrzymać `F[BearerToken]`.
 
-Admittedly, since we don't have many callers, we should just revert to a regular
-function parameter. `MonadReader` is of most use when:
+Faktycznie, biorąc pod uwagę fakt, że nie mamy zbyt wiele wywołujących, powinniśmy wrócić do tradycyjnych
+parametrów funkcji. `MonadReader` ma na najwięcej zastosowań gdy:
 
-1.  we may wish to refactor the code later to reload config
-2.  the value is not needed by intermediate callers
-3.  or, we want to locally scope some variable
+1. możemy chcieć później przerefactorować kod aby konfuguracja była przeładowywana
+2. wartość nie jest używana przez metody pośredniczące (_intermediate callers_)
+3. chcemy lokalnie zmienić jakąś zmienną
 
-Dotty can keep its implicit functions... we already have `ReaderT` and
-`MonadReader`.
+Dotty może zatrzymać funkcje niejawne dla siebie... my już mamy wszystko co nam potrzeba: `ReaderT` i `MonadReader`.
 
 
 ### `WriterT`
 
-The opposite to reading is writing. The `WriterT` monad transformer is typically
-for writing to a journal.
+Odwrotnością czytania jest pisanie, a transformator monad `WriterT` służy właśnie do tego.
 
 {lang="text"}
 ~~~~~~~~
@@ -7874,9 +7815,9 @@ for writing to a journal.
   }
 ~~~~~~~~
 
-The wrapped type is `F[(W, A)]` with the journal accumulated in `W`.
+Opakowywany typ to `F[(W, A)]`, a nasz dziennik jest akumulowany wewnątrz `W`.
 
-There is not just one associated monad, but two! `MonadTell` and `MonadListen`
+Mamy do dyspozycji nie jedną, a dwie powiązane monady: `MonadTell` i `MonadListen`!
 
 {lang="text"}
 ~~~~~~~~
@@ -7895,8 +7836,9 @@ There is not just one associated monad, but two! `MonadTell` and `MonadListen`
   }
 ~~~~~~~~
 
-`MonadTell` is for writing to the journal and `MonadListen` is to recover it.
-The `WriterT` implementation is
+`MonadTell` służy do spisywania dziennika a `MonadListen` do jego odtwrzania.
+
+Ich implementacja dla `WriterT` wygląda następująco:
 
 {lang="text"}
 ~~~~~~~~
@@ -7911,9 +7853,8 @@ The `WriterT` implementation is
   }
 ~~~~~~~~
 
-The most obvious example is to use `MonadTell` for logging, or audit reporting.
-Reusing `Meta` from our error reporting we could imagine creating a log
-structure like
+Oczywistym zastosowaniem `MonadTell` jest logowanie lub zbieranie danych audytowych. Raz jeszcze używając
+`Meta` możemy wyobrazić sobie taki log
 
 {lang="text"}
 ~~~~~~~~
@@ -7923,8 +7864,8 @@ structure like
   final case class Warning(msg: String)(implicit m: Meta) extends Log
 ~~~~~~~~
 
-and use `Dequeue[Log]` as our journal type. We could change our OAuth2
-`authenticate` method to
+i użyć `Dequeue[Log]` jako naszego dziennika. Tym razem zmodyfikujemy metodę `authenticate` z części kodu
+odpowiedzialnej za obsługę OAuth2.
 
 {lang="text"}
 ~~~~~~~~
@@ -7940,23 +7881,19 @@ and use `Dequeue[Log]` as our journal type. We could change our OAuth2
     } yield code
 ~~~~~~~~
 
-We could even combine this with the `ReaderT` traces and get structured logs.
+Moglibyśmy nawet połączyć to podejśce ze śledzeniem opartym o `ReaderT` aby uzyskać ustrukturalizowany log zdarzeń.
 
-The caller can recover the logs with `.written` and do something with them.
+Dziennik może zostać odzyskany za pomocą `.written`, a następnie dowolnie modyfikowany.
 
-However, there is a strong argument that logging deserves its own algebra. The
-log level is often needed at the point of creation for performance reasons and
-writing out the logs is typically managed at the application level rather than
-something each component needs to be concerned about.
+Jednak istnieje silny argument za tym, aby logowanie otrzymało swoją własną algebrę. Poziom logowania jest często potrzebny
+w momencie stworzenia wiadomości dla celów wydajnościowych, a ponad to logowanie często konfigurowane 
+i zarządzane jest na poziomie całej aplikacji, a nie pojedynczych komponentów.
 
-The `W` in `WriterT` has a `Monoid`, allowing us to journal any kind of
-*monoidic* calculation as a secondary value along with our primary program. For
-example, counting the number of times we do something, building up an
-explanation of a calculation, or building up a `TradeTemplate` for a new trade
-while we price it.
+Parametr `W` w `WriterT` posiada `Monoid`, pozwalając nam tym samym na wszelkiego rodzaju monoidyczne operacje,
+które będą działy się równolegle do naszego głównego programu. Możemy na przykład zliczać ile razy coś się wydarzyło,
+budować opis obliczeń lub tworzyć `TradeTemplate` dla nowej transkacji gdy ją wyceniamy.
 
-A popular specialisation of `WriterT` is when the monad is `Id`, meaning the
-underlying `run` value is just a simple tuple `(W, A)`.
+Popularną spejcalizacją `WriterT` jest użycie go z monadą `Id`, sprawiając że leżąca pod spodem wartość `run` to prosta tupla `(W, A)`.
 
 {lang="text"}
 ~~~~~~~~
@@ -7972,24 +7909,22 @@ underlying `run` value is just a simple tuple `(W, A)`.
   }
 ~~~~~~~~
 
-which allows us to let any value carry around a secondary monoidal calculation,
-without needing a context `F[_]`.
+W taki sposób możemy nieść dodatkową monoidyczną kalkulację obok dowolnej wartości bez kontekstu `F[_]`.
 
-In a nutshell, `WriterT` / `MonadTell` is how to multi-task in FP.
+W skrócie, `WriterT` / `MonadTell` to sposoby na multizadaniowość w stylu FP.
 
 
 ### `StateT`
 
-`StateT` lets us `.put`, `.get` and `.modify` a value that is handled by the
-monadic context. It is the FP replacement of `var`.
+`StateT` pozwala nam włożyć (`.put`), wyciągnąć (`.get`) i zmodyfikować (`.modify`) wartość zarządzaną przez monadyczny kontekst.
+Jest to czysto funkcyjny zamiennik dla `var`.
 
-If we were to write an impure method that has access to some mutable state, held
-in a `var`, it might have the signature `() => F[A]` and return a different
-value on every call, breaking referential transparency. With pure FP the
-function takes the state as input and returns the updated state as output, which
-is why the underlying type of `StateT` is `S => F[(S, A)]`.
+Jeśli mielibyśmy napisać nieczystą metodę korzystającą z mutowalnego stanu przechowywanego wewnątrz `var`, jej sygnatura
+mogłaby przyjąć postać `() => F[A]`, a ona sama zwracałaby inną wartość przy każdym wywołaniu, zaburzając w ten sposób transparentność
+referencyjną. W czystym FP taka funkcja przyjmuje stan jako wejście i produkuje i zwraca zmodyfikowany stan jako wyjście.
+Dlatego też `StateT` opakowuje `S => F[(S,A)]`.
 
-The associated monad is `MonadState`
+Pozwiązana monada to `MonadState`
 
 {lang="text"}
 ~~~~~~~~
@@ -8002,12 +7937,11 @@ The associated monad is `MonadState`
   }
 ~~~~~~~~
 
-A> `S` must be an immutable type: `.modify` is not an escape hatch to update a
-A> mutable data structure. Mutability is impure and is only allowed within an `IO`
-A> block.
+A> Typ `S` musi być niemutowalny. `.modify` nie jest tylną furtką do modyfikowania mutowalnych
+A> struktur danych. Mutowalność jest nieczysta i dozwolona jedynie wewnątrz bloku `IO`.
 
-`StateT` is implemented slightly differently than the monad transformers we have
-studied so far. Instead of being a `case class` it is an ADT with two members:
+Struktura `StateT` jest zaimplementowana nieco inaczej niż transformatory, które widzieliśmy do tej pory,
+nie jest case klasą lecz ADT z dwoma wariantami:
 
 {lang="text"}
 ~~~~~~~~
@@ -8026,8 +7960,8 @@ studied so far. Instead of being a `case class` it is an ADT with two members:
   }
 ~~~~~~~~
 
-which are a specialised form of `Trampoline`, giving us stack safety when we
-want to recover the underlying data structure, `.run`:
+które są wyspecjalizowaną formą `Trampoline`, dając nam bezpieczeńśtwo stosu kiedy chcemy odwołać się
+do leżącej pod spodem struktury za pomocą `.run`:
 
 {lang="text"}
 ~~~~~~~~
@@ -8043,7 +7977,7 @@ want to recover the underlying data structure, `.run`:
   }
 ~~~~~~~~
 
-`StateT` can straightforwardly implement `MonadState` with its ADT:
+`StateT` ze swoim ADT w trywialny sposób implementuje `MonadState`
 
 {lang="text"}
 ~~~~~~~~
@@ -8057,7 +7991,7 @@ want to recover the underlying data structure, `.run`:
   }
 ~~~~~~~~
 
-With `.pure` mirrored on the companion as `.stateT`:
+`.pure` otrzymał swoją kopię `.stateT` w obiekcie towarzyszącym:
 
 {lang="text"}
 ~~~~~~~~
@@ -8067,13 +8001,10 @@ With `.pure` mirrored on the companion as `.stateT`:
   }
 ~~~~~~~~
 
-and `MonadTrans.liftM` providing the `F[A] => StateT[F, S, A]` constructor as
-usual.
+a `MonadTrans.liftM` jak zawsze dostarcza nam konstruktor `F[A] => StateT[F, S, A]`.
 
-A common variant of `StateT` is when `F = Id`, giving the underlying type
-signature `S => (S, A)`. Scalaz provides a type alias and convenience functions
-for interacting with the `State` monad transformer directly, and mirroring
-`MonadState`:
+Popularną odmiana `StateT` jest `F = Id`. W takim wypadku opakowywany typ to `S => (S, A)`.
+Scalaz definiuje alias typu `State` i wygodne funkcje to interakcji z nim, które udają `MonadState`:
 
 {lang="text"}
 ~~~~~~~~
@@ -8089,10 +8020,8 @@ for interacting with the `State` monad transformer directly, and mirroring
   }
 ~~~~~~~~
 
-For an example we can return to the business logic tests of
-`drone-dynamic-agents`. Recall from Chapter 3 that we created `Mutable` as test
-interpreters for our application and we stored the number of `started` and
-`stoped` nodes in `var`.
+Wróćmy na chwilę do testów logiki biznesowej z `drone-dynamic-agents`. W Rozdziale 3 stworzyliśmy testowy interpreter `Mutable`,
+który przechowywał liczbę wystartowanych i zatrzymanych węzłów w `var`.
 
 {lang="text"}
 ~~~~~~~~
@@ -8105,9 +8034,8 @@ interpreters for our application and we stored the number of `started` and
   }
 ~~~~~~~~
 
-We now know that we can write a much better test simulator with `State`. We will
-take the opportunity to upgrade the accuracy of the simulation at the same time.
-Recall that a core domain object is our application's view of the world:
+Teraz wiemy już jak napisać dużo lepszy interpreter używając `State`. Przy okazji skorzystamy z możliwości
+zwiększenia dokładności naszej symulacji. Przypomnijmy nasz kluczowy obiekt przechowujący obraz świata:
 
 {lang="text"}
 ~~~~~~~~
@@ -8121,8 +8049,8 @@ Recall that a core domain object is our application's view of the world:
   )
 ~~~~~~~~
 
-Since we're writing a simulation of the world for our tests, we can create a
-data type that captures the ground truth of everything
+Skoro piszemy symulację świata na potrzeby naszych testów, to możemy zdefiniować typ danych
+przechwytujący pełen obraz wszystkiego
 
 {lang="text"}
 ~~~~~~~~
@@ -8137,18 +8065,14 @@ data type that captures the ground truth of everything
   )
 ~~~~~~~~
 
-A> We have not yet rewritten the application to fully make use Scalaz data types
-A> and typeclasses, and we are still relying on stdlib collections. There is no
-A> urgency to update as this is straightforward and these types can be used in a
-A> pure FP manner.
+A> Jeszcze nie przepisaliśmy naszej aplikacji tak aby w pełni wykorzystywała typy danych i typeklasy
+A> dostępne w Scalaz i w dalszym ciągu używamy kolekcji z biblioteki standardowej. Nie musimy się jednak spieszyć
+A> gdyż to podejście jest proste a wykorzystywane typy mogą być używane w zgodzie z czystym FP.
 
-The key difference being that the `started` and `stopped` nodes can be separated
-out. Our interpreter can be implemented in terms of `State[World, a]` and we can
-write our tests to assert on what both the `World` and `WorldView` looks like
-after the business logic has run.
+Główną różnicą jest to, że mamy do dyspozycji zmienne `started` i `stopped`. Nasz interpreter może być budowany na bazie
+`State[World, a]` pozwalając nam na weryfikacje tego jak wygląda zarówno `World` jak i `WorldView` po wykonaniu logiki biznesowej.
 
-The interpreters, which are mocking out contacting external Drone and Google
-services, may be implemented like this:
+Interpretery udające zewnętrzne usługi Drone i Google będą wyglądać tak:
 
 {lang="text"}
 ~~~~~~~~
@@ -8176,14 +8100,14 @@ services, may be implemented like this:
   }
 ~~~~~~~~
 
-and we can rewrite our tests to follow a convention where:
+a my możemy przepisać nasze testy tak aby zachowywały konwencję:
 
--   `world1` is the state of the world before running the program
--   `view1` is the application's belief about the world
--   `world2` is the state of the world after running the program
--   `view2` is the application's belief after running the program
+- `world1` to stan świata przed uruchomieniem programu
+- `view1` to widok świata z punktu widzenia aplikacji
+- `world2` to stan świata po uruchomieniu programu
+- `view2` to widok świata z punktu widzenia aplikacji po uruchomieniu programu
 
-For example,
+Przykład:
 
 {lang="text"}
 ~~~~~~~~
@@ -8199,7 +8123,7 @@ For example,
   }
 ~~~~~~~~
 
-We would be forgiven for looking back to our business logic loop
+Moglibyśmy spojrzeć na naszą nieskończoną pętlę logiki biznesowej
 
 {lang="text"}
 ~~~~~~~~
@@ -8209,25 +8133,22 @@ We would be forgiven for looking back to our business logic loop
     state = act(state)
 ~~~~~~~~
 
-and use `StateT` to manage the `state`. However, our `DynAgents` business logic
-requires only `Applicative` and we would be violating the *Rule of Least Power*
-to require the more powerful `MonadState`. It is therefore entirely reasonable
-to handle the state manually by passing it in to `update` and `act`, and let
-whoever calls us use a `StateT` if they wish.
-
+i użyć w niej `StateT` do zarządzania stanem. Niestety, w ten sposób naruszylibyśmy *Regułę Najmniejszej Mocy* wymagając
+`MonadState` zamiast aktualnie wymaganego `Applicative`. Tak więc całkowicie rozsądne jest zarządzanie ręczne
+i przekazywanie stanu do `update` i `act`.
 
 ### `IndexedStateT`
 
-The code that we have studied thus far is not how Scalaz implements `StateT`.
-Instead, a type alias points to `IndexedStateT`
+Kod, który widzieliśmy do tej pory nie pochodzi ze Scalaz. Tak naprawdę `StateT` jest zaimplementowany tam
+jako alias typu wskazujący na kolejny typ: `IndexedStateT`.
 
 {lang="text"}
 ~~~~~~~~
   type StateT[F[_], S, A] = IndexedStateT[F, S, S, A]
 ~~~~~~~~
 
-The implementation of `IndexedStateT` is much as we have studied, with an extra
-type parameter allowing the input state `S1` and output state `S2` to differ:
+Implementacja `IndexedStateT` jest bardzo podobna do tej, którą widzieliśmy do tej pory, z dodatkiem
+jednego parametru typu pozwalającego na to by stan wejściowy `S1` był inny niż stan wyjściowy `S2`:
 
 {lang="text"}
 ~~~~~~~~
@@ -8251,13 +8172,13 @@ type parameter allowing the input state `S1` and output state `S2` to differ:
   }
 ~~~~~~~~
 
-`IndexedStateT` does not have a `MonadState` when `S1 != S2`, although it has a
-`Monad`.
+`IndexedStateT` nie posiada instancji `MonadState` kiedy `S1 != S2`, więc w takiej sytuacji musi nas zadowolić
+instancja samego `Monad`.
 
-The following example is adapted from [Index your State](https://www.youtube.com/watch?v=JPVagd9W4Lo) by Vincent Marquez.
-Consider the scenario where we must design an algebraic interface for an `Int`
-to `String` lookup. This may have a networked implementation and the order of
-calls is essential. Our first attempt at the API may look something like:
+Poniższy przykład został zaadaptowany z prezentacji Vincentego Maqrqueza [Index your State](https://www.youtube.com/watch?v=JPVagd9W4Lo).
+Wyobraź sobie, że musimy zaprojektować algebraiczy interfejs dla dostępu do wartości typu `String`
+za pomocą klucza typu `Int`. Załóżmy, że jedna z implementacji będzie opierała się na komunikacji sieciowej,
+a kolejność wywołań jest kluczowa. Nasze pierwsze podejście mogłoby wyglądać tak:
 
 {lang="text"}
 ~~~~~~~~
@@ -8270,12 +8191,11 @@ calls is essential. Our first attempt at the API may look something like:
   }
 ~~~~~~~~
 
-with runtime errors if `.update` or `.commit` is called without a `.lock`. A
-more complex design may involve multiple traits and a custom DSL that nobody
-remembers how to use.
+produkując błędy w czasie wykonania jeśli `.update` lub `.commit` zostaną wywołane bez wcześniejszego użycia
+`.lock`. Alternatywą mógłby być skomplikowany DSL, którego nikt nie umiałby użyć bez zaglądania do dokumentacji.
 
-Instead, we can use `IndexedStateT` to require that the caller is in the correct
-state. First we define our possible states as an ADT
+Zamiast tego użyjemy `IndexedStateT` aby wymusić odpowiedni stan na wywołującym. Zacznijmy od możliwych stanów 
+wyrażonych jako ADT
 
 {lang="text"}
 ~~~~~~~~
@@ -8285,7 +8205,7 @@ state. First we define our possible states as an ADT
   final case class Updated(values: Int ==>> String) extends Status
 ~~~~~~~~
 
-and then revisit our algebra
+i odświeżenia naszej algebry
 
 {lang="text"}
 ~~~~~~~~
@@ -8302,7 +8222,7 @@ and then revisit our algebra
   }
 ~~~~~~~~
 
-which will give a compiletime error if we try to `.update` without a `.lock`
+co spowoduje, że próba wywołania `.update` bez wcześniejszego `.lock` spowoduje błąd kompilacji
 
 {lang="text"}
 ~~~~~~~~
@@ -8318,8 +8238,7 @@ which will give a compiletime error if we try to `.update` without a `.lock`
   [error]          ^
 ~~~~~~~~
 
-but allowing us to construct functions that can be composed by explicitly
-including their state:
+pozwalając nam konstruować funkcje, które mogą byc komponowane dzięki wyrażaniu swojego stanu explicite
 
 {lang="text"}
 ~~~~~~~~
@@ -8333,8 +8252,7 @@ including their state:
     } yield a2
 ~~~~~~~~
 
-A> We introduced code duplication in our API when we defined multiple `.read`
-A> operations
+A> Wprowadziliśmy trochę zduplikowanego kodu w naszym API definiując wiele wariantów operacji `.read`
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -8343,16 +8261,16 @@ A>   def readLocked(k: Int): F[Locked, Locked, Maybe[String]]
 A>   def readUncommitted(k: Int): F[Updated, Updated, Maybe[String]]
 A> ~~~~~~~~
 A> 
-A> Instead of
+A> zamiast
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
 A>   def read[S <: Status](k: Int): F[S, S, Maybe[String]]
 A> ~~~~~~~~
 A> 
-A> The reason we didn't do this is, *because subtyping*. This (broken) code would
-A> compile with the inferred type signature `F[Nothing, Ready, Maybe[String]]`
-A> 
+A> Powodem jest podtypowanie (_subtyping_), które pozwala na kompilacje tego błędnego kodu
+A> nadając mu sygnaturę `F[Nothing, Ready, Maybe[String]]`
+A>
 A> {lang="text"}
 A> ~~~~~~~~
 A>   for {
@@ -8362,29 +8280,27 @@ A>     _  <- C.commit
 A>   } yield a1
 A> ~~~~~~~~
 A> 
-A> Scala has a `Nothing` type which is the subtype of all other types. Thankfully,
-A> this code can not make it to runtime, as it would be impossible to call it, but
-A> it is a bad API since users need to remember to add type ascriptions.
-A> 
-A> Another approach would be to stop the compiler from inferring `Nothing`. Scalaz
-A> provides implicit evidence to assert that a type is not inferred as `Nothing`
-A> and we can use it instead:
+A> Wynika to z faktu, że Scala definiuje typ `Nothing`, który jest podtypem wszystkich innych typów.
+A> Na szczęście taki kod nie może być wywołany, ale nadal jest to oznaka kiepsko zaprojektowanego API,
+A> ponieważ użytkownik musi pamiętać o przypisywaniu typów.
+A>
+A> Alternatywnie, można by również powstrzymać kompilator przed inferowaniem `Nothing`, np. za pomocą
+A> niejawnego parametru `NotNothing` pochodzącego ze Scalaz.
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
 A>   def read[S <: Status](k: Int)(implicit NN: NotNothing[S]): F[S, S, Maybe[String]]
 A> ~~~~~~~~
 A> 
-A> The choice of which of the three alternative APIs to prefer is left to the
-A> personal taste of the API designer.
+A> Wybór tego, które z trzech zaprezentowanych API jest najlepsze pozostaje kwestią 
+A> osobistych preferencji projektanta.
 
 
 ### `IndexedReaderWriterStateT`
 
-Those wanting to have a combination of `ReaderT`, `WriterT` and `IndexedStateT`
-will not be disappointed. The transformer `IndexedReaderWriterStateT` wraps `(R,
-S1) => F[(W, A, S2)]` with `R` having `Reader` semantics, `W` for monoidic
-writes, and the `S` parameters for indexed state updates.
+Ci, którzy chcieli kombinacji `ReaderT`, `WriterT` i `InedexedStateT` nie będą zawiedzeni.
+Transformator `IndexedReaderWriterStateT` opakowuje `(R, S1) => F[(W, A, S2)]` gdzie `R`
+to `Reader`, `W` służy do monoidycznych zapisów, a `S` do indeksowanych aktualizacji stanu.
 
 {lang="text"}
 ~~~~~~~~
@@ -8402,8 +8318,8 @@ writes, and the `S` parameters for indexed state updates.
   }
 ~~~~~~~~
 
-Abbreviations are provided because otherwise, let's be honest, these types are
-so long they look like they are part of a J2EE API:
+Do dyspozycji mamy skróty, bo trzeba przyznać, że te typy są tak długie, że wyglądają jak część
+API J2EE.
 
 {lang="text"}
 ~~~~~~~~
@@ -8413,17 +8329,17 @@ so long they look like they are part of a J2EE API:
   val RWST = ReaderWriterStateT
 ~~~~~~~~
 
-`IRWST` is a more efficient implementation than a manually created transformer
-*stack* of `ReaderT[WriterT[IndexedStateT[F, ...], ...], ...]`.
+`IRWST` to bardziej wydajny odpowiednik ręcznie skonstruowanego *stosu* transformatorów 
+`ReaderT[WriterT[IndexedStateT[F, ...], ...], ...]`.
 
 
 ### `TheseT`
 
-`TheseT` allows errors to either abort the calculation or to be accumulated if
-there is some partial success. Hence *keep calm and carry on*.
+`TheseT` pozwala nam wybrać czy błędy mają zakończyć obliczenia czy też mają być zakumulowane
+w przypadku częściowego sukcesu. Stąd *zachowaj spokój i idź dalej* (_keep calm and carry on_).
 
-The underlying data type is `F[A \&/ B]` with `A` being the error type,
-requiring a `Semigroup` to enable the accumulation of errors.
+Opakowywany typ danych to `F[A \&/ B]`, gdzie `A` to typ błędów, z wymaganą instancją `Semigroup`
+jeśli chcemy je akumulować.
 
 {lang="text"}
 ~~~~~~~~
@@ -8451,45 +8367,44 @@ requiring a `Semigroup` to enable the accumulation of errors.
   }
 ~~~~~~~~
 
-There is no special monad associated with `TheseT`, it is just a regular
-`Monad`. If we wish to abort a calculation we can return a `This` value, but we
-accumulate errors when we return a `Both` which also contains a successful part
-of the calculation.
+Nie istnieje żadna specjalna monada dla `TheseT` ponad `Monad`. Jeśli chcemy zakończyć
+obliczenia zwracamy `This` ale akumulujemy błędy zwracając wartość `Both`, która zawiera także
+poprawnie obliczoną część wyniku.
 
-`TheseT` can also be thought of from a different angle: `A` does not need to be
-an *error*. Similarly to `WriterT`, the `A` may be a secondary calculation that
-we are computing along with the primary calculation `B`. `TheseT` allows early
-exit when something special about `A` demands it, like when Charlie Bucket found
-the last golden ticket (`A`) he threw away his chocolate bar (`B`).
-
+Możemy spojrzeć na `TheseT` z innej strony: `A` nie musi być wcale *błędem*. Podobnie jak w przypadku 
+`WriterT`, `A` może być nośnikiem dla innej wartości, którą obliczamy wraz z `B`. `TheseT` pozwala
+zatrzymać się, gdy coś specyficznego dla `A` tego od nas wymaga. Jak wtedy gdy Charlie Bucket
+wyrzucił swoją czekoladę (`B`) jak tylko odnalazł Złoty Kupon (`A`).
 
 ### `ContT`
 
-*Continuation Passing Style* (CPS) is a style of programming where functions
-never return, instead *continuing* to the next computation. CPS is popular in
-Javascript and Lisp as they allow non-blocking I/O via callbacks when data is
-available. A direct translation of the pattern into impure Scala looks like
+*Styl Przekazywania Kontynuacji*[^cps] (CPS, _Continuation Passing Style_) to styl programowania, w którym
+funkcje nigdy nie zwracają wartości, a zamiast tego *kontynuują* następne obliczenia. CPS jest popularny
+w Javascripcie i Lispie pozwalając na wykonywanie nieblokującego IO za pomocą callbacków gdy dane stają się dostępne.
+Bezpośrednie przełożenie tego wzorca na nieczystą Scalę wygląda mniej więcej tak:
+ 
+[^cps]: Jakkolwiek dziwnie to brzmi
 
 {lang="text"}
 ~~~~~~~~
   def foo[I, A](input: I)(next: A => Unit): Unit = next(doSomeStuff(input))
 ~~~~~~~~
 
-We can make this pure by introducing an `F[_]` context
+Możemy sprawić, że ten kod stanie się czysty wprowadzając kontekst `F[_]`
 
 {lang="text"}
 ~~~~~~~~
   def foo[F[_], I, A](input: I)(next: A => F[Unit]): F[Unit]
 ~~~~~~~~
 
-and refactor to return a function for the provided input
+i zwracając funkcję dla danego wejścia
 
 {lang="text"}
 ~~~~~~~~
   def foo[F[_], I, A](input: I): (A => F[Unit]) => F[Unit]
 ~~~~~~~~
 
-`ContT` is just a container for this signature, with a `Monad` instance
+`ContT` to opakowanie dla takiej właśnie sygnatury, z dodatkiem instancji typeklasy `Monad`
 
 {lang="text"}
 ~~~~~~~~
@@ -8505,7 +8420,7 @@ and refactor to return a function for the provided input
   }
 ~~~~~~~~
 
-and convenient syntax to create a `ContT` from a monadic value:
+i wygodnej składni do tworzenia `ContT` z monadycznej wartości:
 
 {lang="text"}
 ~~~~~~~~
@@ -8514,17 +8429,16 @@ and convenient syntax to create a `ContT` from a monadic value:
   }
 ~~~~~~~~
 
-However, the simple callback use of continuations brings nothing to pure
-functional programming because we already know how to sequence non-blocking,
-potentially distributed, computations: that is what `Monad` is for and we can do
-this with `.bind` or a `Kleisli` arrow. To see why continuations are useful we
-need to consider a more complex example under a rigid design constraint.
+Jednak proste użycie calbacków nie wnosi nic do programowania czysto funkcyjnego, ponieważ
+poznaliśmy już sposób na sekwencyjne łączenie nieblokujących, potencjalnie rozproszonych,
+obliczeń: `Monad`ę. Aby zobaczyć dlaczego kontynuacje są użyteczne musimy rozważyć
+bardziej złożony przykład ze sztywnymi ograniczeniami projektowymi.
 
 
 #### Control Flow
 
-Say we have modularised our application into components that can perform I/O,
-with each component owned by a different development team:
+Załóżmy, że podzieliliśmy naszą aplikację na moduły, które mogą wykonywać operacje I/O, a każdy z nich
+rozwijany jest przez osobny zespół:
 
 {lang="text"}
 ~~~~~~~~
@@ -8540,17 +8454,15 @@ with each component owned by a different development team:
   def bar4(a3: A3): IO[A4] = ...
 ~~~~~~~~
 
-Our goal is to produce an `A0` given an `A1`. Whereas Javascript and Lisp would
-reach for continuations to solve this problem (because the I/O could block) we
-can just chain the functions
+Naszym celem jest wyprodukować `A0` na podstawie otrzymanego `A1`. Tam gdzie Javascript lub Lisp
+sięgnęliby po kontynuacje (ponieważ IO może blokować), my możemy po prostu połączyć funkcje
 
 {lang="text"}
 ~~~~~~~~
   def simple(a: A1): IO[A0] = bar2(a) >>= bar3 >>= bar4 >>= bar0
 ~~~~~~~~
 
-We can lift `.simple` into its continuation form by using the convenient `.cps`
-syntax and a little bit of extra boilerplate for each step:
+Możemy wynieść `.simple` do postaci kontynuacji używając `.cps` i odrobiny boilerplate'u:
 
 {lang="text"}
 ~~~~~~~~
@@ -8561,30 +8473,28 @@ syntax and a little bit of extra boilerplate for each step:
   def flow(a: A1): IO[A0]  = (foo1(a) >>= foo2 >>= foo3).run(bar0)
 ~~~~~~~~
 
-So what does this buy us? Firstly, it is worth noting that the control flow of
-this application is left to right
+Co zyskaliśmy? Po pierwsze, warto zauważyć że przepływ kontroli w tej aplikacji biegnie od lewej do prawej strony
 
 {width=60%}
 ![](images/contt-simple.png)
 
-What if we are the authors of `foo2` and we want to post-process the `a0` that
-we receive from the right (downstream), i.e. we want to split our `foo2` into
-`foo2a` and `foo2b`
+Co gdy jako autorzy `foo2` chcielibyśmy zmodyfikować wartość `a0`, którą otrzymujemy z prawej strony? 
+W praktyce oznacza to podzielenie `foo2` na `foo2a` i `foo2b`
 
 {width=75%}
 ![](images/contt-process1.png)
 
-Add the constraint that we cannot change the definition of `flow` or `bar0`.
-Perhaps it is not our code and is defined by the framework we are using.
+Dodajmy ograniczenie, że nie możemy zmodyfikować tego jak zdefiniowane są metody `flow` i `bar0`. 
+Może na przykład pochodzą one z frameworka lub biblioteki, których używamy.
 
-It is not possible to process the output of `a0` by modifying any of the
-remaining `barX` methods. However, with `ContT` we can modify `foo2` to process
-the result of the `next` continuation:
+Nie jesteśmy w stanie przeprocesować `a0` poprzez modyfikację żadnej z pozostałych metod `barX`, 
+jednak używając `ContT` możemy zaimplementować metodę `foo2` tak, aby mogła wykonać obliczenia
+na podstawie wyniku kontynuacji `next`:
 
 {width=45%}
 ![](images/contt-process2.png)
 
-Which can be defined with
+na przykład w taki sposób
 
 {lang="text"}
 ~~~~~~~~
@@ -8596,8 +8506,8 @@ Which can be defined with
   }
 ~~~~~~~~
 
-We are not limited to `.map` over the return value, we can `.bind` into another
-control flow turning the linear flow into a graph!
+Nie jesteśmy ograniczeni do `.map`owania wartości. Możemy również wywołać `.bind` i zamienić
+liniowy przepływ w pełnoprawny graf!
 
 {width=50%}
 ![](images/contt-elsewhere.png)
@@ -8615,7 +8525,7 @@ control flow turning the linear flow into a graph!
   }
 ~~~~~~~~
 
-Or we can stay within the original flow and retry everything downstream
+Możemy też zostać przy oryginalnym przepływie i ponowić wszystkie dalsze operacje 
 
 {width=45%}
 ![](images/contt-retry.png)
@@ -8632,11 +8542,11 @@ Or we can stay within the original flow and retry everything downstream
   }
 ~~~~~~~~
 
-This is just one retry, not an infinite loop. For example, we might want
-downstream to reconfirm a potentially dangerous action.
+W tym wypadku ponawiamy operacje tylko raz, a nie w nieskończoność, np. upewniamy się
+czy na pewno powinniśmy wykonać jakąś potencjalnie niebezpieczną operację.
 
-Finally, we can perform actions that are specific to the context of the `ContT`,
-in this case `IO` which lets us do error handling and resource cleanup:
+W końcu możemy też wykonać akcje specyficzne dla kontekstu `ContT`, czyli w tym wypadku `IO`,
+który pozwala nam na obsługę błędów i uprzątnięcie zasobów:
 
 {lang="text"}
 ~~~~~~~~
@@ -8644,37 +8554,35 @@ in this case `IO` which lets us do error handling and resource cleanup:
 ~~~~~~~~
 
 
-#### When to Order Spaghetti
+#### Kiedy Zamówić Spaghetti
 
-It is not an accident that these diagrams look like spaghetti, that is just what
-happens when we start messing with control flow. All the mechanisms we've
-discussed in this section are simple to implement directly if we can edit the
-definition of `flow`, therefore we do not typically need to use `ContT`.
+Nie przez przypadek nasze diagramy wyglądają jak spaghetti. Tak właśnie się dzieje kiedy
+zaczynamy bawić się przepływem kontroli. Wszystkie mechanizmy które omówiliśmy w tym podrozdziale
+można w łatwy sposób zaimplementować bezpośrednio gdy możemy zmodyfikować `flow`, a więc 
+nie musimy używać `ContT`.
 
-However, if we are designing a framework, we should consider exposing the plugin
-system as `ContT` callbacks to allow our users more power over their control
-flow. Sometimes the customer just really wants the spaghetti.
+Jednak jeśli projektowalibyśmy framework, to system pluginów opartych na `ConT` i pozwalający użytkownikom
+kontrolować przepływ byłby czymś wartym rozważenia. Czasem użytkownik po prostu chce spaghetti.
 
-For example, if the Scala compiler was written using CPS, it would allow for a
-principled approach to communication between compiler phases. A compiler plugin
-would be able to perform some action based on the inferred type of an
-expression, computed at a later stage in the compile. Similarly, continuations
-would be a good API for an extensible build tool or text editor.
+Gdyby kompilator Scali był napisany z użyciem CPS, to kolejne fazy kompilacji mogłyby komunikować się
+ze sobą w prosty i regularny sposób. Plugin kompilatora mógłby wykonywać akcje bazując na wyinferowanym
+typie wyrażenia pochodzącym z późniejszej fazy kompilacji. Podobnie kontynuacje byłyby dobrym API
+dla systemu budowania projektów (_build tool_) albo edytora tekstu.
 
-A caveat with `ContT` is that it is not stack safe, so cannot be used for
-programs that run forever.
+Pułapką `ConT` jest fakt że nie jest to struktura bezpieczna od przepełnienia stosu, a więc
+nie nadaje się do tworzenia programów, które nigdy się nie kończą.
 
 
 #### Great, kid. Don't get `ContT`.
 
-A more complex variant of `ContT` called `IndexedContT` wraps `(A => F[B]) =>
-F[C]`. The new type parameter `C` allows the return type of the entire
-computation to be different to the return type between each component. But if
-`B` is not equal to `C` then there is no `Monad`.
+Bardziej złożony wariant `ContT` znany jako `IndexedContT` opakowuje `(A => F[B] => F[C])`.
+Nowy parametr typu `C`definiuje typ zwracany przez cały pogram, który może być inny, niż
+ten przekazywany między komponentami. Jednak jeśli `B` nie jest równe `C` to nie jesteśmy w stanie
+zdefiniować `Monad`y.
 
-Not missing an opportunity to generalise as much as possible, `IndexedContT` is
-actually implemented in terms of an even more general structure (note the extra
-`s` before the `T`)
+Korzystając z okazji do zgeneralizowania jak to tylko możliwe, zarówno typ `IndexedContT` jak i `ConT` są
+w praktyce zaimplementowane jako aliasy na jeszcze bardziej ogólną strukturę `IndexedContsT` (zwróć uwagę
+na dodatkowe `s` przed `T`)
 
 {lang="text"}
 ~~~~~~~~
@@ -8686,58 +8594,44 @@ actually implemented in terms of an even more general structure (note the extra
   type Cont[b, a]                  = IndexedContsT[Id, Id, b, b, a]
 ~~~~~~~~
 
-where `W[_]` has a `Comonad`, and `ContT` is actually implemented as a type
-alias. Companion objects exist for these type aliases with convenient
-constructors.
+w której `W[_]` posiada instancję `Comonad`. Dla wspomnianych aliasów istnieją obiekty towarzyszące
+z pomocnymi konstruktorami.
 
-Admittedly, five type parameters is perhaps a generalisation too far. But then
-again, over-generalisation is consistent with the sensibilities of
-continuations.
+Wprawdzie pięć parametrów typów to raczej przesada, ale takie przegeneralizowanie pozostaje spójne
+ze specyfiką kontynuacji.
 
 
-### Transformer Stacks and Ambiguous Implicits
+### Stos Transformatorów i Niejednoznaczne Parametry Niejawne
 
-This concludes our tour of the monad transformers in Scalaz.
+Czas podsumować naszą wycieczkę wśród transformatorów monad zdefiniowanych w Scalaz.
 
-When multiple transformers are combined, we call this a *transformer stack* and
-although it is verbose, it is possible to read off the features by reading the
-transformers. For example if we construct an `F[_]` context which is a set of
-composed transformers, such as
+Kiedy wiele transformatorów jest składanych ze sobą nazywamy to *stosem transformatorów* (_transformer stack_),
+i mimo, że jest to dość rozwlekłe, to można odczytać dostarczane w ten sposób funkcjonalności. Jeśli skonstruujemy
+kontekst `F[_]` taki jak
 
 {lang="text"}
 ~~~~~~~~
   type Ctx[A] = StateT[EitherT[IO, E, ?], S, A]
 ~~~~~~~~
 
-we know that we are adding error handling with error type `E` (there is a
-`MonadError[Ctx, E]`) and we are managing state `A` (there is a `MonadState[Ctx,
-S]`).
+wiemy, że dodajemy obsługę błędów typu `E` (istnieje `MonadError[Ctx. E]`) i stan `A`
+(istnieje `MonadState[Ctx, S]`).
 
-But there are unfortunately practical drawbacks to using monad transformers and
-their companion `Monad` typeclasses:
+Niestety istnieją pewne praktyczne przeciwności co do stosowania takich stosów i towarzyszących im
+instancji typeklas:
 
-1.  Multiple implicit `Monad` parameters mean that the compiler cannot find the
-    correct syntax to use for the context.
+1. Wiele niejawnych instancji `Monad` oznacza, że kompilator nie może odnaleźć odpowiedniej składni dla kontekstu
+2. Monady nie komponują się w sposób ogólny, co oznacza, że kolejność zagnieżdżania ma znaczenie
+3. Wszystkie interpretery muszą obsługiwać ten wspólny kontekst. Dla przykładu: jeśli mamy implementację pewnej algebry,
+   która używa `IO`, to i tak musimy opakować ją w `StateT` i `EitherT` mimo że nie będą one używane w interpreterze.
+4. Każda warstwa niesie ze sobą koszt wydajnościowy. Niektóre transformatory są gorsze niż inne, np. `StateT` jest szczególnie kosztowny,
+   ale nawet `EitherT` może sprawiać problemy z alokacją pamięci dla aplikacji o dużej przepustowości.
 
-2.  Monads do not compose in the general case, which means that the order of
-    nesting of the transformers is important.
+Porozmawiajmy o obejściach tych problemów.
 
-3.  All the interpreters must be lifted into the common context. For example, we
-    might have an implementation of some algebra that uses for `IO` and now we
-    need to wrap it with `StateT` and `EitherT` even though they are unused
-    inside the interpreter.
+#### Brak Składni
 
-4.  There is a performance cost associated to each layer. And some monad
-    transformers are worse than others. `StateT` is particularly bad but even
-    `EitherT` can cause memory allocation problems for high throughput
-    applications.
-
-We need to talk about workarounds.
-
-
-#### No Syntax
-
-Say we have an algebra
+Powiedzmy, że mamy algebrę
 
 {lang="text"}
 ~~~~~~~~
@@ -8746,7 +8640,7 @@ Say we have an algebra
   }
 ~~~~~~~~
 
-and some data types
+i typy danych
 
 {lang="text"}
 ~~~~~~~~
@@ -8754,7 +8648,7 @@ and some data types
   final case class Table(last: Int)
 ~~~~~~~~
 
-that we want to use in our business logic
+które chcielibyśmy użyć w naszej logice biznesowej
 
 {lang="text"}
 ~~~~~~~~
@@ -8770,7 +8664,7 @@ that we want to use in our business logic
   } yield i
 ~~~~~~~~
 
-The first problem we encounter is that this fails to compile
+Pierwszy problem: nasz kod się nie kompiluje.
 
 {lang="text"}
 ~~~~~~~~
@@ -8779,8 +8673,7 @@ The first problem we encounter is that this fails to compile
   [error]              ^
 ~~~~~~~~
 
-There are some tactical solutions to this problem. The most obvious is to make
-all the parameters explicit
+Istnieją pewne taktyczne rozwiązania tego problemu. Najbardziej oczywistym jest przyjęcie parametrów wprost
 
 {lang="text"}
 ~~~~~~~~
@@ -8791,15 +8684,13 @@ all the parameters explicit
   ): F[Int] = ...
 ~~~~~~~~
 
-and require only `Monad` to be passed implicitly via context bounds. However,
-this means that we must manually wire up the `MonadError` and `MonadState` when
-calling `foo1` and when calling out to another method that requires an
-`implicit`.
+i wymaganie jedynie `Monad`y niejawnie poprzez ograniczenie kontekstu. Jednak oznacza to, że musimy ręcznie
+przekazać `MonadError` i `MonadState` kiedy wywołujemy `foo1` oraz gdy wołamy inne metody, które wymagają 
+parametrów niejawnych.
 
-A second solution is to leave the parameters `implicit` and use name shadowing
-to make all but one of the parameters explicit. This allows upstream to use
-implicit resolution when calling us but we still need to pass parameters
-explicitly if we call out.
+Drugim rozwiązaniem jest pozostawienie parametrów jako `implicit` i użycie przesłaniania nazw tak by wszystkie
+stały się jawne. Pozwala to innym wywoływać nas używając niejawnego rozstrzygania, ale my nadal musimy
+przekazywać parametry wprost gdy są potrzebne.
 
 {lang="text"}
 ~~~~~~~~
@@ -8812,8 +8703,8 @@ explicitly if we call out.
   ): F[Int] = shadow(E, S) { (E, S) => ...
 ~~~~~~~~
 
-or we could shadow just one `Monad`, leaving the other one to provide our syntax
-and to be available for when we call out to other methods
+Moglibyśmy też przesłonić tylko jedną z `Monad`, pozostawiając drugą tak by mogła być użyta do dostarczenia
+nam potrzebnej składni i gdy wywołujemy inne metody.
 
 {lang="text"}
 ~~~~~~~~
@@ -8827,9 +8718,8 @@ and to be available for when we call out to other methods
   ): F[Int] = shadow(E) { E => ...
 ~~~~~~~~
 
-A third option, with a higher up-front cost, is to create a custom `Monad`
-typeclass that holds `implicit` references to the two `Monad` classes that we
-care about
+Trzecia opcja, która niesie ze sobą wyższy koszt początkowy, to stworzenie własnej typeklasy,
+która będzie przechowywać referencje do dwóch pozostałych, których potrzebujemy
 
 {lang="text"}
 ~~~~~~~~
@@ -8839,7 +8729,7 @@ care about
   }
 ~~~~~~~~
 
-and a derivation of the typeclass given a `MonadError` and `MonadState`
+i którą automatycznie wyderywujemy z dostępnych instancji `MonadError` i `MonadState`
 
 {lang="text"}
 ~~~~~~~~
@@ -8855,7 +8745,7 @@ and a derivation of the typeclass given a `MonadError` and `MonadState`
   }
 ~~~~~~~~
 
-Now if we want access to `S` or `E` we get them via `F.S` or `F.E`
+Teraz, gdy potrzebujemy `S` lub `E` mamy do nich dostęp poprzez `F.S` i `F.E`
 
 {lang="text"}
 ~~~~~~~~
@@ -8870,8 +8760,7 @@ Now if we want access to `S` or `E` we get them via `F.S` or `F.E`
     } yield i
 ~~~~~~~~
 
-Like the second solution, we can choose one of the `Monad` instances to be
-`implicit` within the block, achieved by importing it
+I tak jak w drugim podejściu, możemy wybrać jedną z `Monad` jako niejawną w naszym bloku, importując ją
 
 {lang="text"}
 ~~~~~~~~
@@ -8884,23 +8773,21 @@ Like the second solution, we can choose one of the `Monad` instances to be
 ~~~~~~~~
 
 
-#### Composing Transformers
+#### Komponowanie Transformatorów
 
-An `EitherT[StateT[...], ...]` has a `MonadError` but does not have a
-`MonadState`, whereas `StateT[EitherT[...], ...]` can provide both.
+`EitherT[StateT[...], ...]` posiada instancję `MonadError` ale nie `MonadState`, natomiast `StateT[EitherT[...], ...]`
+daje nam obie.
 
-The workaround is to study the implicit derivations on the companion of the
-transformers and to make sure that the outer most transformer provides
-everything we need.
+Rozwiązaniem jest przestudiowanie reguł niejawnej derywacji transformatorów zawartych w obiektach towarzyszących, 
+aby upewnić się, że najbardziej zewnętrzny z nich dostarcza wszystkie instancje, których potrzebujemy.
 
-A rule of thumb is that more complex transformers go on the outside, with this
-chapter presenting transformers in increasing order of complex.
+Zasada kciuka: im bardziej skomplikowany transformator tym bliżej wierzchu stosu powinien być umieszczony. 
+W tym rozdziale prezentowaliśmy je z rosnącym poziomem skomplikowania, co powinno ułatwić aplikację tej zasady.
 
 
-#### Lifting Interpreters
+#### Wynoszenie Interpreterów
 
-Continuing the same example, let's say our `Lookup` algebra has an `IO`
-interpreter
+Kontynuując ten sam przykład, załóżmy, że nasza algebra `Lookup` ma interpreter oparty o `IO`
 
 {lang="text"}
 ~~~~~~~~
@@ -8909,21 +8796,18 @@ interpreter
   }
 ~~~~~~~~
 
-but we want our context to be
+ale chcielibyśmy aby nasz kontekst wyglądał tak
 
 {lang="text"}
 ~~~~~~~~
   type Ctx[A] = StateT[EitherT[IO, Problem, ?], Table, A]
 ~~~~~~~~
 
-to give us a `MonadError` and a `MonadState`. This means we need to wrap
-`LookupRandom` to operate over `Ctx`.
+aby móc używać `MonadError` i `MonadState`. Oznacza to, że musimy opakować `LookupRandom` tak aby mógł operować na `Ctx`.
 
-A> The odds of getting the types correct on the first attempt are approximately
-A> 3,720 to one.
+A> Szanse na poprawne ustawienie typów przy pierwszy podejściu wynoszą w przybliżeniu 3720 do jednego.
 
-Firstly, we want to make use of the `.liftM` syntax on `Monad`, which uses
-`MonadTrans` to lift from our starting `F[A]` into `G[F, A]`
+Najpierw użyjemy metody `.liftM` z `MonadTrans`, która wynosi `F[A]` do postaci `G[F, A]`
 
 {lang="text"}
 ~~~~~~~~
@@ -8933,9 +8817,8 @@ Firstly, we want to make use of the `.liftM` syntax on `Monad`, which uses
   }
 ~~~~~~~~
 
-It is important to realise that the type parameters to `.liftM` have two type
-holes, one of shape `_[_]` and another of shape `_`. If we create type aliases
-of this shape
+Ważne jest, aby pamiętać że parametr typu przekazywany do `.liftM` sam ma dwa parametry,
+pierwszy o kształcie `_[_]` i drugi `_`. Jeśli stworzymy odpowiednie aliasy
 
 {lang="text"}
 ~~~~~~~~
@@ -8944,8 +8827,8 @@ of this shape
   type Ctx2[F[_], A] = StateT[F, Table, A]
 ~~~~~~~~
 
-We can abstract over `MonadTrans` to lift a `Lookup[F]` to any `Lookup[G[F, ?]]`
-where `G` is a Monad Transformer:
+to możemy abstrahować ponad `MonadTrans` aby wynieść `Lookup[F]` do dowolnego `Lookup[G[F, ?]]`
+tak długo jak `G` to transformator monad:
 
 {lang="text"}
 ~~~~~~~~
@@ -8955,7 +8838,7 @@ where `G` is a Monad Transformer:
     }
 ~~~~~~~~
 
-Allowing us to wrap once for `EitherT`, and then again for `StateT`
+Możemy więc opakować algebrę kolejno dla `EitherT` i `StateT`
 
 {lang="text"}
 ~~~~~~~~
@@ -8963,8 +8846,8 @@ Allowing us to wrap once for `EitherT`, and then again for `StateT`
   val wrap2: Lookup[Ctx] = Lookup.liftM[EitherT[IO, Problem, ?], Ctx2](wrap1)
 ~~~~~~~~
 
-Another way to achieve this, in a single step, is to use `MonadIO` which enables
-lifting an `IO` into a transformer stack:
+Inny sposobem osiągnięcia tego samego rezultatu w pojedynczym kroku jest użycie typeklasy `MonadIO`,
+która pozwala nam wynieść `IO` do stosu transformatorów:
 
 {lang="text"}
 ~~~~~~~~
@@ -8973,12 +8856,11 @@ lifting an `IO` into a transformer stack:
   }
 ~~~~~~~~
 
-with `MonadIO` instances for all the common combinations of transformers.
+i posiada instancje dla wszystkich popularnych kombinacji transformatorów.
 
-The boilerplate overhead to lift an `IO` interpreter to anything with a
-`MonadIO` instance is therefore two lines of code (for the interpreter
-definition), plus one line per element of the algebra, and a final line to call
-it:
+Boilerplate potrzebny by wynieść interpreter oparty o `IO` do dowolnego kontekstu posiadającego
+instancję `MonadIO` to dwie linie kodu (dla definicji interpretera), plus jedna linia dla każdego elementu algebry
+i jedna linia wywołująca konwersję:
 
 {lang="text"}
 ~~~~~~~~
@@ -8989,73 +8871,62 @@ it:
   val L: Lookup[Ctx] = Lookup.liftIO(LookupRandom)
 ~~~~~~~~
 
-A> A compiler plugin that automatically produces `.liftM`, `.liftIO`, and
-A> additional boilerplate that arises in this chapter, would be a great
-A> contribution to the ecosystem!
+A> Plugin kompilatora, który automatycznie produkuje `.liftM`, `.liftIO` i pozostały boilerplate,
+A> który zobaczyliśmy w tym rozdziale, byłby świetnym wkładem w ekosystem!
 
 
-#### Performance
+#### Wydajność
 
-The biggest problem with Monad Transformers is their performance overhead.
-`EitherT` has a reasonably low overhead, with every `.flatMap` call generating a
-handful of objects, but this can impact high throughput applications where every
-object allocation matters. Other transformers, such as `StateT`, effectively add
-a trampoline, and `ContT` keeps the entire call-chain retained in memory.
+Największym problemem Transformatorów Monad jest ich narzut wydajnościowy. `EitherT` ma dość mały narzut,
+gdzie każde wywołanie `.flatMap` generuje tylko garść obiektów, ale nawet to może wpłynąć na aplikacje
+wymagające wysokiej przepustowości, gdzie każda alokacja ma znaczenie. Inne transformatory, takie jak
+`StateT`, dodają trampolinę do każdego wywołania, a `ContT` przechowuje cały łańcuch wywołań w pamięci.
 
-A> Some applications do not care about allocations if they are bounded by network
-A> or I/O. Always measure.
+A> Dla niektórych aplikacji alokacje nie mają znaczenia, jeśli są one i tak ograniczone przez
+A> wydajność sieci albo I/O. Zawsze sprawdzaj.
 
-If performance becomes a problem, the solution is to not use Monad Transformers.
-At least not the transformer data structures. A big advantage of the `Monad`
-typeclasses, like `MonadState` is that we can create an optimised `F[_]` for our
-application that provides the typeclasses naturally. We will learn how to create
-an optimal `F[_]` over the next two chapters, when we deep dive into two
-structures which we have already seen: `Free` and `IO`.
+Jeśli wydajność staje się problemem, jedynym rozwiązaniem jest zrezygnować z Transformatorów Monad,
+a przynajmniej ich struktur danych. Dużą zaletą typeklas opartych o `Monad`, takich jak np. `MonadState`,
+jest fakt, że możemy stworzyć zoptymalizowany kontekst `F[_]`, który będzie dostarczał wspomniane typeklasy.
+Zobaczymy jak stworzyć optymalne `F[_]` w następnych dwóch rozdziałach, kiedy bliżej przyjrzymy się poznanym już
+strukturom `Free` i `IO`.
 
+## Darmowy Lunch
 
-## A Free Lunch
+Nasza branża pragnie bezpiecznych, wysokopoziomowych języków, które pozwalają na wysoką wydajność developerów
+kosztem zmniejszonej wydajności kodu.
 
-Our industry craves safe high-level languages, trading developer efficiency and
-reliability for reduced runtime performance.
+Kompilator Just In Time (JIT) na JVMie działa tak dobrze, że proste funkcje mogą działać porównywalnie 
+szybko co ich odpowiedniki w C lub C++, ignorując koszt garbage collectora. Jednak JIT wykonuje jedynie
+*optymalizacje niskopoziomowe*: predykcję gałęzi (_branch prediction_), inlinowanie metod, rozwijanie pętli itd.
 
-The Just In Time (JIT) compiler on the JVM performs so well that simple
-functions can have comparable performance to their C or C++ equivalents,
-ignoring the cost of garbage collection. However, the JIT only performs *low
-level optimisations*: branch prediction, inlining methods, unrolling loops, and
-so on.
+JIT nie zastosuje optymalizacji do naszej logiki biznesowej, takich jak łączenia wywołań sieciowych lub 
+uruchamiania niezależnych zadań równolegle. Developer jest odpowiedzialny za tworzenie logiki biznesowej i jej optymalizacje,
+co efektywnie obniża czytelność i zwiększa koszt utrzymania kodu. Dobrze by było gdyby optymalizacja
+była problemem zupełnie niezależnym.
 
-The JIT does not perform optimisations of our business logic, for example
-batching network calls or parallelising independent tasks. The developer is
-responsible for writing the business logic and optimisations at the same time,
-reducing readability and making it harder to maintain. It would be good if
-optimisation was a tangential concern.
+Jeśli mielibyśmy do dyspozycji struktury danych, które opisują naszą logikę biznesową w kontekście wysokopoziomowych
+konceptów, a nie instrukcji maszynowych, moglibyśmy wykonać *wysokopoziomowe optymalizacje*. Takie struktury danych
+są zazwyczaj nazywane *Darmowymi* strukturami (_Free structures_) i mogą być generowane za darmo dla elementów naszych
+algebraicznych interfejsów. Przykładowo, instancje *Free Applicative* mogą być wygenerowane i użyte do połączenia 
+lub deduplikacji kosztownych operacji sieciowych.
 
-If instead, we have a data structure that describes our business logic in terms
-of high level concepts, not machine instructions, we can perform *high level
-optimisation*. Data structures of this nature are typically called *Free*
-structures and can be generated for free for the members of the algebraic
-interfaces of our program. For example, a *Free Applicative* can be generated
-that allows us to batch or de-duplicate expensive network I/O.
-
-In this section we will learn how to create free structures, and how they can be
-used.
+W tym rozdziale zobaczymy jak tworzyć takie darmowe struktury i jak ich używać.
 
 
 ### `Free` (`Monad`)
 
-Fundamentally, a monad describes a sequential program where every step depends
-on the previous one. We are therefore limited to modifications that only know
-about things that we've already run and the next thing we are going to run.
+Zasadniczo, monada opisuje sekwencyjny program, gdzie każdy krok zależy od poprzedniego. 
+Ograniczeni więc jesteśmy do modyfikacji, które wiedzą jedynie co już uruchomiliśmy i jaki
+krok uruchomimy jako następny.
 
-A> It was trendy, circa 2015, to write FP programs in terms of `Free` so this is as
-A> much an exercise in how to understand `Free` code as it is to be able to write
-A> or use it.
+A> W okolicach 2015 modnym było pisanie programów FP używając `Free`, a więc będzie to ćwiczenie
+A> tak samo pomagające zrozumieć tę strukturę jak i nauczyć się jej używać.
 A> 
-A> There is a lot of boilerplate to create a free structure. We shall use this
-A> study of `Free` to learn how to generate the boilerplate.
+A> Aby stworzyć darmową strukturę potrzeba dużo boilerplate'u, więc potraktujmy to też
+A> jako sposób na nauczenie się jak go wygenerować.
 
-As a refresher, `Free` is the data structure representation of a `Monad` and is
-defined by three members
+Przypomnijmy, `Free` to struktura danych reprezentująca `Monad`ę zdefiniowana jako trzy elementy
 
 {lang="text"}
 ~~~~~~~~
@@ -9079,12 +8950,12 @@ defined by three members
   }
 ~~~~~~~~
 
--   `Suspend` represents a program that has not yet been interpreted
--   `Return` is `.pure`
--   `Gosub` is `.bind`
+-   `Suspend` reprezentuje program, który nie został jeszcze zinterpretowany
+-   `Return` to `.pure`
+-   `Gosub` to `.bind`
 
-A `Free[S, A]` can be *freely generated* for any algebra `S`. To make this
-explicit, consider our application's `Machines` algebra
+Instancja `Free[S, A]` może być *wygenerowana za darmo* dla dowolnej algebry `S`. Aby zobaczyć to wprost,
+rozważmy naszą algebrę `Machines`
 
 {lang="text"}
 ~~~~~~~~
@@ -9097,10 +8968,9 @@ explicit, consider our application's `Machines` algebra
   }
 ~~~~~~~~
 
-We define a freely generated `Free` for `Machines` by creating an ADT with a
-data type for each element of the algebra. Each data type has the same input
-parameters as its corresponding element, is parameterised over the return type,
-and has the same name:
+Zdefiniujmy wygenerowane za darmo `Free` dla algebry `Machines` poprzez stworzenie ADT
+odpowiadającego jej elementom. Każdy typ danych ma te same parametry wejściowe, jest sparametryzowany
+typem zwracanym i ma taką samą nazwę:
 
 {lang="text"}
 ~~~~~~~~
@@ -9114,15 +8984,14 @@ and has the same name:
     ...
 ~~~~~~~~
 
-The ADT defines an Abstract Syntax Tree (AST) because each member is
-representing a computation in a program.
+Takie ADT jest Abstrakcyjnym Drzewem Składniowym (AST, _Abstract Syntax Tree_) ponieważ każdy element
+reprezentuje obliczenia w naszym programie.
 
-W> The freely generated `Free` for `Machines` is `Free[Machines.Ast, ?]`, i.e. for
-W> the AST, not `Free[Machines, ?]`. It is easy to make a mistake, since the latter
-W> will compile, but is meaningless.
+W> `Free` dla algebry `Machines` ma formę `Free[Machines.Ast, ?]`, a nie `Free[Machines, ?]`, a więc parametrem jest AST, a nie sama algebra.
+W> Łatwo jest się pomylić, gdyż druga forma również bezproblemowo się kompiluje mimo tego że nie ma najmniejszego sensu.
 
-We then define `.liftF`, an implementation of `Machines`, with `Free[Ast, ?]` as
-the context. Every method simply delegates to `Free.liftT` to create a `Suspend`
+Następnie zdefiniujmy `.liftF`, implementację `Machines` dla kontekstu `Free[Ast, ?]`. Każda metoda
+deleguje implementację do `Free.liftF` tworząc `Suspend`
 
 {lang="text"}
 ~~~~~~~~
@@ -9137,10 +9006,9 @@ the context. Every method simply delegates to `Free.liftT` to create a `Suspend`
   }
 ~~~~~~~~
 
-When we construct our program, parameterised over a `Free`, we run it by
-providing an *interpreter* (a natural transformation `Ast ~> M`) to the
-`.foldMap` method. For example, if we could provide an interpreter that maps to
-`IO` we can construct an `IO[Unit]` program via the free AST
+Kiedy skonstruowaliśmy program sprarametryzowany z użyciem `Free`, aby go uruchomić musimy przekazać
+*interpreter* (transformację naturalną `Ast ~> M`) do metody `.foldMap`. Jeśli mielibyśmy interpreter, 
+który mapuje operacje do `IO`, moglibyśmy stworzyć program `IO[Unit]` z dostępnego AST 
 
 {lang="text"}
 ~~~~~~~~
@@ -9152,10 +9020,9 @@ providing an *interpreter* (a natural transformation `Ast ~> M`) to the
                         .foldMap(interpreter)
 ~~~~~~~~
 
-For completeness, an interpreter that delegates to a direct implementation is
-easy to write. This might be useful if the rest of the application is using
-`Free` as the context and we already have an `IO` implementation that we want to
-use:
+Dla kompletności, zaimplementujmy interpreter, który deleguje operacje do ich bezpośredniej implementacji. Taki
+interpreter może być użyteczny jeśli reszta aplikacji również używa `Free` jako kontekstu, a my akurat mamy implementację
+algebry bazującą na `IO` pod ręką:
 
 {lang="text"}
 ~~~~~~~~
@@ -9168,8 +9035,8 @@ use:
   }
 ~~~~~~~~
 
-But our business logic needs more than just `Machines`, we also need access to
-the `Drone` algebra, recall defined as
+Ale nasza logika biznesowa potrzebuje więcej niż tylko algebry `Machines`. Oprócz niej
+potrzebna jest też algebra `Drones`, zdefiniowana jako
 
 {lang="text"}
 ~~~~~~~~
@@ -9185,20 +9052,20 @@ the `Drone` algebra, recall defined as
   }
 ~~~~~~~~
 
-What we want is for our AST to be a combination of the `Machines` and `Drone`
-ASTs. We studied `Coproduct` in Chapter 6, a higher kinded disjunction:
+Chcielibyśmy aby nasze AST było kombinacją AST pochodzących z oby tych algebr. W Rozdziale
+6 poznaliśmy `Coproduct`, dysjunkcję wyższego rodzaju:
 
 {lang="text"}
 ~~~~~~~~
   final case class Coproduct[F[_], G[_], A](run: F[A] \/ G[A])
 ~~~~~~~~
 
-We can use the context `Free[Coproduct[Machines.Ast, Drone.Ast, ?], ?]`.
+Możemy więc użyć kontekstu `Free[Coproduct[Machines.Ast, Drone.Ast, ?], ?]`.
 
-We could manually create the coproduct but we would be swimming in boilerplate,
-and we'd have to do it all again if we wanted to add a third algebra.
+Moglibyśmy tworzyć instancję koproduktu ręcznie ale utonęlibyśmy w morzu boileplate'u,
+a później musielibyśmy robić to raz jeszcze jeśli chcielibyśmy dodać trzecią algebrę.
 
-The `scalaz.Inject` typeclass helps:
+Z pomocą przychodzi typeklasa `scalaz.Inject`:
 
 {lang="text"}
 ~~~~~~~~
@@ -9213,8 +9080,8 @@ The `scalaz.Inject` typeclass helps:
   }
 ~~~~~~~~
 
-The `implicit` derivations generate `Inject` instances when we need them,
-letting us rewrite our `liftF` to work for any combination of ASTs:
+Niejawna derywacja wygeneruje instancje `Inject` kiedy będziemy ich potrzebować, pozwalając nam
+przepisać metodę `liftF`, tak aby działała dla dowolnej kombinacji AST:
 
 {lang="text"}
 ~~~~~~~~
@@ -9227,23 +9094,21 @@ letting us rewrite our `liftF` to work for any combination of ASTs:
   }
 ~~~~~~~~
 
-It is nice that `F :<: G` reads as if our `Ast` is a member of the complete `F`
-instruction set: this syntax is intentional.
+W tym wypadku `Ast :<: F` mówi nam, że `Ast` jest częścią pełnego zbioru instrukcji `F`.
 
-A> A compiler plugin that automatically produces the `scalaz.Free` boilerplate
-A> would be a great contribution to the ecosystem! Not only is it painful to write
-A> the boilerplate, but there is the potential for a typo to ruin our day: if two
-A> members of the algebra have the same type signature, we might not notice.
+A> Plugin kompilatora, który automatycznie wyprodukuje boilerplate związany z `scalaz.Free` byłby
+A> świetnym wkładem w ekosystem! Pisanie go własnoręcznie jest nie tylko bolesne, ale wprowadza
+A> możliwość zrobienia literówki, która w przypadku dwóch metod o tych samych sygnaturach 
+A> może spowodować ciężkie do zdiagnozowania błędy.
 
-Putting it all together, lets say we have a program that we wrote abstracting over `Monad`
+Łącząc ze sobą wszystkie elementy, powiedzmy, że mamy program których abstrahuje ponad `Monad`ą
 
 {lang="text"}
 ~~~~~~~~
   def program[F[_]: Monad](M: Machines[F], D: Drone[F]): F[Unit] = ...
 ~~~~~~~~
-
-and we have some existing implementations of `Machines` and `Drone`, we can
-create interpreters from them:
+    
+oraz mamy gotowe implementacja algebr `Machines` i `Drone`, z użyciem których możemy stworzyć interpretery:
 
 {lang="text"}
 ~~~~~~~~
@@ -9254,8 +9119,8 @@ create interpreters from them:
   val D: Drone.Ast ~> IO    = Drone.interpreter(DroneIO)
 ~~~~~~~~
 
-and combine them into the larger instruction set using a convenience method from
-the `NaturalTransformation` companion
+i połączyć je w większy zbiór instrukcji używając pomocniczych metod z obiektu towarzyszącego
+`NaturalTransformation`
 
 {lang="text"}
 ~~~~~~~~
@@ -9269,7 +9134,7 @@ the `NaturalTransformation` companion
   val interpreter: Ast ~> IO = NaturalTransformation.or(M, D)
 ~~~~~~~~
 
-Then use it to produce an `IO`
+aby następnie użyć ich do wyprodukowania `IO`
 
 {lang="text"}
 ~~~~~~~~
@@ -9277,20 +9142,17 @@ Then use it to produce an `IO`
                         .foldMap(interpreter)
 ~~~~~~~~
 
-But we've gone in circles! We could have used `IO` as the context for our
-program in the first place and avoided `Free`. So why did we put ourselves
-through all this pain? Here are some examples of where `Free` might be useful.
+Tym samym zatoczyliśmy koło! Mogliśmy przecież od razu użyć `IO` jako naszego kontekstu i uniknąć
+`Free`. Po co więc zadaliśmy sobie cały ten trud? Poniżej znajdziemy kilka przykładów gdy `Free` może być użyteczne.
 
 
-#### Testing: Mocks and Stubs
+#### Testowanie: Mocki i Stuby
 
-It might sound hypocritical to propose that `Free` can be used to reduce
-boilerplate, given how much code we have written. However, there is a tipping
-point where the `Ast` pays for itself when we have many tests that require stub
-implementations.
+Może to zabrzmieć obłudnie, jeśli po napisaniu całego tego boilerplate'u powiemy, że `Free` może
+służyć do zmniejszenia jego ilości. Istnieje jednak pewna granica, za którą `Ast` zaczyna
+mieć sens: gdy mamy dużo testów które wymagają stubowania implementacji.
 
-If the `.Ast` and `.liftF` is defined for an algebra, we can create *partial
-interpreters*
+Jeśli `.Ast` i `.liftF` zostały zdefiniowane dla danej algebry, możemy tworzyć *częściowe interpretery*
 
 {lang="text"}
 ~~~~~~~~
@@ -9302,7 +9164,7 @@ interpreters*
   }
 ~~~~~~~~
 
-which can be used to test our `program`
+które posłużą nam do testowania naszego `program`u
 
 {lang="text"}
 ~~~~~~~~
@@ -9311,19 +9173,17 @@ which can be used to test our `program`
     .shouldBe(1)
 ~~~~~~~~
 
-By using partial functions, and not total functions, we are exposing ourselves
-to runtime errors. Many teams are happy to accept this risk in their unit tests
-since the test would fail if there is a programmer error.
+Używając częściowych funkcji zamiast totalnych narażamy się na błędy w czasie wykonania. Wiele
+zespołów godzi się na ten kompromis w swoich testach jednostkowych, bo popełniony błąd i tak zostanie
+wykryty gdy testy te nie zakończą się sukcesem.
 
-Arguably we could also achieve the same thing with implementations of our
-algebras that implement every method with `???`, overriding what we need on a
-case by case basis.
+Moglibyśmy osiągnąć to samo zachowanie implementując wszystkie metody z użyciem `???` i nadpisując
+te, których aktualnie potrzebujemy.
 
-A> The library [smock](https://github.com/djspiewak/smock) is more powerful, but for the purposes of this short example
-A> we can define `stub` ourselves using a type inference trick that can be found
-A> all over the Scalaz source code. The reason for `Stub` being a separate class is
-A> so that we only need to provide the `A` type parameter, with `F` and `G`
-A> inferred from the left hand side of the expression:
+A> Biblioteka [smock](https://github.com/djspiewak/smock) ma większe możliwości, ale na potrzeby tego krótkiego przykładu
+A> możemy sami zdefiniować metodę `stub` używając sztuczki związanej z inferencją typów, która używana jest
+A> w wilu miejscach w Scalaz. `Stub` jest osobną klasą abyśmy mogli podać jedynie parametr typu `A`, pozostawiając
+A> `F` i `G` do odgadnięcia kompilatorowi na podstawie wyrażenia po lewej stronie:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -9340,21 +9200,18 @@ A> ~~~~~~~~
 
 #### Monitoring
 
-It is typical for server applications to be monitored by runtime agents that
-manipulate bytecode to insert profilers and extract various kinds of usage or
-performance information.
+Aplikacje serwerowe są często monitorowane przez agenty, które manipulują bajtkodem aplikacji, wstrzykując 
+profilery i wydobywając różnego rodzaju informacje o działaniu naszego kodu i jego wydajności.
 
-If our application's context is `Free`, we do not need to resort to bytecode
-manipulation, we can instead implement a side-effecting monitor as an
-interpreter that we have complete control over.
+Gdy naszym kontekstem jest `Free` nie musimy uciekać się do manipulacji bajtkodem. Zamiast tego
+możemy zaimplementować interpreter, który będzie monitorować wykonywane operacje i raportować je z użyciem efektów ubocznych.
 
-A> Runtime introspection is one of the few cases that can justify use of a
-A> side-effect. If the monitoring is not visible to the program itself, referential
-A> transparency will still hold. This is also the argument used by teams that use
-A> side-effecting debug logging, and our argument for allowing mutation in the
-A> implementation of `Memo`.
+A> Introspekcja kodu w czasie wykonania jest jednym z nielicznych usprawiedliwień dla użycia efektów ubocznych.
+A> Jeśli monitoring nie jest widoczny dla aplikacji, to nasze obliczenia nadal możemy traktować jako referencyjnie
+A> transparentne. Tego samego argumentu zespoły używają aby uzasadnić użycie logowania skutkującego efektami ubocznymi,
+A> a my użyliśmy go pozwalając sobie na mutację stanu implementując `Memo`.
 
-For example, consider using this `Ast ~> Ast` "agent"
+Rozważmy użycie takiego "agenta" o typie `Ast ~> Ast`, który zapisuje inwokacje metod: 
 
 {lang="text"}
 ~~~~~~~~
@@ -9369,18 +9226,16 @@ For example, consider using this `Ast ~> Ast` "agent"
   )
 ~~~~~~~~
 
-which records method invocations: we would use a vendor-specific routine in real
-code. We could also watch for specific messages of interest and log them as a
-debugging aid.
+Moglibyśmy też wychwytywać wiadomości, które nas szczególnieinteresują i logować gdy się pojawią.
 
-We can attach `Monitor` to our production `Free` application with
+Możemy dołączyć `Monitor` do naszej produkcyjnej aplikacji opartej na `Free` za pomocą
 
 {lang="text"}
 ~~~~~~~~
   .mapSuspension(Monitor).foldMap(interpreter)
 ~~~~~~~~
 
-or combine the natural transformations and run with a single
+lub połączyć transformacje naturalne wywołując pojedyncze
 
 {lang="text"}
 ~~~~~~~~
@@ -9390,23 +9245,21 @@ or combine the natural transformations and run with a single
 
 #### Monkey Patching
 
-As engineers, we are used to requests for bizarre workarounds to be added to the
-core logic of the application. We might want to codify such corner cases as
-*exceptions to the rule* and handle them tangentially to our core logic.
+Jako inżynierowie przywykliśmy już do próśb o dodanie dziwacznych obejść do kluczowej logiki aplikacji. 
+Moglibyśmy chcieć wyrazić takie przypadki brzegowe jako *wyjątki od reguły* i obsługiwać je niezależnie
+od reszty aplikacji.
 
-For example, suppose we get a memo from accounting telling us
+Wyobraźmy sobie, że otrzymaliśmy poniższą notatkę od działu księgowości
 
-> *URGENT: Bob is using node `#c0ffee` to run the year end. DO NOT STOP THIS
-> MACHINE!1!*
+> *PILNE: Bob używa węzła `#c0ffee` przy sprawozdaniu rocznym. NIE ZATRZYMUJCIE TEJ MASZYNY!1!*
 
-There is no possibility to discuss why Bob shouldn't be using our machines for
-his super-important accounts, so we have to hack our business logic and put out
-a release to production as soon as possible.
+Nie ma możliwości, aby wytłumaczyć Bobowi, że nie powinien używać naszych maszyn dla jego super
+ważnych zadań, tak więc musimy zhakować naszą logikę biznesową i wypuścić zmianę na środowisko
+produkcyjne tak szybko jak to możliwe.
 
-Our monkey patch can map into a `Free` structure, allowing us to return a
-pre-canned result (`Free.pure`) instead of scheduling the instruction. We
-special case the instruction in a custom natural transformation with its return
-value:
+Nasza łatka (_monkey patch_) może być przetłumaczona na strukturę `Free`, pozwalając nam zwrócić
+wcześniej przygotowany wynik (`Free.pure`) zamiast wykonywania standardowych operacji. Implementacja
+to specjalna transformacja naturalna:
 
 {lang="text"}
 ~~~~~~~~
@@ -9416,11 +9269,10 @@ value:
   }
 ~~~~~~~~
 
-eyeball that it works, push it to prod, and set an alarm for next week to remind
-us to remove it, and revoke Bob's access to our servers.
+Praca skończona. Zerknąć czy działa, wypchnąć na produkcję, ustawić alarm na przyszły tydzień
+żeby usunąć ten fragment i odebrać Bobowi dostęp do naszych serwerów.
 
-Our unit test could use `State` as the target context, so we can keep track of
-all the nodes we stopped:
+W testach możemy użyć `State` aby zapisywać wszystkie węzły, które zatrzymaliśmy:
 
 {lang="text"}
 ~~~~~~~~
@@ -9438,25 +9290,19 @@ all the nodes we stopped:
     .shouldBe(Set.empty)
 ~~~~~~~~
 
-along with a test that "normal" nodes are not affected.
-
-An advantage of using `Free` to avoid stopping the `#c0ffee` nodes is that we
-can be sure to catch all the usages instead of having to go through the business
-logic and look for all usages of `.stop`. If our application context is just an
-`IO` we could, of course, implement this logic in the `Machines[IO]`
-implementation but an advantage of using `Free` is that we don't need to touch
-the existing code and can instead isolate and test this (temporary) behaviour,
-without being tied to the `IO` implementations.
+Zaletą `Free` w tej sytuacji jest pewność, że obsłużyliśmy wszystkie użycia nie musząc
+szukać ich w logice biznesowej. Jeśli kontekstem naszej aplikacji jest `IO` to moglibyśmy oczywiście
+zaimplementować tę samą funkcjonalność w `Machines[IO]`, ale używając `Free` możemy taką
+zamianę wyizolować i przetestować bez dotykania istniejącego kodu i bez wiązania się z `IO`.
 
 
 ### `FreeAp` (`Applicative`)
 
-Despite this chapter being called **Advanced Monads**, the takeaway is: *we
-shouldn't use monads unless we really **really** have to*. In this section, we
-will see why `FreeAp` (free applicative) is preferable to `Free` monads.
+Mimo tego, że ten rozdział nazywa się **Zaawansowane Monady** kluczowe jest, że 
+*nie powinniśmy używać monad dopóki naprawdę **naprawdę** nie musimy*. W tym podrozdziale
+zobaczymy czemu `FreeAp` (free applicative) jest lepszy od monady `Free`.
 
-`FreeAp` is defined as the data structure representation of the `ap` and `pure`
-methods from the `Applicative` typeclass:
+`FreeAp` zdefiniowany jest jako struktura danych reprezentujące metody `ap` i `pure` z typeklasy `Applicative`:
 
 {lang="text"}
 ~~~~~~~~
@@ -9482,14 +9328,13 @@ methods from the `Applicative` typeclass:
   }
 ~~~~~~~~
 
-The methods `.hoist` and `.foldMap` are like their `Free` analogues
-`.mapSuspension` and `.foldMap`.
+Metody `.hoist` i `.foldMap` odpowadają metodom `.mapSuspension` i `.foldMap` z `Free`.
 
-As a convenience, we can generate a `Free[S, A]` from our `FreeAp[S, A]` with
-`.monadic`. This is especially useful to optimise smaller `Applicative`
-subsystems yet use them as part of a larger `Free` program.
+Możemy też wygenerować `Free[S, A]` bezpośrednio z naszego `FreeAp[S, A]` używając `.monadic`,
+co jest szczególnie przydatne gdy chcemy włączyć małe programy oparte o `FreeAp` do całego systemu
+opartego o `Free`.
 
-Like `Free`, we must create a `FreeAp` for our ASTs, more boilerplate...
+Podobnie jak z `Free`, musimy stworzyć `FreeAp` dla naszego AST. Więcej boilerplate'u...
 
 {lang="text"}
 ~~~~~~~~
@@ -9500,40 +9345,37 @@ Like `Free`, we must create a `FreeAp` for our ASTs, more boilerplate...
 ~~~~~~~~
 
 
-#### Batching Network Calls
+#### Grupowanie Wywołań Sieciowych
 
-We opened this chapter with grand claims about performance. Time to deliver.
+Rozpoczęliśmy ten rozdział wzniosłymi obietnicami dotyczącymi wydajności. Czas ich dotrzymać.
 
-[Philip Stark](https://gist.github.com/hellerbarde/2843375#file-latency_humanized-markdown)'s Humanised version of [Peter Norvig's Latency Numbers](http://norvig.com/21-days.html#answers) serve as
-motivation for why we should focus on reducing network calls to optimise an
-application:
+Aby zrozumieć dlaczego powinniśmy zredukować ilość wywołań sieciowych spójrzmy na [ludzką wersję](https://gist.github.com/hellerbarde/2843375#file-latency_humanized-markdown)
+liczb latencji autorstwa Philipa Starka, bazującą na [danych](http://norvig.com/21-days.html#answers) oryginalnie przygotowanych przez Petera Norviga.
 
-| Computer                          | Human Timescale | Human Analogy                  |
-|--------------------------------- |--------------- |------------------------------ |
-| L1 cache reference                | 0.5 secs        | One heart beat                 |
-| Branch mispredict                 | 5 secs          | Yawn                           |
-| L2 cache reference                | 7 secs          | Long yawn                      |
-| Mutex lock/unlock                 | 25 secs         | Making a cup of tea            |
-| Main memory reference             | 100 secs        | Brushing your teeth            |
-| Compress 1K bytes with Zippy      | 50 min          | Scala compiler CI pipeline     |
-| Send 2K bytes over 1Gbps network  | 5.5 hr          | Train London to Edinburgh      |
-| SSD random read                   | 1.7 days        | Weekend                        |
-| Read 1MB sequentially from memory | 2.9 days        | Long weekend                   |
-| Round trip within same datacenter | 5.8 days        | Long US Vacation               |
-| Read 1MB sequentially from SSD    | 11.6 days       | Short EU Holiday               |
-| Disk seek                         | 16.5 weeks      | Term of university             |
-| Read 1MB sequentially from disk   | 7.8 months      | Fully paid maternity in Norway |
-| Send packet CA->Netherlands->CA   | 4.8 years       | Government's term              |
+| Komputer                          | Ludzka Skala Czasowa | Ludzka Analogia                           |
+|-----------------------------------|----------------------|-------------------------------------------|
+| Odwołanie do pamięci L1           | 0.5 secs             | Uderzenie serca                           |
+| Mispredykcja gałęzi               | 5 secs               | Ziewnięcie                                |
+| Odwołanie do pamięci L2           | 7 secs               | Długie ziewnięcie                         |
+| Zablokowanie/odblokowanie mutexa  | 25 secs              | Przygotowanie herbaty                     |
+| Odwołanie do pamięci głównej      | 100 secs             | Umycie zębów                              |
+| Skompresowanie 1 KB przez Zippy   | 50 min               | Pipeline CI kompilatora Scali             |
+| Przesłanie 2KB przez sieć 1Gbps   | 5.5 hr               | Pociąg z Londynu do Edynburga             |
+| Losowy odczyt z dysku SSD         | 1.7 days             | Weekend                                   |
+| Sekwencyjny odczyt 1MB z pamięci  | 2.9 days             | Długi weekend                             |
+| Podróż po jednym datacenter       | 5.8 days             | Długie wakacje w USA                      |
+| Sekwencyjny odczy 1MB z dysku SSD | 11.6 days            | Krótkie wakacje w Europie                 |
+| Przesunięcie głowicy dyskowej     | 16.5 weeks           | Semestr akademicki                        |
+| Sekwencyjny odczyt 1MB z dysku    | 7.8 months           | Pełnopłatny urlop macierzyński w Norwegii |
+| Wysłanie pakietu CA->Holandia->CA | 4.8 years            | Kadencja rządu                            |
 
-Although `Free` and `FreeAp` incur a memory allocation overhead, the equivalent
-of 100 seconds in the humanised chart, every time we can turn two sequential
-network calls into one batch call, we save nearly 5 years.
+Mimo że zarówno `Free` jak i `FreeAp` niosą ze sobą narzut spowodowany alokacją pamięci (100 sekund na ludzkiej skali),
+to za każdym razem gdy uda nam się połączyć dwa żądania sieciowe w jedno zyskujemy prawie 5 lat.
 
-When we are in a `Applicative` context, we can safely optimise our application
-without breaking any of the expectations of the original program, and without
-cluttering the business logic.
+Kiedy jesteśmy w kontekście `Applicative` możemy bezpiecznie optymalizować naszą aplikację bez zaburzania oczekiwań
+co do oryginalnego programu i bez komplikowania logiki biznesowej.
 
-Luckily, our main business logic only requires an `Applicative`, recall
+Przypomnijmy, że nasza główna logika biznesowa wymaga, na szczęście, jedynie instancji `Applicative`
 
 {lang="text"}
 ~~~~~~~~
@@ -9544,7 +9386,7 @@ Luckily, our main business logic only requires an `Applicative`, recall
   }
 ~~~~~~~~
 
-To begin, we create the `lift` boilerplate for a new `Batch` algebra
+Zacznijmy od stworzenia boilerplate'u `lift` dla nowej algebry `Batch`
 
 {lang="text"}
 ~~~~~~~~
@@ -9561,7 +9403,7 @@ To begin, we create the `lift` boilerplate for a new `Batch` algebra
   }
 ~~~~~~~~
 
-and then we will create an instance of `DynAgentsModule` with `FreeAp` as the context
+oraz instancji `DynAgentsModule` używając `FreeAp` jako kontekstu
 
 {lang="text"}
 ~~~~~~~~
@@ -9572,9 +9414,8 @@ and then we will create an instance of `DynAgentsModule` with `FreeAp` as the co
   val freeap  = program.act(world)
 ~~~~~~~~
 
-In Chapter 6, we studied the `Const` data type, which allows us to analyse a
-program. It should not be surprising that `FreeAp.analyze` is implemented in
-terms of `Const`:
+W Rozdziale 6 poznaliśmy typ danych `Const`, który pozwala nam analizować wykonanie programu. Nie powinno
+więc dziwić, że `FreeAp.analyze` jest zaimplementowane z jego właśnie użyciem:
 
 {lang="text"}
 ~~~~~~~~
@@ -9585,8 +9426,7 @@ terms of `Const`:
   }
 ~~~~~~~~
 
-We provide a natural transformation to record all node starts and `.analyze` our
-program to get all the nodes that need to be started:
+Używamy transformacji naturalnej i `.analyze` aby zebrać wszystkie węzły, które powinny zostać wystartowane
 
 {lang="text"}
 ~~~~~~~~
@@ -9597,9 +9437,9 @@ program to get all the nodes that need to be started:
   val gathered: IList[MachineNode] = freeap.analyze(gather)
 ~~~~~~~~
 
-The next step is to extend the instruction set from `Orig` to `Extended`, which
-includes the `Batch.Ast` and write a `FreeAp` program that starts all our
-`gathered` nodes in a single network call
+Następnym krokiem jest rozszerzenie zbioru instrukcji z `Orig` do `Extended`, tak by zawierał
+`Batch.Ast`, oraz napisanie programu z użyciem `FreeAp`, który wystartuje wszystkie zebrane wcześniej węzły
+pojedynczym żądaniem.
 
 {lang="text"}
 ~~~~~~~~
@@ -9611,7 +9451,7 @@ includes the `Batch.Ast` and write a `FreeAp` program that starts all our
     }
 ~~~~~~~~
 
-We also need to remove all the calls to `Machines.Start`, which we can do with a natural transformation
+Musimy również pozbyć się wszystkich wywołań `Machines.Start`, co możemy osiągnąć używając jeszcze jednej transformacji naturalnej
 
 {lang="text"}
 ~~~~~~~~
@@ -9621,15 +9461,14 @@ We also need to remove all the calls to `Machines.Start`, which we can do with a
   }
 ~~~~~~~~
 
-Now we have two programs, and need to combine them. Recall the `*>` syntax from
-`Apply`
+Mamy teraz dwa programy, które musimy połączyć. Przypomnijmy sobie operator `*>` z `Apply`
 
 {lang="text"}
 ~~~~~~~~
   val patched = batch(gathered) *> freeap.foldMap(nostart)
 ~~~~~~~~
 
-Putting it all together under a single method:
+I złóżmy to wszystko razem jako jedną metodę
 
 {lang="text"}
 ~~~~~~~~
@@ -9637,14 +9476,13 @@ Putting it all together under a single method:
     (batch(orig.analyze(gather)) *> orig.foldMap(nostart))
 ~~~~~~~~
 
-That Is it! We `.optimise` every time we call `act` in our main loop, which is
-just a matter of plumbing.
+I tyle! Wystarczy użyć `.optimise` razem z `act` w głównej pętli naszego programu.
 
 
 ### `Coyoneda` (`Functor`)
 
-Named after mathematician Nobuo Yoneda, we can freely generate a `Functor` data
-structure for any algebra `S[_]`
+To "darmowa" (_free_) struktura danych zawdzięczająca swoją nazwę metematykowi Nobuo Yoneda. Pozwala nam ona wygenerować "za darmo" instancję
+typeklasy `Functor` dla dowolnej algebry `S[_]`, tak długo, jak mamy w planie przetransformować ją do algebry, która taką instancję posiada `
 
 {lang="text"}
 ~~~~~~~~
@@ -9663,7 +9501,7 @@ structure for any algebra `S[_]`
   }
 ~~~~~~~~
 
-and there is also a contravariant version
+również w wersji kontrawariantej
 
 {lang="text"}
 ~~~~~~~~
@@ -9683,21 +9521,20 @@ and there is also a contravariant version
   }
 ~~~~~~~~
 
-A> The colloquial for `Coyoneda` is *coyo* and `ContravariantCoyoneda` is *cocoyo*.
-A> Just some Free Fun.
+A> Okrośleniem potocznym na `Coyoneda` jest *coyo* a na `ContravariantCoyoned` *cocoyo*.
 
-The API is somewhat simpler than `Free` and `FreeAp`, allowing a natural
-transformation with `.trans` and a `.run` (taking an actual `Functor` or
-`Contravariant`, respectively) to escape the free structure.
+API jest nieco prostsze niż `Free` i `FreeAp`, udostępniając transformację poprzez `.trans`
+i możliwość pozbycia się struktury poprzez metodę `.run` (która przyjmuje faktyczną implementację
+`Functor`a lub `ContravariantFunctor`a).
 
-Coyo and cocoyo can be a useful utility if we want to `.map` or `.contramap`
-over a type, and we know that we can convert into a data type that has a Functor
-but we don't want to commit to the final data structure too early. For example,
-we create a `Coyoneda[ISet, ?]` (recall `ISet` does not have a `Functor`) to use
-methods that require a `Functor`, then convert into `IList` later on.
+Coyo i cocoyo są przydatne, gdy chcemy wywołać `.map` lub `.constramap` na typie, który
+takich metod nie posiada, ale wiemy, że w końcu i tak przekonwertujemy go do innego typu,
+pozbawionego tych ograniczeń, a na razie nie chcemy się z nim wiązać. Dla przykładu, możemy 
+stworzyć `Coyoneda[ISet, ?]`, pamiętająć, że `ISet` nie posiada instacji typeklasy `Functor`, aby
+wywołać metody jej wymagające, a później przekonwertować taki obiekt do typu `IList`.
 
-If we want to optimise a program with coyo or cocoyo we have to provide the
-expected boilerplate for each algebra:
+Aby użyć coyo lub cocoyo do optymalizacji naszego programu, musimy dostarczyć oczekiwany
+boilerplate dla każdej algebry, której będziemy używać:
 
 {lang="text"}
 ~~~~~~~~
@@ -9711,41 +9548,37 @@ expected boilerplate for each algebra:
   }
 ~~~~~~~~
 
-An optimisation we get by using `Coyoneda` is *map fusion* (and *contramap
-fusion*), which allows us to rewrite
+Optymalizacją, którą możemy zastosować to *fuzja wywołań `.map`* (_map fusion_), co pozwala nam przepisać
 
 {lang="text"}
 ~~~~~~~~
   xs.map(a).map(b).map(c)
 ~~~~~~~~
 
-into
+na
 
 {lang="text"}
 ~~~~~~~~
   xs.map(x => c(b(a(x))))
 ~~~~~~~~
 
-avoiding intermediate representations. For example, if `xs` is a `List` of a
-thousand elements, we save two thousand object allocations because we only map
-over the data structure once.
+unikając pośrednich reprezentacji. Jeśli, na przykład, `xs` to `List`a z tysiącem elementów,
+to oszczędzamy dwa tysiące alokacji wywołując `.map` tylko raz.
 
-However it is arguably a lot easier to just make this kind of change in the
-original function by hand, or to wait for the [`scalaz-plugin`](https://github.com/scalaz/scalaz-plugin) project to be
-released and automatically perform these sorts of optimisations.
+Jednak dużo prościej jest po prostu ręcznie zmienić oryginalną funkcję albo poczekać
+na [`scalaz-plugin`](https://github.com/scalaz/scalaz-plugin), który automatycznie wykona tego typu
+optymalizacje.
 
 
 ### Extensible Effects
 
-Programs are just data: free structures help to make this explicit and give us
-the ability to rearrange and optimise that data.
+Programy to tylko dane, a struktury typu free wyrażają to wprost, pozwalając nam na
+ich rearanżacje i optymalizacje.
 
-`Free` is more special than it appears: it can sequence arbitrary algebras and
-typeclasses.
+`Free` jest bardziej niezwykła niż nam się wydaje: pozwala sekwencyjnie łączyć arbitralne algebry i typeklasy.
 
-For example, a free structure for `MonadState` is available. The `Ast` and
-`.liftF` are more complicated than usual because we have to account for the `S`
-type parameter on `MonadState`, and the inheritance from `Monad`:
+Na przykład, istnieje `Free` dla `MonadState`. `Ast` i `.liftF` są nieco bardziej skomplikowane niż zwykle, bo
+muszą uwzględniać parametr typu `S` oraz dziedziczenie po typie `Monad`:
 
 {lang="text"}
 ~~~~~~~~
@@ -9767,21 +9600,18 @@ type parameter on `MonadState`, and the inheritance from `Monad`:
   }
 ~~~~~~~~
 
-This gives us the opportunity to use optimised interpreters. For example, we
-could store the `S` in an atomic field instead of building up a nested `StateT`
-trampoline.
+Daje nam to okazje do użycia zoptymalizowanego interpretera, który może na przykład przechowywać stan w atomowym
+polu zamiast budować zagnieżdżone trampoliny `StateT`.
 
-We can create an `Ast` and `.liftF` for almost any algebra or typeclass! The
-only restriction is that the `F[_]` does not appear as a parameter to any of the
-instructions, i.e. it must be possible for the algebra to have an instance of
-`Functor`. This unfortunately rules out `MonadError` and `Monoid`.
+Możemy stworzyć `Ast` i `.liftF` dla niemal dowolnej algebry albo typeklasy. Jedyne ograniczenie jest takie, że
+`F[_]` nie może pojawiać się jako parametr w żadnej instrukcji, a więc algebra musi móc mieć instancję typeklasy `Functor`.
+Ograniczenie to wyklucza z użycia m.in. `MonadError` i `Monoid`.
 
-A> The reason why free encodings do not work for all algebras and typeclasses is
-A> quite subtle.
-A> 
-A> Consider what happens if we create an Ast for `MonadError`, with `F[_]` in
-A> contravariant position, i.e. as a parameter.
-A> 
+A> Powód, dla którego kodowanie free nie działa dla wszystkich algebr i typeklas jest dość subtelny.
+A>
+A> Rozważmy co się stanie, jeśli stworzymy `Ast` dla `MonadError` gdzie `F[_]` występuje w pozycji kontrawariantnej, czyli
+A> np. jako parametr.
+A>
 A> {lang="text"}
 A> ~~~~~~~~
 A>   object MonadError {
@@ -9794,51 +9624,50 @@ A>     ...
 A>   }
 A> ~~~~~~~~
 A> 
-A> When we come to interpret a program that uses `MonadError.Ast` we must construct
-A> the coproduct of instructions. Say we extend a `Drone` program:
+A> Kiedy przychodzi moment interpretacji programu używającego `MonadError.Ast` musimy stworzyć koprodukt
+A> wszystkich instrukcji. Powiedzmy, że chcemy rozszerzyć program bazujący na `Drone`:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
 A>   type Ast[a] = Coproduct[MonadError.Ast[Ast, String, ?], Drone.Ast, a]
 A> ~~~~~~~~
 A> 
-A> This fails to compile because `Ast` refers to itself!
+A> Taki zapis skutkuje błędem kompilacji, ponieważ `Ast` odwołuje się do samego siebie!
 A> 
-A> Algebras that are not entirely made of covariant functor signatures, i.e. `F[_]`
-A> in return position, are impossible to interpret because the resulting type of
-A> the program is self-referential. Indeed the name *algebra* that we have been
-A> using has its roots in [F-Algebras](https://en.wikipedia.org/wiki/F-algebra), where the F is for Functor.
+A> Algebry, które nie składają się w całości z kowariantnych sygnatur, tzn. takich gdzie `F[_]`
+A> jest tylko zwracane z funkcji, nie mogą być interpretowane, ponieważ typ zwracany z programu odwołuje się do samego siebie.
+A> W rzeczywistości nazwa *algebra*, której używamy ma swoje korzenie w [F-Algebrach](https://en.wikipedia.org/wiki/F-algebra),
+A> gdzie F oznacza funktor.
 A> 
-A> *Thanks to Edmund Noble for initiating this discussion.*
+A> *Podziękowania dla Edmunda Noble'a za zainicjowanie tej dyskusji.*
 
-As the AST of a free program grows, performance degrades because the interpreter
-must match over instruction sets with an `O(n)` cost. An alternative to
-`scalaz.Coproduct` is [iotaz](https://github.com/frees-io/iota)'s encoding, which uses an optimised data structure
-to perform `O(1)` dynamic dispatch (using integers that are assigned to each
-coproduct at compiletime).
+Wraz z rozrostem AST programu obniża się wydajność interpretera, ponieważ instrukcja dopasowania (_match_)
+ma złożoność liniową względem obsługiwanych wariantów. Alternatywą do `scalaz.Coproduct` jest biblioteka [iotaz](https://github.com/frees-io/iota),
+która używa zoptymalizowanej struktury danych aby wykonać tę operację ze złożonością `O(1)` (używając liczb całkowitych
+przydzielanych wariantom na etapie kompilacji).
 
-For historical reasons a free AST for an algebra or typeclass is called *Initial
-Encoding*, and a direct implementation (e.g. with `IO`) is called *Finally
-Tagless*. Although we have explored interesting ideas with `Free`, it is
-generally accepted that finally tagless is superior. But to use finally tagless
-style, we need a high performance effect type that provides all the monad
-typeclasses we've covered in this chapter. We also still need to be able to run
-our `Applicative` code in parallel. This is exactly what we will cover next.
+Z przyczyn historycznych free AST dla algebry lub typeklasy jest nazywane *Initial Encoding*,
+a bezpośrednia implementacja (np. z użyciem `IO`) to *Finally Tagless*. Mimo że omówiliśmy 
+interesujące koncepty używając `Free`, to ogólnie przyjęta jest opinia, że finally tagless
+jest podejściem lepszym. Jednak aby użyć tego podejścia musimy mieć do dyspozycji wydajny
+typ efektu, który dostarczy nam wszystkie typeklasy, które omówiliśmy. Ponadto nadal
+potrzebujemy sposobu na uruchomienie naszego kodu opartego o `Applicative` w sposób równoległy.
+
+I dokładnie tym się teraz zajmiemy.
 
 
 ## `Parallel`
 
-There are two effectful operations that we almost always want to run in
-parallel:
+Są dwie operacje wywołujące efekty, które prawie zawsze chcemy wykonywać równolegle:
 
-1.  `.map` over a collection of effects, returning a single effect. This is
-    achieved by `.traverse`, which delegates to the effect's `.apply2`.
-2.  running a fixed number of effects with the *scream operator* `|@|`, and
-    combining their output, again delegating to `.apply2`.
+1. `.map` na kolekcji efektów, zwracając pojedynczy efekt. Można to osiągnąć za pomocą 
+   metody `.traverse`, która deleguje do `.apply2` danego efektu.
+2. uruchomienie danej liczby efektów z użyciem *operatora krzyku* `|@|` i połączenie ich
+   wyników, również delegując do `.apply2`.
 
-However, in practice, neither of these operations execute in parallel by
-default. The reason is that if our `F[_]` is implemented by a `Monad`, then the
-derived combinator laws for `.apply2` must be satisfied, which say
+W praktyce jednak, żadna z tych operacji nie jest domyślnie wykonywana równolegle. Przyczyna 
+jest prosta: jeśli nasze `F[_]` implementuje typeklasę `Monad`, wtedy muszą być zachowane
+jej prawa co do `apply2`, tj.
 
 {lang="text"}
 ~~~~~~~~
@@ -9850,13 +9679,11 @@ derived combinator laws for `.apply2` must be satisfied, which say
   }
 ~~~~~~~~
 
-In other words, **`Monad` is explicitly forbidden from running effects in
-parallel.**
+Innymi słowy, **`Monad`om wprost zabrania się wykonywania efektów równolegle**.
 
-However, if we have an `F[_]` that is **not** monadic, then it may implement
-`.apply2` in parallel. We can use the `@@` (tag) mechanism to create an instance
-of `Applicative` for `F[_] @@ Parallel`, which is conveniently assigned to the
-type alias `Applicative.Par`
+Jednak, gdy mamy `F[_]`, które **nie** jest monadyczne, wtedy może ono implementować
+`.apply2` w sposób równoległy. Możemy użyć mechanizmu `@@` (tagów) aby stworzyć instancję typeklasy `Applicative` dla 
+`F[_] @@ Parallel`, która dorobiła się własnego aliasu `Applicative.Par`
 
 {lang="text"}
 ~~~~~~~~
@@ -9866,14 +9693,14 @@ type alias `Applicative.Par`
   }
 ~~~~~~~~
 
-Monadic programs can then request an implicit `Par` in addition to their `Monad`
+Programy monadyczne mogą więc żądać niejawnego `Par` jako dodatku do ich `Monad`
 
 {lang="text"}
 ~~~~~~~~
   def foo[F[_]: Monad: Applicative.Par]: F[Unit] = ...
 ~~~~~~~~
 
-Scalaz's `Traverse` syntax supports parallelism:
+Metody `Traverse` ze Scalaz wspierają równoległe wykonanie:
 
 {lang="text"}
 ~~~~~~~~
@@ -9885,8 +9712,8 @@ Scalaz's `Traverse` syntax supports parallelism:
   }
 ~~~~~~~~
 
-If the implicit `Applicative.Par[IO]` is in scope, we can choose between
-sequential and parallel traversal:
+Jeśli w zakresie dostępna jest niejawna instancja `Applictive.Parp[IO]`, to możemy wybrać między
+sekwencyjną i równoległa trawersacją:
 
 {lang="text"}
 ~~~~~~~~
@@ -9897,7 +9724,7 @@ sequential and parallel traversal:
   input.parTraverse(network): IO[IList[Int]] // all in parallel
 ~~~~~~~~
 
-Similarly, we can call `.parApply` or `.parTupled` after using scream operators
+Podobnie możemy wywołać `.parApply` lub `.parTupled` po tym jak użyliśmy operatorów krzyku
 
 {lang="text"}
 ~~~~~~~~
@@ -9910,18 +9737,16 @@ Similarly, we can call `.parApply` or `.parTupled` after using scream operators
   (fa |@| fb |@| fc).parApply { case (a, b, c) => a + b + c }: IO[String]
 ~~~~~~~~
 
-It is worth nothing that when we have `Applicative` programs, such as
+Warto zaznaczyć, że kiedy mamy do czynienia z programami opartymi o `Applicative`, takimi jak
 
 {lang="text"}
 ~~~~~~~~
   def foo[F[_]: Applicative]: F[Unit] = ...
 ~~~~~~~~
 
-we can use `F[A] @@ Parallel` as our program's context and get parallelism as
-the default on `.traverse` and `|@|`. Converting between the raw and `@@
-Parallel` versions of `F[_]` must be handled manually in the glue code, which
-can be painful. Therefore it is often easier to simply request both forms of
-`Applicative`
+możemy używać `F[A] @@ Parallel` jako kontekstu, sprawiając że `.traverse` i `|@|` wykonywane będą równolegle.
+Konwersja między zwykłą i równoległą wersją `F[_]` musi być obsłużona ręcznie, co może być uciążliwe, więc
+często łatwiej jest po prostu wymagać obu form `Applicative`.
 
 {lang="text"}
 ~~~~~~~~
@@ -9929,23 +9754,22 @@ can be painful. Therefore it is often easier to simply request both forms of
 ~~~~~~~~
 
 
-### Breaking the Law
+### Łamiąc Prawo
 
-We can take a more daring approach to parallelism: opt-out of the law that
-`.apply2` must be sequential for `Monad`. This is highly controversial, but
-works well for the majority of real world applications. we must first audit our
-codebase (including third party dependencies) to ensure that nothing is making
-use of the `.apply2` implied law.
+Możemy przyjąć bardziej śmiałe podejście do zrównoleglania: zrezygnować z prawa, które każe
+`.apply2` wykonywać operacje sekwencyjnie dla `Monad`. Jest to podejście mocno kontrowersyjne
+ale działa zadziwiająco dobrze dla większości rzeczywistych aplikacji. Najpierw musimy jednak prześledzić nasz kod
+w poszukiwaniu fragmentów, które mogłyby bazować na tym prawie, aby nie wprowadzić błędów. Później jest już tylko łatwiej.
 
-We wrap `IO`
+Opakowujemy `IO`
 
 {lang="text"}
 ~~~~~~~~
   final class MyIO[A](val io: IO[A]) extends AnyVal
 ~~~~~~~~
 
-and provide our own implementation of `Monad` which runs `.apply2` in parallel
-by delegating to a `@@ Parallel` instance
+i dostarczamy naszą własną implementację `Monad`y, która uruchamia `.apply2` równolegle, poprzez oddelegowanie
+do instancji dla typu `@@ Parallel`
 
 {lang="text"}
 ~~~~~~~~
@@ -9958,20 +9782,17 @@ by delegating to a `@@ Parallel` instance
   }
 ~~~~~~~~
 
-We can now use `MyIO` as our application's context instead of `IO`, and **get
-parallelism by default**.
+Od teraz możemy używać `MyIO` zamiast `IO` jako kontekstu naszej aplikacji i korzystać z **automatycznego zrównoleglania**.
 
-A> Wrapping an existing type and providing custom typeclass instances is known as
+A> Opakowywanie istniejących typów i dostarczanie własnych instancji typeklas znane jest jako
 A> *newtyping*.
 A> 
-A> `@@` and newtyping are complementary: `@@` allows us to request specific
-A> typeclass variants on our domain model, whereas newtyping allow us to define the
-A> instances on the implementation. Same thing, different insertion points.
+A> `@@` i newtyping są komplementarne: `@@` pozwala na żądanie konkretnych wariantów typeklas dla naszego modelu domenowego,
+A> natomiast newtyping umożliwia definiowanie instancji dla konkretnej implementacji. To samo, tylko z różnymi punktami wejścia. 
 A> 
-A> The `@newtype` macro [by Cary Robbins](https://github.com/estatico/scala-newtype) has an optimised runtime representation
-A> (more efficient than `extends AnyVal`), that makes it easy to delegate
-A> typeclasses that we do not wish to customise. For example, we can customise
-A> `Monad` but delegate the `Plus`:
+A> Makro `@newtype` [autorstwa Cary'ego Robbinsa](https://github.com/estatico/scala-newtype) dostarcza zoptymalizowaną
+A> implementację (bardziej wydajną niż `extends AnyVal`), która pozwala oddelegować te typeklasy, których nie chcemy zmieniać.
+A> Możemy więc nadpisać `Monad` i oddelegować `Plus`:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -9982,8 +9803,7 @@ A>     implicit val plus: Plus[MyIO] = derived
 A>   }
 A> ~~~~~~~~
 
-For completeness: a naive and inefficient implementation of `Applicative.Par`
-for our toy `IO` could use `Future`:
+Dla kompletności: naiwna i niewydajna implementacja `Applicative.Par` dla naszego `IO` mogłaby używać `Future`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10003,23 +9823,24 @@ for our toy `IO` could use `Future`:
   }
 ~~~~~~~~
 
-and due to [a bug in the Scala compiler](https://github.com/scala/bug/issues/10954) that treats all `@@` instances as
-orphans, we must explicitly import the implicit:
+a z powodu [błędu w kompilatorze Scali](https://github.com/scala/bug/issues/10954), który powoduje że wszystkie instancje dla typów `@@`
+traktowane są jako instancje osierocone, musimy explicite zaimportować tą niejawną wartość:
 
 {lang="text"}
 ~~~~~~~~
   import IO.ParApplicative
 ~~~~~~~~
 
-In the final section of this chapter we will see how Scalaz's `IO` is actually
-implemented.
+W ostatniej sekcji tego rozdziału zobaczymy jak na prawdę zaimplementowany jest typ `IO` w Scalaz.
 
 
 ## `IO`
 
-Scalaz's `IO` is the fastest asynchronous programming construct in the Scala
-ecosystem: up to 50 times faster than `Future`. `IO` is a free data structure
-specialised for use as a general effect monad.
+`IO` ze Scalaz jest najszybszą strukturą danych pozwalającą na programowanie asynchroniczne jaką możemy znaleźć w ekosystemie Scali, 
+nawet do 50 razy szybsza niż `Fututre`.[^fastest] Zaprojektowana została jako monada do obsługi efektów ogólnego przeznaczenia. 
+
+[^fastest]: Biblioteki takie jak Monix, cats-effect i Scalaz nieustannie prześcigają się w optymalizacjach mających na celu
+zwiększenie wydajności, stąd ciężko jest określić kto jest aktualnym liderem.
 
 {lang="text"}
 ~~~~~~~~
@@ -10035,34 +9856,31 @@ specialised for use as a general effect monad.
   }
 ~~~~~~~~
 
-`IO` has **two** type parameters: it has a `Bifunctor` allowing the error type to
-be an application specific ADT. But because we are on the JVM, and must interact
-with legacy libraries, a convenient type alias is provided that uses exceptions
-for the error type:
+`IO` ma **dwa** parametry typu, a tym samym posiada instancję typeklasy `Bifunctor`, która pozwala
+na zdefiniowanie błędów jako ADT specyficznego dla danej aplikacji. Niestety jesteśmy na JVMie oraz musimy
+współpracować z istniejącymi bibliotekami, dlatego też zdefiniowany został pomocny alias, który używa
+wyjątków jako typu błędów:
 
 {lang="text"}
 ~~~~~~~~
   type Task[A] = IO[Throwable, A]
 ~~~~~~~~
 
-A> `scalaz.ioeffect.IO` is a high performance `IO` by John de Goes. It has a
-A> separate lifecycle to the core Scalaz library and must be manually added to our
-A> `build.sbt` with
+A> `scalaz.ioeffect.IO` to biblioteka definiująca wysoce wydajne `IO` stworzona przez Johna de Goes. Jego cykl życia i wydań
+A> jest niezależny od Scalaz i musi być dodany osobno do `build.sbt`:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
 A>   libraryDependencies += "org.scalaz" %% "scalaz-ioeffect" % "2.10.1"
 A> ~~~~~~~~
 A> 
-A> Do not use the deprecated `scalaz-effect` and `scalaz-concurrency` packages.
-A> 
-A> Prefer the `scalaz.ioeffect` variants of all typeclasses and data types.
+A> Pakiety `scalaz-effect` i `scalaz-concurrency` są zdeprecjonowane i nie powinny być używane.
+A> Zalecamy używać `scalaz.ioeffect` i zdefiniowanych tam wariantów typeklas i typów danych.
 
 
-### Creating
+### Tworzenie
 
-There are multiple ways to create an `IO` that cover a variety of eager, lazy,
-safe and unsafe code blocks:
+Istnieje wiele sposobów na stworzenie `IO` z zarówno zachłannych i leniwych, jak i bezpiecznych i niebezpiecznych bloków kodu:
 
 {lang="text"}
 ~~~~~~~~
@@ -10084,7 +9902,7 @@ safe and unsafe code blocks:
   }
 ~~~~~~~~
 
-with convenient `Task` constructors:
+wraz z wygodnymi konstruktorami dla `Task`a:
 
 {lang="text"}
 ~~~~~~~~
@@ -10096,8 +9914,7 @@ with convenient `Task` constructors:
   }
 ~~~~~~~~
 
-The most common constructors, by far, when dealing with legacy code are
-`Task.apply` and `Task.fromFuture`:
+Najczęściej używanym wariantem, szczególnie przy pracy z istniejącym kodem, jest `Task.apply` oraz `Task.fromFuture`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10106,23 +9923,21 @@ The most common constructors, by far, when dealing with legacy code are
   Task.fromFuture(fa)(ExecutionContext.global): Task[String]
 ~~~~~~~~
 
-We cannot pass around raw `Future`, because it eagerly evaluates, so must always
-be constructed inside a safe block.
+Nie możemy przekazywać instancji `Future` bezpośrednio, ponieważ obliczenia wewnątrz niej rozpoczynają się zachłannie w momencie
+stworzenia, dlatego też tworzenie to musi odbyć się wewnątrz bezpiecznego bloku.
 
-Note that the `ExecutionContext` is **not** `implicit`, contrary to the
-convention. Recall that in Scalaz we reserve the `implicit` keyword for
-typeclass derivation, to simplify the language: `ExecutionContext` is
-configuration that must be provided explicitly.
+Zauważmy, że `ExecutionContext` **nie** jest przekazywany niejawnie, odwrotnie niż przyjęta konwencja.
+W Scalaz parametry niejawne zarezerwowane są dla typeklas, a `ExecutionContext` to parametr konfiguracyjny,
+a więc powinien być przekazany wprost.
 
 
-### Running
+### Uruchamianie
 
-The `IO` interpreter is called `RTS`, for *runtime system*. Its implementation
-is beyond the scope of this book. We will instead focus on the features that
-`IO` provides.
+Interpreter `IO` nazywa się `RTS`, od *runitme system*, ale jego implementacja wybiega poza zakres tej książki.
+W zamian omówimy funkcjonalności, które nam udostępnia.
 
-`IO` is just a data structure, and is interpreted *at the end of the world* by
-extending `SafeApp` and implementing `.run`
+`IO` to po prostu struktura danych, którą interpretujemy *na końcu świata* poprzez rozszerzenie `SafeApp` i zaimplementowanie
+metody `.run`
 
 {lang="text"}
 ~~~~~~~~
@@ -10141,27 +9956,25 @@ extending `SafeApp` and implementing `.run`
   }
 ~~~~~~~~
 
-A> `Void` is a type that has no values, like `scala.Nothing`. However, the Scala
-A> compiler infers `Nothing` when it fails to correctly infer a type parameter,
-A> causing confusing error messages, whereas `Void` will fail fast during
-A> compilation.
+A> `Void` to typ danych, który nie ma żadnych wartości, podobnie jak `scala.Nothing`. 
+A> Różnica między nimi polega na tym, jak traktowani są przez kompilator. `Nothing`
+A> używany jest zawsze wtedy, gdy kompilatorowi nie uda się poprawnie wyinferować typów,
+A> co może powodować mylące komunikaty błędów. `Void` nie ma tych problemów.
 A> 
-A> A `Void` error type means that the effect **cannot fail**, which is to say that we
-A> have handled all errors by this point.
+A> `Void` jako typ błędu oznacza, że operacja **musi się udać**, co oznacza, że
+A> wszystkie błędy zostały wcześniej obsłużone.
 
-If we are integrating with a legacy system and are not in control of the entry
-point of our application, we can extend the `RTS` and gain access to unsafe
-methods to evaluate the `IO` at the entry point to our principled FP code.
+Jeśli integrujemy się z istniejącym systemem i nie mamy kontroli nad punktem wejścia do naszej aplikacji, możemy
+rozszerzyć `RTS` zyskując dostęp do niebezpiecznych metod, których możemy użyć aby wyewaluować `IO`
+na wejściu do czysto funkcyjnej części kodu. 
 
 
-### Features
+### Funkcjonalności
 
-`IO` provides typeclass instances for `Bifunctor`, `MonadError[E, ?]`,
-`BindRec`, `Plus`, `MonadPlus` (if `E` forms a `Monoid`), and an
+`IO` dostarcza instancje dla `Bifunctor`, `MonadError[E, ?]`, `BindRec`, `Plus`, `MonadPlus` (jeśli `E` formuje `Monoid`) oraz
 `Applicative[IO.Par[E, ?]]`.
 
-In addition to the functionality from the typeclasses, there are implementation
-specific methods:
+W dodatku do funkcjonalności pochodzących z typeklas, dostajemy implementację kilku specyficznych metod:
 
 {lang="text"}
 ~~~~~~~~
@@ -10190,9 +10003,9 @@ specific methods:
     ...
 ~~~~~~~~
 
-It is possible for an `IO` to be in a *terminated* state, which represents work
-that is intended to be discarded (it is neither an error nor a success). The
-utilities related to termination are:
+Instancja `IO` może być *zakończona* (_terminated_), co oznacza, że praca, która
+była zaplanowana zostanie odrzucona (nie jest to ani sukces ani błąd). Narzędzia
+do pracy z tym stanem to:
 
 {lang="text"}
 ~~~~~~~~
@@ -10212,9 +10025,9 @@ utilities related to termination are:
 
 ### `Fiber`
 
-An `IO` may spawn *fibers*, a lightweight abstraction over a JVM `Thread`. We
-can `.fork` an `IO`, and `.supervise` any incomplete fibers to ensure that they
-are terminated when the `IO` action completes
+`IO` może przywołać *włókna* (_fibers_), czyli lekką abstrakcję ponad wątkami udostępnianymi przez JVM.
+Możemy rozgałęziać (`.fork`) `IO` i nadzorować (`.supervise`) niezakończone włókna aby upewnić się, że
+zostaną zakończone kiedy `IO` się wykona
 
 {lang="text"}
 ~~~~~~~~
@@ -10224,8 +10037,8 @@ are terminated when the `IO` action completes
   ...
 ~~~~~~~~
 
-When we have a `Fiber` we can `.join` back into the `IO`, or `interrupt` the
-underlying work.
+Kiedy mamy do dyspozycji włókno możemy je włączyć spowrotem do `IO` (`.join`) lub przerwać 
+wykonywaną pracę (`.interrupt`).
 
 {lang="text"}
 ~~~~~~~~
@@ -10235,10 +10048,9 @@ underlying work.
   }
 ~~~~~~~~
 
-We can use fibers to achieve a form of optimistic concurrency control. Consider
-the case where we have `data` that we need to analyse, but we also need to
-validate it. We can optimistically begin the analysis and cancel the work if the
-validation fails, which is performed in parallel.
+Możemy używać włókien do osiągnięcia optymistycznej kontroli współbieżności. Wyobraźmy sobie, że mamy dane (`data`),
+które chcemy przeanalizować oraz zwalidować. Możemy optymistycznie rozpocząć analizę i przerwać ją gdy walidacja, 
+która uruchomiona jest równolegle, zakończy się niepowodzeniem.
 
 {lang="text"}
 ~~~~~~~~
@@ -10254,14 +10066,14 @@ validation fails, which is performed in parallel.
   } yield result
 ~~~~~~~~
 
-Another usecase for fibers is when we need to perform a *fire and forget*
-action. For example, low priority logging over a network.
+Innym zastosowaniem włókien jest sytuacja gdy chcemy rozpocząć akcję i o niej zapomnieć, jak na przykład niskopriorytetowe
+logowanie zdarzeń przez sieć.
 
 
 ### `Promise`
 
-A promise represents an asynchronous variable that can be set exactly once (with
-`complete` or `error`). An unbounded number of listeners can `get` the variable.
+Obietnica (`Promise`) reprezentuje asynchroniczną zmienną, która może być ustawiona dokładnie raz (poprzez `.complete` lub `.error`).
+Następnie dowolna liczba odbiorców może odczytać taką zmienną używając `.get`.
 
 {lang="text"}
 ~~~~~~~~
@@ -10278,18 +10090,18 @@ A promise represents an asynchronous variable that can be set exactly once (with
   }
 ~~~~~~~~
 
-`Promise` is not something that we typically use in application code. It is a
-building block for high level concurrency frameworks.
+`Promise` nie jest zazwyczaj używany w kodzie aplikacyjnym. Jest to raczej element zaprojektowany do budowania
+wyżejpoziomowych frameworków do obsługi współbieżności.
 
-A> When an operation is guaranteed to succeed, the error type `E` is left as a free
-A> type parameter so that the caller can specify their preference.
+A> Kiedy wiemy, że operacja na pewno się uda, typ błędu `E` może być ustawiony dowolnie, tak aby mógł
+A> dostosować się do preferencji użytkownika.
 
 
 ### `IORef`
 
-`IORef` is the `IO` equivalent of an atomic mutable variable.
+`IORef` to odpowiednik mutowalnej zmiennej w świecie `IO`.
 
-We can read the variable and we have a variety of ways to write or update it.
+Możemy odczytać jej wartość oraz dostajemy do dyspozycji szereg operacji do manipulacji tą wartością.
 
 {lang="text"}
 ~~~~~~~~
@@ -10313,8 +10125,8 @@ We can read the variable and we have a variety of ways to write or update it.
   }
 ~~~~~~~~
 
-`IORef` is another building block and can be used to provide a high performance
-`MonadState`. For example, create a newtype specialised to `Task`
+`IORef` to kolejny typ danych, który może nam dostarczyć wysokowydajną instancję `MonadState`. 
+Spróbujmy stworzyć nowy typ wyspecjalizowany do obsługi `Task`ów
 
 {lang="text"}
 ~~~~~~~~
@@ -10332,8 +10144,8 @@ We can read the variable and we have a variety of ways to write or update it.
   }
 ~~~~~~~~
 
-We can make use of this optimised `StateMonad` implementation in a `SafeApp`,
-where our `.program` depends on optimised MTL typeclasses:
+Możemy wykorzystać tak zoptymalizowaną implementację `MonadState` w `SafeApp`, gdy nasz `.program`
+wymaga instancji tej typeklasy:
 
 {lang="text"}
 ~~~~~~~~
@@ -10348,19 +10160,18 @@ where our `.program` depends on optimised MTL typeclasses:
   }
 ~~~~~~~~
 
-A more realistic application would take a variety of algebras and typeclasses as
-input.
+Bardziej realistyczna aplikacja wymagałaby zdecydowanie większej liczby różnych typeklas i algebr
+jako wejścia.
 
-A> This optimised `MonadState` is constructed in a way that breaks typeclass
-A> coherence. Two instances having the same types may be managing different state.
-A> It would be prudent to isolate the construction of all such instances to the
-A> application's entrypoint.
+A> Tak zoptymalizowana instancja `MonadState` jest konstruowana w sposób, który łamie koherencję typeklas.
+A> Dwie instancje tego samego typu mogą zarządzać innym stanem. Rozważnym byłoby wyizolowanie tworzenia wszystkich takich instancji
+A> w punkcie wejścia do naszej aplikacji.
 
 
 #### `MonadIO`
 
-The `MonadIO` that we previously studied was simplified to hide the `E`
-parameter. The actual typeclass is
+Typ `MonadIO` który wcześniej widzieliśmy został uproszczony poprzez ukrycie parametru `E`. Prawdziwa jego 
+forma wygląda tak:
 
 {lang="text"}
 ~~~~~~~~
@@ -10369,8 +10180,7 @@ parameter. The actual typeclass is
   }
 ~~~~~~~~
 
-with a minor change to the boilerplate on the companion of our algebra,
-accounting for the extra `E`:
+wraz z drobną różnicą w boilerplacie kompaniującym naszej algebrze, uwzględniają dodatkowe `E`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10387,15 +10197,15 @@ accounting for the extra `E`:
 ~~~~~~~~
 
 
-## Summary
+## Podsumowanie
 
-1.  The `Future` is broke, don't go there.
-2.  Manage stack safety with a `Trampoline`.
-3.  The Monad Transformer Library (MTL) abstracts over common effects with typeclasses.
-4.  Monad Transformers provide default implementations of the MTL.
-5.  `Free` data structures let us analyse, optimise and easily test our programs.
-6.  `IO` gives us the ability to implement algebras as effects on the world.
-7.  `IO` can perform effects in parallel and is a high performance backbone for any application.
+1. Typ `Future` jest zepsuty, nie idź tą drogą.
+2. Możemy zapanować nad bezpieczeństwem stosu za pomocą `Trampoline`.
+3. Biblioteka Transformatorów Monad (MTL) abstrahuje nad popularnymi efektami za pomocą typeklas.
+4. Transformatory Monad dostarczają domyślnych implementacji dla typeklas z MTL.
+5. Struktura `Free` pozwala nam analizować, optymalizować i łatwo testować nasze programy.
+6. `IO` umożliwia implementowanie algebr jako efektów wykonywanych na świecie zewnętrznym.
+7. `IO` może wykonywać efekty równolegle i jest wysoce wydajnym fundamentem dla dowolnej aplikacji.
 
 
 # Typeclass Derivation
