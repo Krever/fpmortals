@@ -6935,7 +6935,7 @@ to dobry sposób na swój własny wkład do ekosystemu Scalaz.
 
 Znajomość Zaawansowanych Monad to element obowiązkowy, aby móc nazwać się zaawansowanym programistą funkcyjnym.
 
-Jednocześnie jestesteśmy deweloperami, którzy nieustannie pragną prostego życia, a więc i nasza definicja "zaawansowania"
+Jednocześnie jesteśmy deweloperami, którzy nieustannie pragną prostego życia, a więc i nasza definicja "zaawansowania"
 jest raczej skromna. Dla porównania: `scala.concurrent.Future` jest strukturą dużo bardziej skomplikowaną niż jakakolwiek
 z prezentowanych w tym rozdziale `Monad`.
 
@@ -6946,13 +6946,13 @@ z prezentowanych w tym rozdziale `Monad`.
 Największym problemem z `Future` jest to, że rozpoczyna obliczenia w momencie stworzenia, tym samym łącząc definiowanie
 programu z jego interpretacją (czyli np. uruchomieniem).
 
-`Future` jest też nienajlepszym wyborem ze względów wydajnościowych: za każdym razem, gdy wywołujemy `.flatMap`
+`Future` jest też nie najlepszym wyborem ze względów wydajnościowych: za każdym razem, gdy wywołujemy `.flatMap`
 domknięcie jest przekazywane do `Executor`a, wywołując planowanie wątków i zmiany kontekstu. Nie jest niczym
-nadzwyczajnym aby 50% mocy obliczeniowej CPU wykorzystywane było na te własnie operacje zamiast rzeczywistej pracy.
-W efekcie program zrównoleglony za pomocą `Future` może okazać się *wolniejszy* od swojego sekwencyjnego odpowiendnika.
+nadzwyczajnym aby 50% mocy obliczeniowej CPU wykorzystywane było na te właśnie operacje zamiast rzeczywistej pracy.
+W efekcie program zrównoleglony za pomocą `Future` może okazać się *wolniejszy* od swojego sekwencyjnego odpowiednika.
 
 Zachłanna ewaluacja w połączeniu ze odwołaniami do executora sprawia że niemożliwym jest określenie kiedy
-zadanie się rozpoczęło, kiedy sie zakończyło ani jakie pod-zadania zostały rozpoczęte. Zatem nie powinno nas dziwić,
+zadanie się rozpoczęło, kiedy się zakończyło ani jakie pod-zadania zostały rozpoczęte. Zatem nie powinno nas dziwić,
 że "rozwiązania" do monitorowania wydajności frameworków opartych o `Future` są solidnym źródłem utrzymania
 dla nowoczesnych odpowiedników sprzedawców "cudownych remediów".
 
@@ -6960,7 +6960,7 @@ Co więcej, `Future.flatMap` wymaga niejawnego przekazania parametru typu `Execu
 użytkownika do myślenia o logice biznesowej i semantyce uruchomienia w tym samym momencie.
 
 A> Jeśli `Future` ma swój odpowiednik w sadze Star Wars, to jest nim Anakin Skywalker: upadły
-A> wybraniec, który wbiega i niszczy wszystko bez zastnowienia.
+A> wybraniec, który wbiega i niszczy wszystko bez zastanowienia.
 
 
 ## Efekty i efekty uboczne
@@ -7015,7 +7015,7 @@ stosu wywołań determinowana jest przez flagę `-Xss` ustawianą przy uruchomie
 ogonowo-rekursywne są wykrywane przez kompilator Scali i nie dodają wpisów do stosu. Kiedy przekroczymy dozwolony
 limit poprzez zawołanie zbyt wielu metod napotkamy `StackOverflowError`.
 
-Niestety, każde zagnieżdzone wywołanie na naszym `IO`, jak np. `.flatMap`, dodaje kolejne wywołania do stosu.
+Niestety, każde zagnieżdżone wywołanie na naszym `IO`, jak np. `.flatMap`, dodaje kolejne wywołania do stosu.
 Najprostszym sposobem aby zaobserwować to zjawisko, jest powtórzenie akcji w nieskończoność i sprawdzenie czy 
 taki program przeżyje dłużej niż kilka sekund. Możemy użyć metody `.forever` pochodzącej z `Apply` (rodzica `Monad`y):
 
@@ -7037,7 +7037,7 @@ taki program przeżyje dłużej niż kilka sekund. Możemy użyć metody `.forev
       at ...
 ~~~~~~~~
 
-Scalaz definiuje typeklasę `BindRec`, którą mogą implementować `Monad`y niezagrożające przeładowywaniem stosu (_stack safe_):. 
+Scalaz definiuje typeklasę `BindRec`, którą mogą implementować `Monad`y niezagrażające przeładowywaniem stosu (_stack safe_):. 
 Wymaga ona zachowywania stałego rozmiaru stosu przy rekurencyjnych wywołaniach `bind`:
 
 {lang="text"}
@@ -7067,7 +7067,7 @@ Aby osiągnąć wspomniane bezpieczeństwo, należy zamienić wywołania metod n
   }
 ~~~~~~~~
 
-A> `SUSPEND`, `RETURN` i `GOSUB` to ukłon w stonę poleceń z języka `BASIC` o tych samych nazwach, 
+A> `SUSPEND`, `RETURN` i `GOSUB` to ukłon w stronę poleceń z języka `BASIC` o tych samych nazwach, 
 A> służących odpowiednio do zatrzymywania, zakańczania i kontynuowania podprogramu.
 
 ADT `Free` to naturalna reprezentacja metod z interfejsu `Monad`:
@@ -7109,15 +7109,15 @@ znane jako *thunk*, otrzymamy typ `Trampoline`, który pozwoli nam zaimplementow
 
 `.tailrecM` pochodząca z `BindRec` uruchamia `.bind` tak długo aż otrzymamy `B`. Mimo że technicznie rzecz biorąc
 nie jest to implementacja, którą spełnia wymagania anotacji `@tailrec`, to zachowuje stałą wielkość stosu, ponieważ
-każde wywołanie zwraza obiekt ze sterty (_heap_), a rekurencja zostaje odroczona.
+każde wywołanie zwraca obiekt ze sterty (_heap_), a rekurencja zostaje odroczona.
 
-A> Nazwa `Trampoline` wynika z faktu, że za każdym razem gdy odkładamy `.bind` na stosie *odbijamy się* spowrotem
+A> Nazwa `Trampoline` wynika z faktu, że za każdym razem gdy odkładamy `.bind` na stosie *odbijamy się* z powrotem
 A> na stertę.
 A>
-A> Jedynym odwołaniem do odbijania sie w sadze Star Wars jest pojedynek Yody z Dooku. Nie rozmawiajmy o tym.
+A> Jedynym odwołaniem do odbijania się w sadze Star Wars jest pojedynek Yody z Dooku. Nie rozmawiajmy o tym.
 
 Dostępne są funkcje ułatwiające tworzenie `Trampoline` zarówno zachłannie (`.done`) jak i przez nazwę (`.delay`). 
-Możemy też stworzyć instancję `Trampoline` przekazując inną jej instację poprzez nazwę (`.suspend`):
+Możemy też stworzyć instancję `Trampoline` przekazując inną jej instancję poprzez nazwę (`.suspend`):
 
 {lang="text"}
 ~~~~~~~~
@@ -7220,7 +7220,7 @@ Używając `Trampoline` możemy w podobny sposób zabezpieczyć nasze `IO`:
 A> Słyszeliśmy, że lubisz `Monad`y, więc zrobiliśmy dla ciebie `Monad`ę z `Monad`y, żebyś mógł
 A> bindować monadycznie gdy bindujesz monadycznie.
 
-Interpreter, `unsafePerformIO()`, specjalnie został nazwany w tak odstrzający sposób, aby zniechęcić
+Interpreter, `unsafePerformIO()`, specjalnie został nazwany w tak odstraszający sposób, aby zniechęcić
 do używania go poza punktem wejścia naszej aplikacji.
 
 Tym razem nie zobaczymy `StackOverflowError`:
@@ -7241,11 +7241,11 @@ Używanie `Trampoline` zazwyczaj wiąże się ze spadkiem wydajności w porówna
 Okazuje się, że `Free` nie jest tak do końca za darmo.
 
 A> Zawsze wykonuj benchmarki i nie akceptuj ogólnych stwierdzeń na temat wydajności. Może np. okazać się
-A> że garbage collector będzie działał szybciej gdy użyjemy `Free` z powodu zmiejszonego rozmiaru obiektów
+A> że garbage collector będzie działał szybciej gdy użyjemy `Free` z powodu zmniejszonego rozmiaru obiektów
 A> przechowywanych na stosie.
 
 
-## Biblioteka Tranformatorów Monad
+## Biblioteka Transformatorów Monad
 
 Transformatory monad to struktury danych, które opakowują wewnętrzną wartość i dostarczają monadyczny *efekt*.
 
@@ -7262,7 +7262,7 @@ W tym podrozdziale opiszemy każdy z nich, zwracając uwagę na to do czego mog�
 | błędy                     | `F[E \/ A]`           | `EitherT`     | `MonadError`  |
 | wartość czasu wykonania   | `A => F[B]`           | `ReaderT`     | `MonadReader` |
 | dziennik/wielozadaniowość | `F[(W, A)]`           | `WriterT`     | `MonadTell`   |
-| zmienijący się stan       | `S => F[(S, A)]`      | `StateT`      | `MonadState`  |
+| zmieniający się stan       | `S => F[(S, A)]`      | `StateT`      | `MonadState`  |
 | zachowaj spokój i idź dalej | `F[E \&/ A]`        | `TheseT`      |               |
 | kontrola przepływu        | `(A => F[B]) => F[B]` | `ContT`       |               |
 
@@ -7295,7 +7295,7 @@ A> drugi nie jest parametryzowany i zapisany jest jako `_`.
 W ogólności istnieją trzy sposoby na uzyskanie transformatora monady:
 
 - z instancji typu wewnętrznego, używając konstruktora
-- z pojedyńczej instancji `A`, używają `.pure` z `Monad`y
+- z pojedynczej instancji `A`, używają `.pure` z `Monad`y
 - z `F[A]`, używając `liftM` z `MonadTrans`
 
 Z racji tego jak działa inferencja typów w Scali, często oznacza to że dość skomplikowana
@@ -7320,7 +7320,7 @@ poprzez odpowiednio `Option`, `Maybe` i `LazyOption`. Skupimy się na `MaybeT` a
   }
 ~~~~~~~~
 
-doastarcza `MonadPlus`
+dostarcza `MonadPlus`
 
 {lang="text"}
 ~~~~~~~~
@@ -7339,9 +7339,9 @@ to delegacja operacji do `Monad[F]` i opakowywanie wyniku w `MaybeT`.
 Sam klej i taśma.
 
 Z tą monadą możemy pisać logikę obsługującą opcjonalność wewnątrz kontekstu `F[_]`.
-Alternatywnie musilibyśmy wszędzie umieszczać `Option` lub `Maybe`.
+Alternatywnie musielibyśmy wszędzie umieszczać `Option` lub `Maybe`.
 
-Wyobraźmy sobie, że odpytujemy portal społecznościowy chcąć zliczyć liczbę gwazdek danego użytkownika,
+Wyobraźmy sobie, że odpytujemy portal społecznościowy chcąc zliczyć liczbę gwiazdek danego użytkownika,
 zaczynając od `String`a, który może, lub nie, wskazywać na konkretnego użytkownika. Oto nasza algebra:
 
 {lang="text"}
@@ -7364,7 +7364,7 @@ będzie to dość skomplikowane, bo musimy obsłużyć przypadek `Empty`:
   } yield maybeStars
 ~~~~~~~~
 
-Jendak mając do dyspozyji `MonadPlus` możemy wessać `Maybe` do `F[_]` za pomocą `.orEmpty` i skupić się na ważniejszych rzeczach:
+Jednak mając do dyspozycji `MonadPlus` możemy wessać `Maybe` do `F[_]` za pomocą `.orEmpty` i skupić się na ważniejszych rzeczach:
 
 {lang="text"}
 ~~~~~~~~
@@ -7375,10 +7375,10 @@ Jendak mając do dyspozyji `MonadPlus` możemy wessać `Maybe` do `F[_]` za pomo
 ~~~~~~~~
 
 Jednakże zwiększenie wymagań co do naszego kontekstu na typeklasę `MonadPlus`
-może spowodować problemy na późniejszym etapie, jeśli nie bedzie ona dostępna.
+może spowodować problemy na późniejszym etapie, jeśli nie będzie ona dostępna.
 Rozwiązaniem jest zmiana kontekstu na `MaybeT[F, ?]` (co automatycznie daje nam
 instancję `MonadPlus` dla dowolnej `Monad`y), albo użyć `MaybeT` w prost w zwracanym typie,
-za cene nieco większej ilości kodu:
+za cenę nieco większej ilości kodu:
 
 {lang="text"}
 ~~~~~~~~
@@ -7388,7 +7388,7 @@ za cene nieco większej ilości kodu:
   } yield stars
 ~~~~~~~~
 
-Każdy zespół musi sam wybrać między tymi opcjami, na bazie tego jakich intepreterów
+Każdy zespół musi sam wybrać między tymi opcjami, na bazie tego jakich interpreterów
 planują używać dla swoich programów.
 
 
@@ -7427,7 +7427,7 @@ z instancją `MonadError`
 `.raiseError` i `.handleError` są samo-opisującymi się odpowiednikami `throw` i `catch`, które znamy 
 z pracy z wyjątkami.
 
-`MonadError` dostarcza również dodatkową składnię do rozwiązywania popularnych probelmów:
+`MonadError` dostarcza również dodatkową składnię do rozwiązywania popularnych problemów:
 
 {lang="text"}
 ~~~~~~~~
@@ -7438,12 +7438,12 @@ z pracy z wyjątkami.
   }
 ~~~~~~~~
 
-`.attempt` przenosi błedy z kontekstu do wartości.
+`.attempt` przenosi błędy z kontekstu do wartości.
 
 `.recover` służy do zamiany błędów na wartości dla wszystkich przypadków, w przeciwieństwie do
 `.handleError`, która pozwala nam zwrócić `F[A]`, czyli tym samym częściowo obsłużyć błędy.
 
-`.emap`, czyli *either* map, pozwala zaaplikować transformację, która sama w sobie może sie nie udać.
+`.emap`, czyli *either* map, pozwala zaaplikować transformację, która sama w sobie może się nie udać.
 
 `MonadError` dla `EitherT` wygląda następująco:
 
@@ -7553,7 +7553,7 @@ Możemy w końcu wrócić do naszego `JsonClient`a z Rozdziału 4.3
   }
 ~~~~~~~~
 
-gdzie w API zawarliśmy jedynie szczęsliwą ścieżkę wykonania. Jeśli nasz interpreter dla tej algebry
+gdzie w API zawarliśmy jedynie szczęśliwą ścieżkę wykonania. Jeśli nasz interpreter dla tej algebry
 działa jedynie dla `F` mających instancję `MonadError` musimy zdefiniować jakiego rodzaju błędy mogą się pojawić.
 I faktycznie, jeśli zdecydujemy się interpretować `EitherT[IO, JsonClient.Error, ?]`, to możemy mieć **dwie** warstwy błędów
 
@@ -7566,14 +7566,14 @@ I faktycznie, jeśli zdecydujemy się interpretować `EitherT[IO, JsonClient.Err
   }
 ~~~~~~~~
 
-które pokrywają problemy z siecią, ze statusem odpowiedzi serwera oraz z naszym modelem obiektow otrzymywanych z serwera.
+które pokrywają problemy z siecią, ze statusem odpowiedzi serwera oraz z naszym modelem obiektów otrzymywanych z serwera.
 
 
 #### Wybieranie typu błędu
 
 Społeczność jest podzielona co do najlepszej strategii wyrażania błędów za pomocą `E` w `MonadError`.
 
-Jedna szkoła mówi, że powinnismy wybrać jakiś ogólny typ, np. `String`. Druga twierdzi, że każda aplikacja powinna mieć ADT 
+Jedna szkoła mówi, że powinniśmy wybrać jakiś ogólny typ, np. `String`. Druga twierdzi, że każda aplikacja powinna mieć ADT 
 wyrażające błędy, aby każdy z nich mógł być raportowany i obsługiwany inaczej. Gang niepryncypialny woli używać `Throwable` dla maksymalnej
 kompatybilności z JVMem.
 
@@ -7589,7 +7589,7 @@ ADT niesie ze sobą wartość jeśli każdy wariant pozwala na inną strategię 
 Kompromisem między ADT i `String`iem jest format pośredni, jak np. JSON, który jest rozumiany przez większość
 bibliotek odpowiedzialnych za logowanie i monitoring.
 
-Brak stacktrace'a może znacznie utrudnić zlokalizowamie fragmentu kodu odpowiedzialnego za zgłoszenie danego błędu.
+Brak stacktrace'a może znacznie utrudnić zlokalizowanie fragmentu kodu odpowiedzialnego za zgłoszenie danego błędu.
 Możemy rozwiązać ten problem używając biblioteki [`sourcecode` autorstwa Li Haoyi](https://github.com/lihaoyi/sourcecode/):
 
 {lang="text"}
@@ -7631,14 +7631,14 @@ wszystko stanie się jasne:
   Meta(com.acme,<console>,11)
 ~~~~~~~~
 
-Zgadza się, zawraliśmy pakt z diabłem pod postacią makr, ale jeśli mielibyśmy tworzyć obiekty
+Zgadza się, zawarliśmy pakt z diabłem pod postacią makr, ale jeśli mielibyśmy tworzyć obiekty
 `Meta` ręcznie to nasz kod zdezaktualizowywałby się szybciej niż nasza dokumentacja.
 
 
 ### `ReaderT`
 
 Monada `ReaderT` opakowuje `A => F[B]` pozwalając programowi `F[B]` zależeć od wartości `A` znanej dopiero w czasie wykonania.
-Dla tych zaznajomionych ze wsztrzykiwaniem zależności (_dependency injection_), jest to funkcyjny odpowiednik
+Dla tych zaznajomionych ze wstrzykiwaniem zależności (_dependency injection_), jest to funkcyjny odpowiednik
 anotacji `@Inject` znanej ze Springa lub Guice'a, tyle że bez dodatku XMLa czy refleksji.
 
 `ReaderT` jest w rzeczywistości jedynie aliasem do bardziej ogólnego typu danych
@@ -7664,12 +7664,12 @@ nazwanego na cześć matematyka *Henryka Kleisli*.
 
 A> Niektórzy nazywają `>=>` *operatorem ryby* (_fish operator_). Zawsze jest też większa ryba, stąd i `>==>`. Inna nazwa to *strzałki Kleisli* (_Kleisli arrows_).
 
-Niejawna konwersja widoczna w obiekcie towarzyszącym pozwala nam używać `Kelisli` tam gdzie spodziewamy się funkcji,
+Niejawna konwersja widoczna w obiekcie towarzyszącym pozwala nam używać `Kleisli` tam gdzie spodziewamy się funkcji,
 w efekcie czego możemy przekazywać instancje tego typu jako parametr do `.bind` lub `>>=`.
 
-Najpopularniejszym zastosowaniem `ReaderT` jest dostarcznieme informacji ze środowiska do naszego programu.
+Najpopularniejszym zastosowaniem `ReaderT` jest dostarczanie informacji ze środowiska do naszego programu.
 W `drone-dynamic-agents` potrzebujemy dostępu do tokenu odświeżającego Oauth 2.0 dla naszego użytkownika, aby
-móc połączyć się z serwerm Google'a. Oczywistym wydaje się odczytanie `RefreshTokens` z dysku przy starcie aplikacji i
+móc połączyć się z serwerem Google'a. Oczywistym wydaje się odczytanie `RefreshTokens` z dysku przy starcie aplikacji i
 dodanie parametru `RefreshToken` do każdej metody. Okazuje się że jest to problem na tyle częsty ze Martin Odersky
 zaproponował nowy mechanizm [funkcji niejawnych](https://www.scala-lang.org/blog/2016/12/07/implicit-function-types.html),
 które mogłyby nam tutaj pomóc.
@@ -7715,7 +7715,7 @@ Prawa obowiązujące `MonadReader` zastrzegają, że `S` nie może zmieniać si�
 później zdecydujemy, że chcielibyśmy przeładowywać konfigurację za każdym razem gdy jest potrzebna,
 to możemy ponownie wprowadzić typ `ConfigReader`, który nie ma takich ograniczeń.
 
-W naszej implementacji OAuth 2.0 możemy zaczać od przeniesienia parametru `Monad` do metod:
+W naszej implementacji OAuth 2.0 możemy zacząć od przeniesienia parametru `Monad` do metod:
 
 {lang="text"}
 ~~~~~~~~
@@ -7770,7 +7770,7 @@ Ostrożny programista mógłby chcieć w pewnym momencie przyciąć `IList[Meta]
 przepełnienia stosu. Tym samym bardziej odpowiednią strukturą danych była by `Dequeue`.
 
 `.local` może być użyte również do śledzenie informacji kontekstowych, które są bezpośrednio związane
-z aktualnie wykonywanym zadaniem, jak na przykład liczba spacji potrzebnych do wcięcia lini gdy wyświetlamy
+z aktualnie wykonywanym zadaniem, jak na przykład liczba spacji potrzebnych do wcięcia linii gdy wyświetlamy
 format przyjazny dla ludzi, zwiększając tę liczbę o dwa gdy zwiększamy zagnieżdżenie.
 
 A> Nie cztery. Nie osiem. Nie TAB.
@@ -7794,7 +7794,7 @@ Jeśli wywołujący otrzyma `ReaderT` i ma pod ręką parametr `token`, to wysta
 Faktycznie, biorąc pod uwagę fakt, że nie mamy zbyt wiele wywołujących, powinniśmy wrócić do tradycyjnych
 parametrów funkcji. `MonadReader` ma na najwięcej zastosowań gdy:
 
-1. możemy chcieć później przerefactorować kod aby konfuguracja była przeładowywana
+1. możemy chcieć później przerefactorować kod aby konfiguracja była przeładowywana
 2. wartość nie jest używana przez metody pośredniczące (_intermediate callers_)
 3. chcemy lokalnie zmienić jakąś zmienną
 
@@ -7836,7 +7836,7 @@ Mamy do dyspozycji nie jedną, a dwie powiązane monady: `MonadTell` i `MonadLis
   }
 ~~~~~~~~
 
-`MonadTell` służy do spisywania dziennika a `MonadListen` do jego odtwrzania.
+`MonadTell` służy do spisywania dziennika a `MonadListen` do jego odtwarzania.
 
 Ich implementacja dla `WriterT` wygląda następująco:
 
@@ -7881,7 +7881,7 @@ odpowiedzialnej za obsługę OAuth2.
     } yield code
 ~~~~~~~~
 
-Moglibyśmy nawet połączyć to podejśce ze śledzeniem opartym o `ReaderT` aby uzyskać ustrukturalizowany log zdarzeń.
+Moglibyśmy nawet połączyć to podejście ze śledzeniem opartym o `ReaderT` aby uzyskać ustrukturalizowany log zdarzeń.
 
 Dziennik może zostać odzyskany za pomocą `.written`, a następnie dowolnie modyfikowany.
 
@@ -7891,9 +7891,9 @@ i zarządzane jest na poziomie całej aplikacji, a nie pojedynczych komponentów
 
 Parametr `W` w `WriterT` posiada `Monoid`, pozwalając nam tym samym na wszelkiego rodzaju monoidyczne operacje,
 które będą działy się równolegle do naszego głównego programu. Możemy na przykład zliczać ile razy coś się wydarzyło,
-budować opis obliczeń lub tworzyć `TradeTemplate` dla nowej transkacji gdy ją wyceniamy.
+budować opis obliczeń lub tworzyć `TradeTemplate` dla nowej transakcji gdy ją wyceniamy.
 
-Popularną spejcalizacją `WriterT` jest użycie go z monadą `Id`, sprawiając że leżąca pod spodem wartość `run` to prosta tupla `(W, A)`.
+Popularną specjalizacją `WriterT` jest użycie go z monadą `Id`, sprawiając że leżąca pod spodem wartość `run` to prosta tupla `(W, A)`.
 
 {lang="text"}
 ~~~~~~~~
@@ -7924,7 +7924,7 @@ mogłaby przyjąć postać `() => F[A]`, a ona sama zwracałaby inną wartość 
 referencyjną. W czystym FP taka funkcja przyjmuje stan jako wejście i produkuje i zwraca zmodyfikowany stan jako wyjście.
 Dlatego też `StateT` opakowuje `S => F[(S,A)]`.
 
-Pozwiązana monada to `MonadState`
+Powiązana monada to `MonadState`
 
 {lang="text"}
 ~~~~~~~~
@@ -7960,7 +7960,7 @@ nie jest case klasą lecz ADT z dwoma wariantami:
   }
 ~~~~~~~~
 
-które są wyspecjalizowaną formą `Trampoline`, dając nam bezpieczeńśtwo stosu kiedy chcemy odwołać się
+które są wyspecjalizowaną formą `Trampoline`, dając nam bezpieczeństwo stosu kiedy chcemy odwołać się
 do leżącej pod spodem struktury za pomocą `.run`:
 
 {lang="text"}
@@ -8176,7 +8176,7 @@ jednego parametru typu pozwalającego na to by stan wejściowy `S1` był inny ni
 instancja samego `Monad`.
 
 Poniższy przykład został zaadaptowany z prezentacji Vincentego Maqrqueza [Index your State](https://www.youtube.com/watch?v=JPVagd9W4Lo).
-Wyobraź sobie, że musimy zaprojektować algebraiczy interfejs dla dostępu do wartości typu `String`
+Wyobraź sobie, że musimy zaprojektować algebraiczny interfejs dla dostępu do wartości typu `String`
 za pomocą klucza typu `Int`. Załóżmy, że jedna z implementacji będzie opierała się na komunikacji sieciowej,
 a kolejność wywołań jest kluczowa. Nasze pierwsze podejście mogłoby wyglądać tak:
 
@@ -8238,7 +8238,7 @@ co spowoduje, że próba wywołania `.update` bez wcześniejszego `.lock` spowod
   [error]          ^
 ~~~~~~~~
 
-pozwalając nam konstruować funkcje, które mogą byc komponowane dzięki wyrażaniu swojego stanu explicite
+pozwalając nam konstruować funkcje, które mogą być komponowane dzięki wyrażaniu swojego stanu explicite
 
 {lang="text"}
 ~~~~~~~~
@@ -8284,7 +8284,7 @@ A> Wynika to z faktu, że Scala definiuje typ `Nothing`, który jest podtypem ws
 A> Na szczęście taki kod nie może być wywołany, ale nadal jest to oznaka kiepsko zaprojektowanego API,
 A> ponieważ użytkownik musi pamiętać o przypisywaniu typów.
 A>
-A> Alternatywnie, można by również powstrzymać kompilator przed inferowaniem `Nothing`, np. za pomocą
+A> Alternatywnie, można by również powstrzymać kompilator przed ingerowaniem `Nothing`, np. za pomocą
 A> niejawnego parametru `NotNothing` pochodzącego ze Scalaz.
 A> 
 A> {lang="text"}
@@ -8380,7 +8380,7 @@ wyrzucił swoją czekoladę (`B`) jak tylko odnalazł Złoty Kupon (`A`).
 
 *Styl Przekazywania Kontynuacji*[^cps] (CPS, _Continuation Passing Style_) to styl programowania, w którym
 funkcje nigdy nie zwracają wartości, a zamiast tego *kontynuują* następne obliczenia. CPS jest popularny
-w Javascripcie i Lispie pozwalając na wykonywanie nieblokującego IO za pomocą callbacków gdy dane stają się dostępne.
+w JavaScripcie i Lispie pozwalając na wykonywanie nieblokującego IO za pomocą callbacków gdy dane stają się dostępne.
 Bezpośrednie przełożenie tego wzorca na nieczystą Scalę wygląda mniej więcej tak:
  
 [^cps]: Jakkolwiek dziwnie to brzmi
@@ -8429,7 +8429,7 @@ i wygodnej składni do tworzenia `ContT` z monadycznej wartości:
   }
 ~~~~~~~~
 
-Jednak proste użycie calbacków nie wnosi nic do programowania czysto funkcyjnego, ponieważ
+Jednak proste użycie callbacków nie wnosi nic do programowania czysto funkcyjnego, ponieważ
 poznaliśmy już sposób na sekwencyjne łączenie nieblokujących, potencjalnie rozproszonych,
 obliczeń: `Monad`ę. Aby zobaczyć dlaczego kontynuacje są użyteczne musimy rozważyć
 bardziej złożony przykład ze sztywnymi ograniczeniami projektowymi.
@@ -8454,7 +8454,7 @@ rozwijany jest przez osobny zespół:
   def bar4(a3: A3): IO[A4] = ...
 ~~~~~~~~
 
-Naszym celem jest wyprodukować `A0` na podstawie otrzymanego `A1`. Tam gdzie Javascript lub Lisp
+Naszym celem jest wyprodukować `A0` na podstawie otrzymanego `A1`. Tam gdzie JavaScript lub Lisp
 sięgnęliby po kontynuacje (ponieważ IO może blokować), my możemy po prostu połączyć funkcje
 
 {lang="text"}
@@ -9006,7 +9006,7 @@ deleguje implementację do `Free.liftF` tworząc `Suspend`
   }
 ~~~~~~~~
 
-Kiedy skonstruowaliśmy program sprarametryzowany z użyciem `Free`, aby go uruchomić musimy przekazać
+Kiedy skonstruowaliśmy program sparametryzowany z użyciem `Free`, aby go uruchomić musimy przekazać
 *interpreter* (transformację naturalną `Ast ~> M`) do metody `.foldMap`. Jeśli mielibyśmy interpreter, 
 który mapuje operacje do `IO`, moglibyśmy stworzyć program `IO[Unit]` z dostępnego AST 
 
@@ -9062,7 +9062,7 @@ Chcielibyśmy aby nasze AST było kombinacją AST pochodzących z oby tych algeb
 
 Możemy więc użyć kontekstu `Free[Coproduct[Machines.Ast, Drone.Ast, ?], ?]`.
 
-Moglibyśmy tworzyć instancję koproduktu ręcznie ale utonęlibyśmy w morzu boileplate'u,
+Moglibyśmy tworzyć instancję koproduktu ręcznie ale utonęlibyśmy w morzu boilerplate'u,
 a później musielibyśmy robić to raz jeszcze jeśli chcielibyśmy dodać trzecią algebrę.
 
 Z pomocą przychodzi typeklasa `scalaz.Inject`:
@@ -9182,7 +9182,7 @@ te, których aktualnie potrzebujemy.
 
 A> Biblioteka [smock](https://github.com/djspiewak/smock) ma większe możliwości, ale na potrzeby tego krótkiego przykładu
 A> możemy sami zdefiniować metodę `stub` używając sztuczki związanej z inferencją typów, która używana jest
-A> w wilu miejscach w Scalaz. `Stub` jest osobną klasą abyśmy mogli podać jedynie parametr typu `A`, pozostawiając
+A> w wielu miejscach w Scalaz. `Stub` jest osobną klasą abyśmy mogli podać jedynie parametr typu `A`, pozostawiając
 A> `F` i `G` do odgadnięcia kompilatorowi na podstawie wyrażenia po lewej stronie:
 A> 
 A> {lang="text"}
@@ -9226,7 +9226,7 @@ Rozważmy użycie takiego "agenta" o typie `Ast ~> Ast`, który zapisuje inwokac
   )
 ~~~~~~~~
 
-Moglibyśmy też wychwytywać wiadomości, które nas szczególnieinteresują i logować gdy się pojawią.
+Moglibyśmy też wychwytywać wiadomości, które nas szczególnie interesują i logować gdy się pojawią.
 
 Możemy dołączyć `Monitor` do naszej produkcyjnej aplikacji opartej na `Free` za pomocą
 
@@ -9328,7 +9328,7 @@ zobaczymy czemu `FreeAp` (free applicative) jest lepszy od monady `Free`.
   }
 ~~~~~~~~
 
-Metody `.hoist` i `.foldMap` odpowadają metodom `.mapSuspension` i `.foldMap` z `Free`.
+Metody `.hoist` i `.foldMap` odpowiadają metodom `.mapSuspension` i `.foldMap` z `Free`.
 
 Możemy też wygenerować `Free[S, A]` bezpośrednio z naszego `FreeAp[S, A]` używając `.monadic`,
 co jest szczególnie przydatne gdy chcemy włączyć małe programy oparte o `FreeAp` do całego systemu
@@ -9354,20 +9354,20 @@ liczb latencji autorstwa Philipa Starka, bazującą na [danych](http://norvig.co
 
 | Komputer                          | Ludzka Skala Czasowa | Ludzka Analogia                           |
 |-----------------------------------|----------------------|-------------------------------------------|
-| Odwołanie do pamięci L1           | 0.5 secs             | Uderzenie serca                           |
-| Mispredykcja gałęzi               | 5 secs               | Ziewnięcie                                |
-| Odwołanie do pamięci L2           | 7 secs               | Długie ziewnięcie                         |
-| Zablokowanie/odblokowanie mutexa  | 25 secs              | Przygotowanie herbaty                     |
-| Odwołanie do pamięci głównej      | 100 secs             | Umycie zębów                              |
-| Skompresowanie 1 KB przez Zippy   | 50 min               | Pipeline CI kompilatora Scali             |
-| Przesłanie 2KB przez sieć 1Gbps   | 5.5 hr               | Pociąg z Londynu do Edynburga             |
-| Losowy odczyt z dysku SSD         | 1.7 days             | Weekend                                   |
-| Sekwencyjny odczyt 1MB z pamięci  | 2.9 days             | Długi weekend                             |
-| Podróż po jednym datacenter       | 5.8 days             | Długie wakacje w USA                      |
-| Sekwencyjny odczy 1MB z dysku SSD | 11.6 days            | Krótkie wakacje w Europie                 |
-| Przesunięcie głowicy dyskowej     | 16.5 weeks           | Semestr akademicki                        |
-| Sekwencyjny odczyt 1MB z dysku    | 7.8 months           | Pełnopłatny urlop macierzyński w Norwegii |
-| Wysłanie pakietu CA->Holandia->CA | 4.8 years            | Kadencja rządu                            |
+| Odwołanie do pamięci L1           | 0,5 sek.             | Uderzenie serca                           |
+| Mispredykcja gałęzi               | 5 sek.               | Ziewnięcie                                |
+| Odwołanie do pamięci L2           | 7 sek.               | Długie ziewnięcie                         |
+| Zablokowanie/odblokowanie mutexa  | 25 sek.              | Przygotowanie herbaty                     |
+| Odwołanie do pamięci głównej      | 100 sek.             | Umycie zębów                              |
+| Skompresowanie 1 KB przez Zippy   | 50 min.               | Pipeline CI kompilatora Scali             |
+| Przesłanie 2KB przez sieć 1Gbps   | 5,5 godz.               | Pociąg z Londynu do Edynburga             |
+| Losowy odczyt z dysku SSD         | 1,7 dn.             | Weekend                                   |
+| Sekwencyjny odczyt 1MB z pamięci  | 2,9 dn.             | Długi weekend                             |
+| Podróż po jednym datacenter       | 5,8 dn.             | Długie wakacje w USA                      |
+| Sekwencyjny odczyt 1MB z dysku SSD | 11,6 dn.            | Krótkie wakacje w Europie                 |
+| Przesunięcie głowicy dyskowej     | 16,5 tyg.           | Semestr akademicki                        |
+| Sekwencyjny odczyt 1MB z dysku    | 7,8 mies.           | Pełnopłatny urlop macierzyński w Norwegii |
+| Wysłanie pakietu CA->Holandia->CA | 4,8 r.            | Kadencja rządu                            |
 
 Mimo że zarówno `Free` jak i `FreeAp` niosą ze sobą narzut spowodowany alokacją pamięci (100 sekund na ludzkiej skali),
 to za każdym razem gdy uda nam się połączyć dwa żądania sieciowe w jedno zyskujemy prawie 5 lat.
@@ -9481,7 +9481,7 @@ I tyle! Wystarczy użyć `.optimise` razem z `act` w głównej pętli naszego pr
 
 ### `Coyoneda` (`Functor`)
 
-To "darmowa" (_free_) struktura danych zawdzięczająca swoją nazwę metematykowi Nobuo Yoneda. Pozwala nam ona wygenerować "za darmo" instancję
+To "darmowa" (_free_) struktura danych zawdzięczająca swoją nazwę matematykowi Nobuo Yoneda. Pozwala nam ona wygenerować "za darmo" instancję
 typeklasy `Functor` dla dowolnej algebry `S[_]`, tak długo, jak mamy w planie przetransformować ją do algebry, która taką instancję posiada `
 
 {lang="text"}
@@ -9501,7 +9501,7 @@ typeklasy `Functor` dla dowolnej algebry `S[_]`, tak długo, jak mamy w planie p
   }
 ~~~~~~~~
 
-również w wersji kontrawariantej
+również w wersji kontrawariantnej
 
 {lang="text"}
 ~~~~~~~~
@@ -9521,16 +9521,16 @@ również w wersji kontrawariantej
   }
 ~~~~~~~~
 
-A> Okrośleniem potocznym na `Coyoneda` jest *coyo* a na `ContravariantCoyoned` *cocoyo*.
+A> Określeniem potocznym na `Coyoneda` jest *coyo* a na `ContravariantCoyoned` *cocoyo*.
 
 API jest nieco prostsze niż `Free` i `FreeAp`, udostępniając transformację poprzez `.trans`
 i możliwość pozbycia się struktury poprzez metodę `.run` (która przyjmuje faktyczną implementację
 `Functor`a lub `ContravariantFunctor`a).
 
-Coyo i cocoyo są przydatne, gdy chcemy wywołać `.map` lub `.constramap` na typie, który
+Coyo i cocoyo są przydatne, gdy chcemy wywołać `.map` lub `.contramap` na typie, który
 takich metod nie posiada, ale wiemy, że w końcu i tak przekonwertujemy go do innego typu,
 pozbawionego tych ograniczeń, a na razie nie chcemy się z nim wiązać. Dla przykładu, możemy 
-stworzyć `Coyoneda[ISet, ?]`, pamiętająć, że `ISet` nie posiada instacji typeklasy `Functor`, aby
+stworzyć `Coyoneda[ISet, ?]`, pamiętając, że `ISet` nie posiada instancji typeklasy `Functor`, aby
 wywołać metody jej wymagające, a później przekonwertować taki obiekt do typu `IList`.
 
 Aby użyć coyo lub cocoyo do optymalizacji naszego programu, musimy dostarczyć oczekiwany
@@ -9570,10 +9570,10 @@ na [`scalaz-plugin`](https://github.com/scalaz/scalaz-plugin), który automatycz
 optymalizacje.
 
 
-### Extensible Effects
+### Efekty Rozszerzalne
 
 Programy to tylko dane, a struktury typu free wyrażają to wprost, pozwalając nam na
-ich rearanżacje i optymalizacje.
+ich rearanżację i optymalizację.
 
 `Free` jest bardziej niezwykła niż nam się wydaje: pozwala sekwencyjnie łączyć arbitralne algebry i typeklasy.
 
@@ -9712,7 +9712,7 @@ Metody `Traverse` ze Scalaz wspierają równoległe wykonanie:
   }
 ~~~~~~~~
 
-Jeśli w zakresie dostępna jest niejawna instancja `Applictive.Parp[IO]`, to możemy wybrać między
+Jeśli w zakresie dostępna jest niejawna instancja `Applictive.Par[IO]`, to możemy wybrać między
 sekwencyjną i równoległa trawersacją:
 
 {lang="text"}
@@ -9837,7 +9837,7 @@ W ostatniej sekcji tego rozdziału zobaczymy jak na prawdę zaimplementowany jes
 ## `IO`
 
 `IO` ze Scalaz jest najszybszą strukturą danych pozwalającą na programowanie asynchroniczne jaką możemy znaleźć w ekosystemie Scali, 
-nawet do 50 razy szybsza niż `Fututre`.[^fastest] Zaprojektowana została jako monada do obsługi efektów ogólnego przeznaczenia. 
+nawet do 50 razy szybsza niż `Future`.[^fastest] Zaprojektowana została jako monada do obsługi efektów ogólnego przeznaczenia. 
 
 [^fastest]: Biblioteki takie jak Monix, cats-effect i Scalaz nieustannie prześcigają się w optymalizacjach mających na celu
 zwiększenie wydajności, stąd ciężko jest określić kto jest aktualnym liderem.
@@ -9933,7 +9933,7 @@ a więc powinien być przekazany wprost.
 
 ### Uruchamianie
 
-Interpreter `IO` nazywa się `RTS`, od *runitme system*, ale jego implementacja wybiega poza zakres tej książki.
+Interpreter `IO` nazywa się `RTS`, od *runtime system*, ale jego implementacja wybiega poza zakres tej książki.
 W zamian omówimy funkcjonalności, które nam udostępnia.
 
 `IO` to po prostu struktura danych, którą interpretujemy *na końcu świata* poprzez rozszerzenie `SafeApp` i zaimplementowanie
@@ -10037,7 +10037,7 @@ zostaną zakończone kiedy `IO` się wykona
   ...
 ~~~~~~~~
 
-Kiedy mamy do dyspozycji włókno możemy je włączyć spowrotem do `IO` (`.join`) lub przerwać 
+Kiedy mamy do dyspozycji włókno możemy je włączyć z powrotem do `IO` (`.join`) lub przerwać 
 wykonywaną pracę (`.interrupt`).
 
 {lang="text"}
