@@ -41,7 +41,7 @@ Pokazuje ona jak stworzyć bibliotekę wspierającą programowanie funkcyjne od 
 
 # Nota lewa autorskiego[^copyleft]
 
-[^copleft]: _Copyleft notice_. Nie mogliśmy się powstrzymać.
+[^copyleft]: _Copyleft notice_. Nie mogliśmy się powstrzymać.
 
 Ta książka jest **Wolna**[^libre] i podąża za filozofią [Wolnego Oprogramowania](https://www.gnu.org/philosophy/free-sw.en.html):
 możesz używać jej jak tylko chcesz, [źródła są dostępne](https://github.com/fommil/fpmortals/), możesz ją redystrybuować 

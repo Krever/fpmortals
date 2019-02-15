@@ -274,7 +274,7 @@ W przykładzie bazującym na typie `Option`, blok `yield` jest wywoływany jest 
 Jeśli którakolwiek ze zmiennych `a,b,c` przyjmie wartość `None`, konstrukcja `for` zrobi zwarcie[^zwarcie] i zwróci `None` nie mówiąc
 nam co poszło nie tak.
 
-[^zwarcie] Z angielskiego _short-circuits_. Chodzi tutaj o zakończenie przetwarzania bez wykonywania pozostałych instrukcji.
+[^zwarcie]: Z angielskiego _short-circuits_. Chodzi tutaj o zakończenie przetwarzania bez wykonywania pozostałych instrukcji.
 
 A> W praktyce możemy zobaczyć wiele funkcji z parametrami typu `Option`, które w rzeczywistości muszą być zdefiniowane
 A> aby uzyskać sensowny rezultat. Alternatywą do rzucania wyjątku jest użycie konstrukcji `for`, która zapewni nam totalność
@@ -1964,7 +1964,7 @@ małe, dobrze zdefiniowane typeklasy są często lepsze niż monolityczne kolekc
 
 ### Niejawne rozstrzyganie[^implres]
 
-[^implres] _Implicit resolution_
+[^implres]: _Implicit resolution_
 
 Wielokrotnie używaliśmy wartości niejawnych: ten rozdział ma na celu doprecyzować czym one są i jak tak na prawdę działają.
 
@@ -10208,45 +10208,37 @@ wraz z drobną różnicą w boilerplacie kompaniującym naszej algebrze, uwzglę
 7. `IO` może wykonywać efekty równolegle i jest wysoce wydajnym fundamentem dla dowolnej aplikacji.
 
 
-# Typeclass Derivation
+# Derywacja Typeklas
 
-Typeclasses provide polymorphic functionality to our applications. But to use a
-typeclass we need instances for our business domain objects.
+Typeklasy pozwalają na polimorfizm w naszym kodzie, ale aby z nich skorzystać potrzebujemy ich instancji
+dla naszych obiektow domenowych.
 
-The creation of a typeclass instance from existing instances is known as
-*typeclass derivation* and is the topic of this chapter.
+*Derywacja typeklas* to proces tworzenia nowych instancji na podstawie instancji już istniejących, i to właśnie nim
+zajemiemy się w tym rozdziale.
 
-There are four approaches to typeclass derivation:
+Istnieją cztery główne podejścia do tego zagadnienia:
 
-1.  Manual instances for every domain object. This is infeasible for real world
-    applications as it results in hundreds of lines of boilerplate for every line
-    of a `case class`. It is useful only for educational purposes and adhoc
-    performance optimisations.
+1. Ręcznie tworzone instancje dla każdego obiektu domenowego. Wykorzystanie tego podejścia na codzień jest
+   niewykonalne, gdyż skończylibyśmy z setkami linii czystego boilerplate'u dla każdej case klasy. Jego użyteczność
+   ogranicza się więc jedynie do zastosowań edukacyjnych i doraźnych optymalizacji wydajnościowych.
+2. Abstrahowanie ponad typeklasami z użyciem isntiejących typeklas ze Scalaz. To podejście wykorzystywane jest przez
+   bibliotekę `scalaz-deriving`, która potrafi wygenerować zautomatyzowane testy oraz derywacje dla produktów i 
+   koproduktów.
+3. Makra, z tym, że napisanie makra dla każdej typeklasy wymaga doświadczonego dewelopera. Na szczęście [Magnolia](https://github.com/propensive/magnolia) 
+   Jona Prettiego pozwala zastąpić ręcznie pisane makra prostym API, centralizując skomplikowane interakcje z kompilatorem.
+4. Pisanie generycznych programów używając biblioteki [Shapeless](https://github.com/milessabin/shapeless/). Różne elementy opatrzone słowem
+   kluczowym `implicit` tworzą osobny język wewnątrz Scali, który może być wykorzystany do implementowania skomplikowanej logiki
+   na poziomie typów.
 
-2.  Abstract over the typeclass by an existing Scalaz typeclass. This is the
-    approach of `scalaz-deriving`, producing automated tests and derivations for
-    products and coproducts
+W tym rozdziale przeanalizujemy typeklasy o rosnącym stopniu skomplikowania i ich derywacje. Zaczniemy od `scalaz-deriving` jako
+machanizmu najbardziej pryncypialnego, powtarzając niektóre lekcje z Rozdziału 5 "Typeklasy ze Scalaz". Następnie przejdziemy do
+Magnolii, która jest najprostsza do użycia, a skończymy na Shapelessie, który jest najpotężniejszy i pozwala na derywacje
+o skomplikowanej logice.
 
-3.  Macros. However, writing a macro for each typeclass requires an advanced and
-    experienced developer. Fortunately, Jon Pretty's [Magnolia](https://github.com/propensive/magnolia) library abstracts
-    over hand-rolled macros with a simple API, centralising the complex
-    interaction with the compiler.
+## Uruchamianie Przykładów
 
-4.  Write a generic program using the [Shapeless](https://github.com/milessabin/shapeless/) library. The `implicit` mechanism
-    is a language within the Scala language and can be used to write programs at
-    the type level.
-
-In this chapter we will study increasingly complex typeclasses and their
-derivations. We will begin with `scalaz-deriving` as the most principled
-mechanism, repeating some lessons from Chapter 5 "Scalaz Typeclasses", then
-Magnolia (the easiest to use), finishing with Shapeless (the most powerful) for
-typeclasses with complex derivation logic.
-
-
-## Running Examples
-
-This chapter will show how to define derivations for five specific typeclasses.
-Each example exhibits a feature that can be generalised:
+W tym rozdziale pokażemy jak zdefiniować derywacje pięciu konkretnych typeklas. Każda z nich pokazuje
+funkcjonalność, która może być uogólniona:
 
 {lang="text"}
 ~~~~~~~~
@@ -10268,7 +10260,8 @@ Each example exhibits a feature that can be generalised:
   
   @typeclass trait JsEncoder[T] {
     // type parameter is in contravariant position and needs access to field names
-    def toJson(t: T): JsValue
+    def toJson(t:
+	T): JsValue
   }
   
   @typeclass trait JsDecoder[T] {
@@ -10277,24 +10270,20 @@ Each example exhibits a feature that can be generalised:
   }
 ~~~~~~~~
 
-A> There is a school of thought that says serialisation formats, such as JSON and
-A> XML, should **not** have typeclass encoders and decoders, because it can lead to
-A> typeclass decoherence (i.e. more than one encoder or decoder may exist for the
-A> same type). The alternative is to use algebras and avoid using the `implicit`
-A> language feature entirely.
+A> Istnieje szkoła, która mówi, że formaty serializcji takie jak JSON i XML **nie** powinny mieć
+A> enkoderów i dekoderów w formie typeklas, ponieważ może to prowadzić do dekoherencji typeklas
+A> (może zaistnieć więcej niż jeden enkoder lub dekoder dla tego samego typu). Alternatywą jest używanie
+A> algebr i zupełne porzucenie `implicit`ów.
 A> 
-A> Although it is possible to apply the techniques in this chapter to either
-A> typeclass or algebra derivation, the latter involves a **lot** more boilerplate.
-A> We therefore consciously choose to restrict our study to encoders and decoders
-A> that are coherent. As we will see later in this chapter, use-site automatic
-A> derivation with Magnolia and Shapeless, combined with limitations of the Scala
-A> compiler's implicit search, commonly leads to typeclass decoherence.
-
+A> Mimo że w teorii możliwe jest zastosowanie technik opisanych w tym rozdziale zarówno do derywacji algebr jak i typeklas
+A> to te pierwsze wymagają **zdecydowanie** więcej boilerplate'u. Dlatego też świadomie ograniczymy się
+A> do enkoderów i dekoderów które są koherentne. Jak zobaczymy później, automatyczna derywacja po stronie użycia osiągnięta z użyciem
+A> Magnolii lub Shapelessa, w połączeniu z ograniczeniami niejawnego rozstrzygania kompilatora, często prowadzi
+A> do dekoherencji typeklas.
 
 ## `scalaz-deriving`
 
-The `scalaz-deriving` library is an extension to Scalaz and can be added to a
-project's `build.sbt` with
+Biblioteka `scalaz-deriving` jest rozszerzeniem Scalaz i może być dodana do `build.sbt` za pomocą
 
 {lang="text"}
 ~~~~~~~~
@@ -10302,14 +10291,14 @@ project's `build.sbt` with
   libraryDependencies += "org.scalaz" %% "scalaz-deriving" % derivingVersion
 ~~~~~~~~
 
-providing new typeclasses, shown below in relation to core Scalaz typeclasses:
+dostarczając nam nowe typeklasy, pokazane poniżej w relacji do kluczowych typeklas ze Scalaz:
 
 {width=60%}
 ![](images/scalaz-deriving-base.png)
 
-A> In Scalaz 7.3, `Applicative` and `Divisible` will inherit from `InvariantApplicative`
+A> W Scalaz 7.3 `Applicative` i `Divisible` będą dziedziczyć po `InvariantApplicative`
 
-Before we proceed, here is a quick recap of the core Scalaz typeclasses:
+Zanim przejdziemy dalej, szybka powtórka z kluczowych typeklas w Scalaz:
 
 {lang="text"}
 ~~~~~~~~
@@ -10352,12 +10341,11 @@ Before we proceed, here is a quick recap of the core Scalaz typeclasses:
 ~~~~~~~~
 
 
-### Don't Repeat Yourself
+### Nie Powtarzaj Się
 
-The simplest way to derive a typeclass is to reuse one that already exists.
+Najprostszym sposobem za derywacje typeklasy jest użycie typeklas już istniejących.
 
-The `Equal` typeclass has an instance of `Contravariant[Equal]`, providing
-`.contramap`:
+Typeklasa `Equal` posiada instancję `Contravariant[Equal]`, która z kolei dostarcza metodę `.contramap`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10370,9 +10358,8 @@ The `Equal` typeclass has an instance of `Contravariant[Equal]`, providing
   }
 ~~~~~~~~
 
-As users of `Equal`, we can use `.contramap` for our single parameter data
-types. Recall that typeclass instances go on the data type companions to be in
-their implicit scope:
+Jako użytkownicy `Equal` możemy wykorzystać `.contramap` dla naszych jednoparametrowych typów danych.
+Pamiętajmy że instancje typeklas powinny trafić do obiektu towarzyszącego aby znaleźć się w niejawnym zakresie:
 
 {lang="text"}
 ~~~~~~~~
@@ -10385,9 +10372,8 @@ their implicit scope:
   false
 ~~~~~~~~
 
-However, not all typeclasses can have an instance of `Contravariant`. In
-particular, typeclasses with type parameters in covariant position may have a
-`Functor` instead:
+Jednak nie wszystkie typeklasy mogą posiadać instancję typu `Contravariant`. W szczególności typeklasy, których
+parametry występują w pozycji kowariantnej mogą w zamian dostarczać `Functor`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10402,7 +10388,7 @@ particular, typeclasses with type parameters in covariant position may have a
   }
 ~~~~~~~~
 
-We can now derive a `Default[Foo]`
+Możemy teraz wyderywować `Default[Foo]` za pomocą
 
 {lang="text"}
 ~~~~~~~~
@@ -10412,8 +10398,8 @@ We can now derive a `Default[Foo]`
   }
 ~~~~~~~~
 
-If a typeclass has parameters in both covariant and contravariant position, as
-is the case with `Semigroup`, it may provide an `InvariantFunctor`
+Jeśli parametry typeklasy występują zarówno w pozycji kowariantnej jak i kontrawariantej, jak ma to miejsce
+w przypadku `Semigroup`, to typeklasa taka może dostarczać `InvariantFunctor`
 
 {lang="text"}
 ~~~~~~~~
@@ -10427,7 +10413,7 @@ is the case with `Semigroup`, it may provide an `InvariantFunctor`
   }
 ~~~~~~~~
 
-and we can call `.xmap`
+i do jej derywacji użyjemy `.xmap`
 
 {lang="text"}
 ~~~~~~~~
@@ -10437,7 +10423,7 @@ and we can call `.xmap`
   }
 ~~~~~~~~
 
-Generally, it is simpler to just use `.xmap` instead of `.map` or `.contramap`:
+W ogólności łatwiej jest użyć `.xmap` zamiast `.map` lub `.contramap`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10449,8 +10435,7 @@ Generally, it is simpler to just use `.xmap` instead of `.map` or `.contramap`:
   }
 ~~~~~~~~
 
-A> The `@xderiving` annotation automatically inserts `.xmap` boilerplate. Add the
-A> following to `build.sbt`
+A> Anotacja `@xderiving` automatycznie wstawia `.xmap`. Aby jej użyć dodaj do `build.sbt`
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -10458,7 +10443,7 @@ A>   addCompilerPlugin("org.scalaz" %% "deriving-plugin" % derivingVersion)
 A>   libraryDependencies += "org.scalaz" %% "deriving-macro" % derivingVersion % "provided"
 A> ~~~~~~~~
 A> 
-A> and use it as
+A> i użyj jej w poniższy sposób
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -10469,11 +10454,10 @@ A> ~~~~~~~~
 
 ### `MonadError`
 
-Typically things that *write* from a polymorphic value have a `Contravariant`,
-and things that *read* into a polymorphic value have a `Functor`. However, it is
-very much expected that reading can fail. For example, if we have a default
-`String` it does not mean that we can simply derive a default `String Refined
-NonEmpty` from it
+Zazwyczaj rzeczy, które wyciągają informacje z polimorficznej wartości posiadają instancję `Contravariant`,
+a te które zapisują do takiej wartości definiują `Functor`. Jednak bardzo często taki odczyt
+może się nie powieść. Przykładowo, to że mamy domyślny `String` nie oznacza wcale, że możemy
+bez problemu wyderywować z niego domyślny `String Refined NonEmpty`.
 
 {lang="text"}
 ~~~~~~~~
@@ -10485,7 +10469,7 @@ NonEmpty` from it
     Default[String].map(refineV[NonEmpty](_))
 ~~~~~~~~
 
-fails to compile with
+skutkuje błędem kompilacji
 
 {lang="text"}
 ~~~~~~~~
@@ -10496,11 +10480,9 @@ fails to compile with
   [error]                                          ^
 ~~~~~~~~
 
-Recall from Chapter 4.1 that `refineV` returns an `Either`, as the compiler has
-reminded us.
+Kompilator przypomniał nam to, czego dowiedzieliśmy się w Rozdziale 4.1, czyli że `refineV` zwraca `Either`.
 
-As the typeclass author of `Default`, we can do better than `Functor` and
-provide a `MonadError[Default, String]`:
+Jako autorzy typeklasy `Default` możemy postarać się troch bardziej niż `Functor` i dostarczyć `MonadError[Default, String]`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10516,7 +10498,7 @@ provide a `MonadError[Default, String]`:
   }
 ~~~~~~~~
 
-Now we have access to `.emap` syntax and can derive our refined type
+Mamy teraz dostęp do `.emap` i możemy wyderywować instancję dla naszego rafinowanego typu
 
 {lang="text"}
 ~~~~~~~~
@@ -10524,7 +10506,7 @@ Now we have access to `.emap` syntax and can derive our refined type
     Default[String].emap(refineV[NonEmpty](_).disjunction)
 ~~~~~~~~
 
-In fact, we can provide a derivation rule for all refined types
+W praktyce, możemy dostarczyć regułę dla wszystkich rafinowanych typów
 
 {lang="text"}
 ~~~~~~~~
@@ -10533,23 +10515,23 @@ In fact, we can provide a derivation rule for all refined types
   ): Default[A Refined P] = Default[A].emap(refineV[P](_).disjunction)
 ~~~~~~~~
 
-where `Validate` is from the refined library and is required by `refineV`.
+gdzie typ `Validate` pochodzi z biblioteki `refined`, a jego instancja wymagana jest przez `refineV`.
 
-A> The `refined-scalaz` extension to `refined` provides support for automatically
-A> deriving all typeclasses for refined types with the following import
-A> 
+
+A> Biblioteka `refined-scalaz` zapewnia wsparcie dla automatycznej derywacji wszystkich typeklas
+A> dla rafinowanych typów za pomocą 
+A>
 A> {lang="text"}
 A> ~~~~~~~~
 A>   import eu.timepit.refined.scalaz._
 A> ~~~~~~~~
-A> 
-A> if there is a `Contravariant` or `MonadError[?, String]` in the implicit scope.
-A> 
-A> However, due to [limitations of the Scala compiler](https://github.com/scala/bug/issues/10753) it rarely works in practice
-A> and we must write `implicit def refined` derivations for each typeclass.
+A>
+A> jeśli tylko dostępna jest instancja `Contravariant` lub `MonadError[?, String]` dla danej typeklasy.
+A>
+A> W praktyce jednak mechanizm ten rzadko działa z powodu [ograniczeń kompilatora](https://github.com/scala/bug/issues/10753).
 
-Similarly we can use `.emap` to derive an `Int` decoder from a `Long`, with
-protection around the non-total `.toInt` stdlib method.
+Podobnie możemy użyć `.emap` aby wyderywować dekoder dla typu `Int` z instancji dla typu `Long`, chroniąc
+się przed brakiem totalności `.toInt` z biblioteki standardowej.
 
 {lang="text"}
 ~~~~~~~~
@@ -10560,8 +10542,8 @@ protection around the non-total `.toInt` stdlib method.
   }
 ~~~~~~~~
 
-As authors of the `Default` typeclass, we might want to reconsider our API
-design so that it can never fail, e.g. with the following type signature
+Jako autorzy `Default` powinniśmy rozważyć API, w którym nie może dojść do błędu,
+np. z użyciem takiej sygnatury
 
 {lang="text"}
 ~~~~~~~~
@@ -10570,16 +10552,16 @@ design so that it can never fail, e.g. with the following type signature
   }
 ~~~~~~~~
 
-We would not be able to define a `MonadError`, forcing us to provide instances
-that always succeed. This will result in more boilerplate but gains compiletime
-safety. However, we will continue with `String \/ A` as the return type as it is
-a more general example.
+W takiej sytuacji nie bylibyśmy w stanie zdefiniować `MonadError`, wymuszając aby
+instancje zawsze produkowały poprawną wartość. Poskutkowałoby to większą ilością boilerplate'u,
+ale również zwiększonym bezpieczeństwem w czasie kompilacji. Pozostaniemy jednak przy typie
+zwracanym `String \/ A` gdyż może służyć za bardziej ogólny przykład.
 
 
 ### `.fromIso`
 
-All of the typeclasses in Scalaz have a method on their companion with a
-signature similar to the following:
+Wszystkie typeklasy ze Scalaz mają w swoim obiekcie towarzyszącym metodę o sygnaturze
+podobnej do:
 
 {lang="text"}
 ~~~~~~~~
@@ -10594,11 +10576,10 @@ signature similar to the following:
   }
 ~~~~~~~~
 
-These mean that if we have a type `F`, and a way to convert it into a `G` that
-has an instance, we can call `Equal.fromIso` to obtain an instance for `F`.
+Oznacza to, że jeśli mamy typ `F` oraz sposób na jego konwersję do typu `G`, który posiada instancję danej typeklasy,
+to wystarczy zawołać `.fromIso` aby otrzymać instancję dla `F`.
 
-For example, as typeclass users, if we have a data type `Bar` we can define an
-isomorphism to `(String, Int)`
+Dla przykładu, mając typ danych `Bar` możemy bez problemu zdefiniować izomorfizm do `(String, Int)`
 
 {lang="text"}
 ~~~~~~~~
@@ -10610,7 +10591,7 @@ isomorphism to `(String, Int)`
   }
 ~~~~~~~~
 
-and then derive `Equal[Bar]` because there is already an `Equal` for all tuples:
+a następnie wyderywować `Equal[Bar]`, ponieważ istnieją już instancje `Equal` dla tupli dowolnego kształtu
 
 {lang="text"}
 ~~~~~~~~
@@ -10620,14 +10601,12 @@ and then derive `Equal[Bar]` because there is already an `Equal` for all tuples:
   }
 ~~~~~~~~
 
-The `.fromIso` mechanism can also assist us as typeclass authors. Consider
-`Default` which has a core type signature of the form `Unit => F[A]`. Our
-`default` method is in fact isomorphic to `Kleisli[F, Unit, A]`, the `ReaderT`
-monad transformer.
+Mechanizm `.fromIso` może też pomóc nam, jako autorom typeklas. Rozważmy `Default`, której rdzeniem
+jest sygnatura `Unit => F[A]`. Tym samym metoda `default` jest izomorficzna w stosunku do `Kleisli[F. Unit, A]`, 
+czyli transformatora `ReaderT`.
 
-Since `Kleisli` already provides a `MonadError` (if `F` has one), we can derive
-`MonadError[Default, String]` by creating an isomorphism between `Default` and
-`Kleisli`:
+A skoro `Kleisli` posiada `MonadError` (jeśli tylko posiada go `F`), to możemy wyderywować
+`MonadError[Default, String]` poprzez stworzenie izomorfizmu między `Default` i `Kleisli`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10639,18 +10618,15 @@ Since `Kleisli` already provides a `MonadError` (if `F` has one), we can derive
   implicit val monad: MonadError[Default, String] = MonadError.fromIso(iso)
 ~~~~~~~~
 
-giving us the `.map`, `.xmap` and `.emap` that we've been making use of so far,
-effectively for free.
+Tym samym zyskaliśmy `.map`, `.xmap` i `.emap`, których wcześniej używaliśmy, w praktyce za darmo.
 
 
-### `Divisible` and `Applicative`
+### `Divisible` i `Applicative`
 
-To derive the `Equal` for our case class with two parameters, we reused the
-instance that Scalaz provides for tuples. But where did the tuple instance come
-from?
+Aby wyderywować `Equal` dla naszej dwuparametrowej case klasy użyliśmy instancji dostarczanej przez Scalaz
+dla tupli. Ale skąd wzięła się ta instancja?
 
-A more specific typeclass than `Contravariant` is `Divisible`. `Equal` has an
-instance:
+Bardziej specyficzną typeklasą niż `Contravariant` jest `Divisible`, a `Equal` posiada jej instancję:
 
 {lang="text"}
 ~~~~~~~~
@@ -10667,9 +10643,8 @@ instance:
   }
 ~~~~~~~~
 
-A> When implementing `Divisible` the compiler will require us to provide
-A> `.contramap`, which we can do directly with an optimised implementation or with
-A> this derived combinator:
+A> Implementując `Divisble` kompilator będzie od nas wymagał dostarczenia implementacji `.contramap`, 
+A> którą możemy stworzyć bezpośrednio lub posłużyć się kombinatorem pochodnym:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -10677,10 +10652,10 @@ A>   override def contramap[A, B](fa: F[A])(f: B => A): F[B] =
 A>     divide2(conquer[Unit], fa)(c => ((), f(c)))
 A> ~~~~~~~~
 A> 
-A> This has been added to `Divisible` in Scalaz 7.3.
+A> który został dodany do `Divisble` w Scalaz 7.3.
 
-And from `divide2`, `Divisible` is able to build up derivations all the way to
-`divide22`. We can call these methods directly for our data types:
+Bazując na `divide2`, `Dvisible` jest w stanie zbudować derywacje aż do `divide22`, które następnie możemy zawołać
+bezpośrednio dla naszych typów danych:
 
 {lang="text"}
 ~~~~~~~~
@@ -10691,7 +10666,7 @@ And from `divide2`, `Divisible` is able to build up derivations all the way to
   }
 ~~~~~~~~
 
-The equivalent for type parameters in covariant position is `Applicative`:
+Odpowiednikiem dla parametrów typu w pozycji kowariantnej jest `Applicative`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10702,18 +10677,16 @@ The equivalent for type parameters in covariant position is `Applicative`:
   }
 ~~~~~~~~
 
-But we must be careful that we do not break the typeclass laws when we implement
-`Divisible` or `Applicative`. In particular, it is easy to break the *law of
-composition* which says that the following two codepaths must yield exactly the
-same output
+Należy być jednak ostrożnym, aby nie zaburzyć praw rządzących `Divisble` i `Applicative`. 
+Szczególnie łatwo jest naruszyć *prawo kompozycji*, które mówi, że oba poniższe
+wywołania muszą wyprodukować ten sam wynik
 
 -   `divide2(divide2(a1, a2)(dupe), a3)(dupe)`
 -   `divide2(a1, divide2(a2, a3)(dupe))(dupe)`
--   for any `dupe: A => (A, A)`
 
-with similar laws for `Applicative`.
+dla dowolnego `dupe: A => (A, A)`. Dla `Applicative` sprawa wygląda podobnie.
 
-Consider `JsEncoder` and a proposed instance of `Divisible`
+Rozważmy `JsEncoder` i propozycję jej instancji `Divisible`
 
 {lang="text"}
 ~~~~~~~~
@@ -10730,30 +10703,28 @@ Consider `JsEncoder` and a proposed instance of `Divisible`
   }
 ~~~~~~~~
 
-On one side of the composition laws, for a `String` input, we get
+Z jednej strony prawa kompozycji, dla wejścia typu `String`, otrzymujemy
 
 {lang="text"}
 ~~~~~~~~
   JsArray([JsArray([JsString(hello),JsString(hello)]),JsString(hello)])
 ~~~~~~~~
 
-and on the other
+a z drugiej
 
 {lang="text"}
 ~~~~~~~~
   JsArray([JsString(hello),JsArray([JsString(hello),JsString(hello)])])
 ~~~~~~~~
 
-which are different. We could experiment with variations of the `divide`
-implementation, but it will never satisfy the laws for all inputs.
+Moglibyśmy eksperymentować z różnymi wariacjami `divide`, ale nigdy nie zaspokoilibyśmy
+praw dla wszystkich możliwych wejść.
 
-We therefore cannot provide a `Divisible[JsEncoder]` because it would break the
-mathematical laws and invalidates all the assumptions that users of `Divisible`
-rely upon.
+Dlatego też nie możemy dostarczyć `Divisible[JsEncoder]`, gdyż złamalibyśmy matematyczne prawa rządzące tą typeklasą,
+tym samym zaburzając wszystkie założenia na bazie których użytkownicy `Divisible` budują swój kod.
 
-To aid in testing laws, Scalaz typeclasses contain the codified versions of
-their laws on the typeclass itself. We can write an automated test, asserting
-that the law fails, to remind us of this fact:
+Aby pomóc z testowaniem tych praw, typeklasy ze Scalaz zawierają ich skodyfikowaną wersję.
+Możemy napisać zautomatyzowany test, przypominający nam, że złamaliśmy daną regułę:
 
 {lang="text"}
 ~~~~~~~~
@@ -10763,7 +10734,7 @@ that the law fails, to remind us of this fact:
   assert(!D.divideLaw.composition(S, S, S)(E))
 ~~~~~~~~
 
-On the other hand, a similar `JsDecoder` test meets the `Applicative` composition laws
+Z drugiej strony, test podobnej typeklasy `JsDecoder` pokazuje że prawa `Applicative` są przez nią zachowane
 
 {lang="text"}
 ~~~~~~~~
@@ -10783,7 +10754,7 @@ On the other hand, a similar `JsDecoder` test meets the `Applicative` compositio
   }
 ~~~~~~~~
 
-for some test data
+dla danych testowych
 
 {lang="text"}
 ~~~~~~~~
@@ -10793,40 +10764,37 @@ for some test data
   composeTest(JsObject(IList("b" -> JsInteger(1))))
 ~~~~~~~~
 
-Now we are reasonably confident that our derived `MonadError` is lawful.
+Jesteśmy teraz w stanie zaufać, przynajmniej do pewnego stopnia, że nasza wyderywowana instancja `MonadError` przestrzega zasad.
 
-However, just because we have a test that passes for a small set of data does
-not prove that the laws are satisfied. We must also reason through the
-implementation to convince ourselves that it **should** satisfy the laws, and try
-to propose corner cases where it could fail.
+Jednak udowodnienie, że taki test przechodzi dla konkretnego zbioru danych nie udowadnia, że prawa są zachowane.
+Musimy jeszcze przeanalizować implementację i przekonać siebie samych, że prawa są **raczej** zachowane, a ponad to
+powinniśmy spróbować wskazać przypadki w których mogłoby się to okazać nieprawdą.
 
-One way of generating a wide variety of test data is to use the [scalacheck](https://github.com/rickynils/scalacheck)
-library, which provides an `Arbitrary` typeclass that integrates with most
-testing frameworks to repeat a test with randomly generated data.
+Jednym ze sposobów generowania różnorodnych danych testowych jest użycie biblioteki [scalacheck](https://github.com/rickynils/scalacheck).
+Dostarcza ona typeklasę `Arbitrary`, która integruje się z większością frameworków testowych, pozwalając powtarzać
+testy na bazie losowo wygenerowanych danych.
 
-The `jsonformat` library provides an `Arbitrary[JsValue]` (everybody should
-provide an `Arbitrary` for their ADTs!) allowing us to make use of Scalatest's
-`forAll` feature:
+Biblioteka `jsonFormat` dostarcza `Arbitrary[JsValue]` (każdy powinien dostarczać `Arbitrary` dla swoich ADT!) pozwalając nam
+na skorzystanie z `forAll`:
 
 {lang="text"}
 ~~~~~~~~
   forAll(SizeRange(10))((j: JsValue) => composeTest(j))
 ~~~~~~~~
 
-This test gives us even more confidence that our typeclass meets the
-`Applicative` composition laws. By checking all the laws on `Divisible` and
-`MonadError` we also get **a lot** of smoke tests for free.
+Taki test daje nam jeszcze większą pewność, że nasza typeklasa spełnia wszystkie prawa kompozycji
+dla `Applicative`. Sprawdzając wszystkie prawa dla `Divisble` i `MonadError` dostajemy też
+**dużo** smoke testów zupełnie za darmo.
 
-A> We must restrict `forAll` to have a `SizeRange` of `10`, which limits both
-A> `JsObject` and `JsArray` to a maximum size of 10 elements. This avoids stack
-A> overflows as larger numbers can generate gigantic JSON documents.
+A> Musimy sparametryzować `forAll` za pomocą `SizeRange(10)`, aby ograniczyć wielkość obiektów `JsObject` i `JsArray` do maksymalnie
+A> 10 elementów. W ten sposób unikamy przepełnienia stosu, gdyż większe liczby potrafią wygenerować
+A> naprawdę gigantyczne dokumenty.
 
 
-### `Decidable` and `Alt`
+### `Decidable` i `Alt`
 
-Where `Divisible` and `Applicative` give us typeclass derivation for products
-(built from tuples), `Decidable` and `Alt` give us the coproducts (built from
-nested disjunctions):
+Tam gdzie `Divisble` i `Applicative` pozwalają nam na derywacje typeklas dla produktów (w oparciu o tuple),
+`Decidable` i `Alt` umożliwiają ją dla koproduktów (opartych o zagnieżdżone dysjunkcje):
 
 {lang="text"}
 ~~~~~~~~
@@ -10849,19 +10817,18 @@ nested disjunctions):
   }
 ~~~~~~~~
 
-The four core typeclasses have symmetric signatures:
+Te cztery typeklasy mają symetryczne sygnatury:
 
-| Typeclass     | method    | given          | signature         | returns |
-|------------- |--------- |-------------- |----------------- |------- |
-| `Applicative` | `apply2`  | `F[A1], F[A2]` | `(A1, A2) => Z`   | `F[Z]`  |
-| `Alt`         | `altly2`  | `F[A1], F[A2]` | `(A1 \/ A2) => Z` | `F[Z]`  |
-| `Divisible`   | `divide2` | `F[A1], F[A2]` | `Z => (A1, A2)`   | `F[Z]`  |
-| `Decidable`   | `choose2` | `F[A1], F[A2]` | `Z => (A1 \/ A2)` | `F[Z]`  |
+| Typeklasa     | Metoda    | Argumenty      | Sygnatura         | Typ zwracany |
+|---------------|-----------|----------------|-------------------|--------------|
+| `Applicative` | `apply2`  | `F[A1], F[A2]` | `(A1, A2) => Z`   | `F[Z]`       |
+| `Alt`         | `altly2`  | `F[A1], F[A2]` | `(A1 \/ A2) => Z` | `F[Z]`       |
+| `Divisible`   | `divide2` | `F[A1], F[A2]` | `Z => (A1, A2)`   | `F[Z]`       |
+| `Decidable`   | `choose2` | `F[A1], F[A2]` | `Z => (A1 \/ A2)` | `F[Z]`       |
 
-supporting covariant products; covariant coproducts; contravariant products;
-contravariant coproducts.
+wspierając odpowiednio kowariantne produkty, kowariantne koprodukty, kontrawariantne produkty i kontrawariantne koprodukty.
 
-We can write a `Decidable[Equal]`, letting us derive `Equal` for any ADT!
+Możemy stworzyć instancję `Decidable[Equal]`, która pozwoli na derywację `Equal` dla dowolnego ADT!
 
 {lang="text"}
 ~~~~~~~~
@@ -10879,7 +10846,7 @@ We can write a `Decidable[Equal]`, letting us derive `Equal` for any ADT!
   }
 ~~~~~~~~
 
-For an ADT
+Dla przykładowego ADT
 
 {lang="text"}
 ~~~~~~~~
@@ -10888,7 +10855,7 @@ For an ADT
   final case class JarJar(i: Int, s: String) extends Darth
 ~~~~~~~~
 
-where the products (`Vader` and `JarJar`) have an `Equal`
+gdzie produkty (`Vader` i `JarJar`) mają swoje instancje `Equal`
 
 {lang="text"}
 ~~~~~~~~
@@ -10902,7 +10869,7 @@ where the products (`Vader` and `JarJar`) have an `Equal`
   }
 ~~~~~~~~
 
-we can derive the equal for the whole ADT
+możemy wyderywować instancję dla całego ADT
 
 {lang="text"}
 ~~~~~~~~
@@ -10918,13 +10885,10 @@ we can derive the equal for the whole ADT
   false
 ~~~~~~~~
 
-A> Scalaz 7.2 does not provide a `Decidable[Equal]` out of the box, because it was
-A> a late addition.
+A> Scalaz 7.2 nie dostarcza instancji `Decidable[Equal]`, ponieważ ta typeklasa była dodana później.
 
-Typeclasses that have an `Applicative` can be eligible for an `Alt`. If we want
-to use our `Kleisli.iso` trick, we have to extend `IsomorphismMonadError` and
-mix in `Alt`. Upgrade our `MonadError[Default, String]` to have an
-`Alt[Default]`:
+Typeklasy, która mają `Applicative` kwalifikują się również do `Alt`. Jeśli chcemy użyć triku z `Kleisli.iso`,
+musimy rozszerzyć `IsomorphismMonadError` i domiksować `Alt`. Rozszerzmy więc naszą instancję `MonadError[Default, String`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10937,25 +10901,23 @@ mix in `Alt`. Upgrade our `MonadError[Default, String]` to have an
   }
 ~~~~~~~~
 
-A> The primitive of `Alt` is `alt`, much as the primitive of `Applicative` is `ap`,
-A> but it often makes more sense to use `altly2` and `apply2` as the primitives
-A> with the following overrides:
+A> Podstawą dla `Alt` jest `.alt`, podobnie jak `.ap` dla `Applicative`, ale często lepiej jest 
+A> użyć jako metod bazowych `.altly2` i `.apply2` z odpowiednimi nadpisaniami:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
 A>   override def ap[A, B](fa: =>F[A])(f: =>F[A => B]): F[B] =
 A>     apply2(fa, f)((a, abc) => abc(a))
-A>   
+A>
 A>   override def alt[A](a1: =>F[A], a2: =>F[A]): F[A] = altly2(a1, a2) {
 A>     case -\/(a) => a
 A>     case \/-(a) => a
 A>   }
 A> ~~~~~~~~
 A> 
-A> Just don't forget to implement `apply2` and `altly2` or there will be an
-A> infinite loop at runtime.
+A> Nie można tylko zapomnieć o implementacji `apply2` i `altly2`, bo skończy się to nieskończoną pętlą w czasie wykonania.
 
-Letting us derive our `Default[Darth]`
+Pozwala nam to tym samym wyderywować `Default[Darath]`
 
 {lang="text"}
 ~~~~~~~~
@@ -10982,8 +10944,7 @@ Letting us derive our `Default[Darth]`
   \/-(Vader())
 ~~~~~~~~
 
-Returning to the `scalaz-deriving` typeclasses, the invariant parents of `Alt`
-and `Decidable` are:
+Wróćmy do typeklas z `scalaz-deriving`, gdzie inwariantnymi odpowiednikami `Alt` i `Decidable` są:
 
 {lang="text"}
 ~~~~~~~~
@@ -11003,34 +10964,33 @@ and `Decidable` are:
   }
 ~~~~~~~~
 
-supporting typeclasses with an `InvariantFunctor` like `Monoid` and `Semigroup`.
+wspierając typeklasy z `InvariantFunctor`em, jak np. `Monoid` czy `Semigroup`.
 
 
-### Arbitrary Arity and `@deriving`
+### Arbitralna Arność[^arnosc] i `@deriving`
 
-There are two problems with `InvariantApplicative` and `InvariantAlt`:
+[^arnosc]: Liczba argumentów, eng. _arity_
 
-1.  they only support products of four fields and coproducts of four entries.
-2.  there is a **lot** of boilerplate on the data type companions.
+`InvariantApplicative` i `InvariantAlt` niosą ze sobą dwa problemy:
 
-In this section we solve both problems with additional typeclasses introduced by
-`scalaz-deriving`
+1. wspierają jedynie produkty o 4 polach i koprodukty o 4 pozycjach.
+2. wprowadzają **dużo** boilerplate'u w obiektach towarzyszących.
+
+W tym rozdziale rozwiążemy oba te problemy z użyciem dodatkowych typeklas ze `scalaz-deriving`
 
 {width=75%}
 ![](images/scalaz-deriving.png)
 
-Effectively, our four central typeclasses `Applicative`, `Divisible`, `Alt` and
-`Decidable` all get extended to arbitrary arity using the [iotaz](https://github.com/frees-io/iota) library, hence
-the `z` postfix.
+W praktyce, cztery główne typeklasy `Applicative`, `Divisble`, `Alt` i `Decidable` zostały rozszerzone do
+arbitralnej arności używając biblioteki [iotaz](https://github.com/frees-io/iota), stąd też sufiks `z`.
 
-The iotaz library has three main types:
+Biblioteka ta definiuje trzy główne typy:
 
--   `TList` which describes arbitrary length chains of types
--   `Prod[A <: TList]` for products
--   `Cop[A <: TList]` for coproducts
+-   `TList`, który opisuje ciąg typów dowolnej długości
+-   `Prod[A <: TList]` dla produktów
+-   `Cop[A <: TList]` dla koproduktów
 
-By way of example, a `TList` representation of `Darth` from the previous
-section is
+Dla przykładu, oto reprezentacje oparte o `TList` dla ADT `Darath` z poprzedniego podrozdziału:
 
 {lang="text"}
 ~~~~~~~~
@@ -11041,7 +11001,7 @@ section is
   type JarJarT = Int    :: String :: TNil
 ~~~~~~~~
 
-which can be instantiated:
+które mogą być zinstancjonizowane
 
 {lang="text"}
 ~~~~~~~~
@@ -11052,9 +11012,8 @@ which can be instantiated:
   val darth: Cop[DarthT] = VaderI.inj(Vader("hello", 1))
 ~~~~~~~~
 
-To be able to use the `scalaz-deriving` API, we need an `Isomorphism` between
-our ADTs and the `iotaz` generic representation. It is a lot of boilerplate,
-we will get to that in a moment:
+Aby móc użyć API ze `scalaz-deriving` potrzebujemy `Isomorphism` pomiędzy naszym ADT i generyczną
+reprezentacją z `iotaz`. Generuje to sporo boilerplate'u, do które zaraz wrócimy
 
 {lang="text"}
 ~~~~~~~~
@@ -11093,8 +11052,8 @@ we will get to that in a moment:
   }
 ~~~~~~~~
 
-With that out of the way we can call the `Deriving` API for `Equal`, possible
-because `scalaz-deriving` provides an optimised instance of `Deriving[Equal]`
+Teraz możemy już bez żadnych problemów zawołać API `Deriving` dla `Equal`, korzystając z tego, 
+że `scalaz-deriving` dostarcza zoptymalizowaną instancję `Deriving[Equal]`
 
 {lang="text"}
 ~~~~~~~~
@@ -11115,13 +11074,12 @@ because `scalaz-deriving` provides an optimised instance of `Deriving[Equal]`
   }
 ~~~~~~~~
 
-A> Typeclasses in the `Deriving` API are wrapped in `Need` (recall `Name` from
-A> Chapter 6), which allows lazy construction, avoiding unnecessary work if the
-A> typeclass is not needed, and avoiding stack overflows for recursive ADTs.
+A> Typeklasy używane w `Deriving` są opakowywane w `Need`, co pozwala na ich leniwą konstrukcję,
+A> tym samym unikając zbędnej pracy gdy dana instancja nie jest potrzebna, oraz zabezpiecza nas przed
+A> przepełnieniem stosu dla rekurencyjnych ADT.
 
-To be able to do the same for our `Default` typeclass, we need to provide an
-instance of `Deriving[Default]`. This is just a case of wrapping our existing
-`Alt` with a helper:
+Aby móc zrobić to samo dla naszej typeklasy `Default`, musimy zdefiniować dodatkową instancję `Deriving[Default]`.
+Na szczęście sprowadza się to jedynie do opakowania naszej instancji `Alt`:
 
 {lang="text"}
 ~~~~~~~~
@@ -11131,7 +11089,7 @@ instance of `Deriving[Default]`. This is just a case of wrapping our existing
   }
 ~~~~~~~~
 
-and then calling it from the companions
+i wywołania z obiektów towarzyszących
 
 {lang="text"}
 ~~~~~~~~
@@ -11152,12 +11110,10 @@ and then calling it from the companions
   }
 ~~~~~~~~
 
-We have solved the problem of arbitrary arity, but we have introduced even more
-boilerplate.
+Tym samym rozwiązaliśmy problem dowolnej liczby parametrów, ale wprowadziliśmy jeszcze więcej boilerplate'u.
 
-The punchline is that the `@deriving` annotation, which comes from
-`deriving-plugin`, generates all this boilerplate automatically and only needs
-to be applied at the top level of an ADT:
+Puenta jest taka, że anotacja `@deriving`, pochodząca z `deriving-plugin`, wygeneruje cały ten boilerplate za nas!
+Wystarczy zaaplikować ją w korzeniu naszego ADT:
 
 {lang="text"}
 ~~~~~~~~
@@ -11167,19 +11123,19 @@ to be applied at the top level of an ADT:
   final case class JarJar(i: Int, s: String) extends Darth
 ~~~~~~~~
 
-Also included in `scalaz-deriving` are instances for `Order`, `Semigroup` and
-`Monoid`. Instances of `Show` and `Arbitrary` are available by installing the
-`scalaz-deriving-magnolia` and `scalaz-deriving-scalacheck` extras.
+`scalaz-deriving` zawiera również instancje dla typeklas `Order`, `Semigroup` i `Monoid`.
+Instancje dla `Show` i `Arbitrary` dostępne są po zainstalowaniu rozszerzeń `scalaz-deriving-magnolia` oraz
+`scalaz-deriving-scalacheck`.
 
-You're welcome!
+Nie ma za co!
 
 
-### Examples
+### Przykłady
 
-We finish our study of `scalaz-deriving` with fully worked implementations of
-all the example typeclasses. Before we do that we need to know about a new data
-type: `/~\`, aka the *snake in the road*, for containing two higher kinded
-structures that share the same type parameter:
+Zakończymy naszą naukę `scalaz-deriving` z w pełni działającymi implementacjami wszystkich
+przykładowych typeklas. Jednak zanim do tego dojdziemy, musimy poznać jeszcze jeden typ danych:
+`/~\` a.k.a. *wąż na drodze*, który posłuży nam do przechowywania dwóch struktur wyższego rodzaju
+sparametryzowanych tym samym typem:
 
 {lang="text"}
 ~~~~~~~~
@@ -11195,28 +11151,25 @@ structures that share the same type parameter:
   }
 ~~~~~~~~
 
-We typically use this in the context of `Id /~\ TC` where `TC` is our typeclass,
-meaning that we have a value, and an instance of a typeclass for that value,
-without knowing anything about the value.
+Zazwyczaj będziemy używać tej struktury w kontekście `Id /~\ TC`, gdzie `TC` to nasz typeklasa,
+wyrażając fakt że mamy wartość oraz instancję typeklasy dla tej wartości.
 
-In addition, all the methods on the `Deriving` API have implicit evidence of the
-form `A PairedWith FA`, allowing the `iotaz` library to be able to perform
-`.zip`, `.traverse`, and other operations on `Prod` and `Cop`. We can ignore
-these parameters, as we don't use them directly.
+W dodatku wszystkie metody w API `Deriving` przyjmują niejawny parametr typu `A PairedWith F[A]`, pozwalający
+bibliotece `iotaz` na wykonywanie `.zip`, `.traverse` i innych operacji na wartościach typu `Prod` i `Cop`.
+Jako że nie używamy tych parametrów bezpośrednio, to możemy je na razie zignorować.
 
 
 #### `Equal`
 
-As with `Default` we could define a regular fixed-arity `Decidable` and wrap it
-with `ExtendedInvariantAlt` (the simplest approach), but we choose to implement
-`Decidablez` directly for the performance benefit. We make two additional
-optimisations:
+Podobnie jak przy `Default`, moglibyśmy zdefiniować `Decidable` o stałej arności i owinąć
+w `ExtendedInvariantAlt` (rozwiązanie najprostsze), ale zamiast tego zdefiniujemy `Decidablez` dla
+korzyści wydajnościowych. Dokonamy dwóch dodatkowych optymalizacji:
 
-1.  perform instance equality `.eq` before applying the `Equal.equal`, allowing
-    for shortcut equality between identical values.
-2.  `Foldable.all` allowing early exit when any comparison is `false`. e.g. if
-    the first fields don't match, we don't even request the `Equal` for remaining
-    values.
+1. wykonanie porównania referencji `.eq` przed zaaplikowaniem `Equal.equal`, pozwalając na
+   szybsze określenie równości dla tych samych wartości.
+2. szybkie wyjście z `Foldable.all` kiedy którekolwiek z porównań zwróci `false`, tzn. jeśli
+   pierwsze pola się nie zgadzają to nie będziemy nawet wymagać instancji `Equal` dla pozostałych
+   wartości
 
 {lang="text"}
 ~~~~~~~~
@@ -11242,9 +11195,8 @@ optimisations:
 
 #### `Default`
 
-Unfortunately, the `iotaz` API for `.traverse` (and its analogy, `.coptraverse`)
-requires us to define natural transformations, which have a clunky syntax, even
-with the `kind-projector` plugin.
+Niestety, API `iotaz` dla `.traverse` (i analogicznej `.coptraverse`) wymaga od nas zdefiniowania transformacji naturalnej,
+co nawet w obecności `kind-pojector`a jest niezbyt wygodne.
 
 {lang="text"}
 ~~~~~~~~
@@ -11274,9 +11226,8 @@ with the `kind-projector` plugin.
 
 #### `Semigroup`
 
-It is not possible to define a `Semigroup` for general coproducts, however it is
-possible to define one for general products. We can use the arbitrary arity
-`InvariantApplicative`:
+Nie da się zdefiniować `Semigroup`y dla wszystkich koproduktów, ale da się to zrobić dla wszystkich
+produktów. W tym celu użyjemy `InvariantApplicative` o dowolnej arności, czyli `InvariantApplicativez`:
 
 {lang="text"}
 ~~~~~~~~
@@ -11294,27 +11245,27 @@ possible to define one for general products. We can use the arbitrary arity
 ~~~~~~~~
 
 
-#### `JsEncoder` and `JsDecoder`
+#### `JsEncoder` i `JsDecoder`
 
-`scalaz-deriving` does not provide access to field names so it is not possible
-to write a JSON encoder or decoder.
+`scalaz-deriving` nie pozwala na dostęp do nazw pól, więc nie jest możliwe zdefiniowanie enkoderów
+i dekoderów z jej użyciem.
 
-A> An earlier version of `scalaz-deriving` supported field names but it was clear
-A> that there was no advantage over using Magnolia, so the support was dropped to
-A> remain focused on typeclasses with lawful `Alt` and `Decidable`.
+A> Wcześniejsza wersja `scalaz-deriving` wspierała taką funkcjonalność ale okazało się,
+A> że nie daje to żadnej przewagi nad używaniem Magnolii, więc wsparcie to zostało usunięte
+A> w imię skupienia się na typeklasach posiadających poprawne instancje `Alt` i `Decidable`.
 
 
 ## Magnolia
 
-The Magnolia macro library provides a clean API for writing typeclass
-derivations. It is installed with the following `build.sbt` entry
+Magnolia jest biblioteką opierającą się o makra, która dostarcza schludne i dość proste API pomagające w derywowaniu
+typeklas. Instaluje się ją za pomocą wpisu w build.sbt
 
 {lang="text"}
 ~~~~~~~~
   libraryDependencies += "com.propensive" %% "magnolia" % "0.10.1"
 ~~~~~~~~
 
-A typeclass author implements the following members:
+Jako autorzy typeklasy musimy zaimplementować poniższe pola
 
 {lang="text"}
 ~~~~~~~~
@@ -11330,7 +11281,7 @@ A typeclass author implements the following members:
   }
 ~~~~~~~~
 
-The Magnolia API is:
+API Magnolii to:
 
 {lang="text"}
 ~~~~~~~~
@@ -11350,7 +11301,7 @@ The Magnolia API is:
   }
 ~~~~~~~~
 
-with helpers
+wraz z pomocnikami
 
 {lang="text"}
 ~~~~~~~~
@@ -11376,34 +11327,32 @@ with helpers
   }
 ~~~~~~~~
 
-The `Monadic` typeclass, used in `constructMonadic`, is automatically generated
-if our data type has a `.map` and `.flatMap` method when we `import mercator._`
+Typeklasa `Monadic` widoczna w `constructMonadic` jest automatycznie generowana za pomocą `import mercator._`, jeśli nasz typ danych
+posiada metody `.map` i `.flatMap`.
 
-It does not make sense to use Magnolia for typeclasses that can be abstracted by
-`Divisible`, `Decidable`, `Applicative` or `Alt`, since those abstractions
-provide a lot of extra structure and tests for free. However, Magnolia offers
-features that `scalaz-deriving` cannot provide: access to field names, type
-names, annotations and default values.
+Nie ma sensu używać Magnolii do derywacji typeklas, które mogą być opisane poprzez `Divisible`/`Decidable`/`Applicative`/`Alt`, 
+gdyż te abstrakcje dają nam dodatkową strukturę i testy za darmo. Jednak Magnolia oferuje nam funkcjonalności, których
+nie ma `scalaz-deriving`: dostęp do nazw pól, nazw typów, anotacji i domyślnych wartości.
 
 
-### Example: JSON
+### Przykład: JSON
 
-We have some design choices to make with regards to JSON serialisation:
+Musimy zadać sobie kilka pytań odnośnie tego jak chcemy serializować dane: 
 
-1.  Should we include fields with `null` values?
-2.  Should decoding treat missing vs `null` differently?
-3.  How do we encode the name of a coproduct?
-4.  How do we deal with coproducts that are not `JsObject`?
+1. Czy powinniśmy załączać pola o wartości `null`?
+1. Czy dekodując powinniśmy traktować brakujące pola i pola o wartości `null` inaczej?
+1. Jak zakodować nazwę koproduktu?
+1. Jak poradzić sobie z koproduktami, które nie są `JsObject`em?
 
-We choose sensible defaults
+Oto nasze odpowiedzi:
 
--   do not include fields if the value is a `JsNull`.
--   handle missing fields the same as `null` values.
--   use a special field `"type"` to disambiguate coproducts using the type name.
--   put primitive values into a special field `"xvalue"`.
+- nie załączamy pól o wartości `JsNull`
+- brakujące pola traktujemy tak samo jak wartości `null`
+- użyjemy specjalnego pola `type` aby rozróżnić koprodukty na podstawie ich nazw
+- wartości prymitywne umieścimy w specjalnym polu `xvalue`
 
-and let the users attach an annotation to coproducts and product fields to
-customise their formats:
+Pozwolimy też użytkownikowi dołączyć anotacje do koproduktów i pól produktów aby
+dostosować te zachowania:
 
 {lang="text"}
 ~~~~~~~~
@@ -11415,10 +11364,10 @@ customise their formats:
   }
 ~~~~~~~~
 
-A> Magnolia is not limited to one annotation family. This encoding is so that we
-A> can do a like-for-like comparison with Shapeless in the next section.
+A> Magnolia nie ogranicza nas do jednej rodziny anotacji. Taka implementacja ma pozwolić nam
+A> na dokonanie dokładnego porównania z Shapelessem w następnym podrozdziale.
 
-For example
+Na przykład 
 
 {lang="text"}
 ~~~~~~~~
@@ -11428,7 +11377,7 @@ For example
   final case class Money(@json.field("integer") i: Int) extends Cost
 ~~~~~~~~
 
-Start with a `JsDecoder` that handles only our sensible defaults:
+Zacznijmy z enkoderem, który obsługuje jedynie ustawienia domyślne:
 
 {lang="text"}
 ~~~~~~~~
@@ -11459,14 +11408,13 @@ Start with a `JsDecoder` that handles only our sensible defaults:
   }
 ~~~~~~~~
 
-We can see how the Magnolia API makes it easy to access field names and
-typeclasses for each parameter.
+Widzimy w jak prosty sposób możemy posługiwać się nazwami pól oraz
+instancjami typeklas dla każdego z nich.
 
-Now add support for annotations to handle user preferences. To avoid looking up
-the annotations on every encoding, we will cache them in an array. Although field
-access to an array is non-total, we are guaranteed that the indices will always
-align. Performance is usually the victim in the trade-off between specialisation
-and generalisation.
+Teraz dodajmy wsparcie dla anotacji, aby obsłużyć preferencje użytkownika. Aby
+uniknąć sprawdzania anotacji za każdym kodowaniem, zapiszemy je w lokalnej tablicy. Mimo że 
+dostęp do komórek tablicy nie jest totalny, to w praktyce mamy gwarancję że indeksy zawsze będą się zgadzać.
+Wydajność zazwyczaj cierpi przy okazji walki specjalizacji z generalizacją.
 
 {lang="text"}
 ~~~~~~~~
@@ -11526,8 +11474,7 @@ and generalisation.
   }
 ~~~~~~~~
 
-For the decoder we use `.constructMonadic` which has a type signature similar to
-`.traverse`
+Przy dekoderze skorzystamy z metody `.constructMonadic`, która ma sygnaturę podobną do `.traverse`
 
 {lang="text"}
 ~~~~~~~~
@@ -11561,8 +11508,8 @@ For the decoder we use `.constructMonadic` which has a type signature similar to
   }
 ~~~~~~~~
 
-Again, adding support for user preferences and default field values, along with
-some optimisations:
+Raz jeszcze dodajemy wsparcie dla preferencji użytkownika i domyślnych wartości pól wraz z paroma 
+optymalizacjami:
 
 {lang="text"}
 ~~~~~~~~
@@ -11643,8 +11590,8 @@ some optimisations:
   }
 ~~~~~~~~
 
-We call the `JsMagnoliaEncoder.gen` or `JsMagnoliaDecoder.gen` method from the
-companion of our data types. For example, the Google Maps API
+Teraz musimy wywołać `JsMagnoliaEncoder.gen` oraz `JsMagnoliaDecoder.gen` z obiektów towarzyszących
+naszych typów danych. Na przykład dla API Map Google:
 
 {lang="text"}
 ~~~~~~~~
@@ -11676,8 +11623,8 @@ companion of our data types. For example, the Google Maps API
   }
 ~~~~~~~~
 
-Thankfully, the `@deriving` annotation supports Magnolia! If the typeclass
-author provides a file `deriving.conf` with their jar, containing this text
+Na szczęście anotacja `@deriving` wspiera derywację z użyciem Magnolii! Jeśli autor typeklasy 
+dostarcza w swoim jarze plik `deriving.conf` zawierający poniższe linie
 
 {lang="text"}
 ~~~~~~~~
@@ -11685,7 +11632,7 @@ author provides a file `deriving.conf` with their jar, containing this text
   jsonformat.JsDecoder=jsonformat.JsMagnoliaDecoder.gen
 ~~~~~~~~
 
-the `deriving-macro` will call the user-provided method:
+to `deriving-macro` wywoła odpowiednie metody:
 
 {lang="text"}
 ~~~~~~~~
@@ -11705,11 +11652,11 @@ the `deriving-macro` will call the user-provided method:
 ~~~~~~~~
 
 
-### Fully Automatic Derivation
+### W Pełni Automatyczna Derywacja
 
-Generating `implicit` instances on the companion of the data type is
-historically known as *semi-auto* derivation, in contrast to *full-auto* which
-is when the `.gen` is made `implicit`
+Generowanie niejawnych instancji w obiektach towarzyszących typom danych jest techniką znaną
+jako generacja *semi-automatyczna* (_semi-auto_), w porównaniu do generacji *w pełni automatycznej* (_full-auto_),
+która ma miejsce gdy metoda `.gen` jest również niejawna
 
 {lang="text"}
 ~~~~~~~~
@@ -11723,8 +11670,8 @@ is when the `.gen` is made `implicit`
   }
 ~~~~~~~~
 
-Users can import these methods into their scope and get magical derivation at
-the point of use
+W takim wypadku użytkownicy mogą zaimportować takie metody i zyskać magiczną derywację
+w punkcie użycia
 
 {lang="text"}
 ~~~~~~~~
@@ -11734,16 +11681,15 @@ the point of use
   res = JsObject([("text","hello"),("value",1)])
 ~~~~~~~~
 
-This may sound tempting, as it involves the least amount of typing, but there
-are two caveats:
+Może to brzmieć kusząco, gdyż wymaga najmniejszej ilości kodu, ale niesie ze sobą dwie pułapki:
 
-1.  the macro is invoked at every use site, i.e. every time we call `.toJson`.
-    This slows down compilation and also produces more objects at runtime, which
-    will impact runtime performance.
-2.  unexpected things may be derived.
+1. makro wykonywane jest przy każdym użyciu, a więc na przykład za każdym razem gdy wywołamy `.toJson`.
+   Spowalnia to kompilacje oraz prowadzi do stworzenia większej ilości obiektów, co może spowodować
+   spadek wydajności w czasie wykonania.
+2. wyderywowane mogą zostać rzeczy zupełnie niespodziewane.
 
-The first caveat is self evident, but unexpected derivations manifests as
-subtle bugs. Consider what would happen for
+Punkt pierwszy jest raczej oczywisty, ale nieprzewidziane derywacje manifestują się w formie subtelnych
+błędów. Pomyślmy co się wydarzy dla
 
 {lang="text"}
 ~~~~~~~~
@@ -11751,8 +11697,8 @@ subtle bugs. Consider what would happen for
   final case class Foo(s: Option[String])
 ~~~~~~~~
 
-if we forgot to provide an implicit derivation for `Option`. We might expect a
-`Foo(Some("hello"))` to look like
+jeśli zapomnimy dostarczyć niejawna instancję dla `Option`. Moglibyśmy oczekiwać, że
+`Foo(Some("hello"))` przyjmie formę
 
 {lang="text"}
 ~~~~~~~~
@@ -11761,7 +11707,7 @@ if we forgot to provide an implicit derivation for `Option`. We might expect a
   }
 ~~~~~~~~
 
-But it would instead be
+Ale zamiast tego otrzymamy
 
 {lang="text"}
 ~~~~~~~~
@@ -11773,36 +11719,33 @@ But it would instead be
   }
 ~~~~~~~~
 
-because Magnolia derived an `Option` encoder for us.
+ponieważ Magnolia wyderywowała dla na nas enkoder dla typu `Option`.
 
-This is confusing, we would rather have the compiler tell us if we forgot
-something. Full auto is therefore not recommended.
-
+Chcielibyśmy, żeby kompilator informował nas o brakujących elementach, tak więc odradzamy
+używanie w pełni automatycznej derywacji.
 
 ## Shapeless
 
-The [Shapeless](https://github.com/milessabin/shapeless/) library is notoriously the most complicated library in Scala. The
-reason why it has such a reputation is because it takes the `implicit` language
-feature to the extreme: creating a kind of *generic programming* language at the
-level of the types.
+Biblioteka [Shapeless](https://github.com/milessabin/shapeless/) jest niezmiennie najbardziej skomplikowaną biblioteką
+w ekosystemie Scali. Taka reputacja wynika z faktu, że implementuje ona niemal osoby język do *programowania generycznego*
+na poziomie typów i robi to za pomocą maksymalnego wykorzystania wartości niejawnych.
 
-This is not an entirely foreign concept: in Scalaz we try to limit our use of
-the `implicit` language feature to typeclasses, but we sometimes ask the
-compiler to provide us with *evidence* relating types. For example Liskov or
-Leibniz relationship (`<~<` and `===`), and to `Inject` a free algebra into a
-`scalaz.Coproduct` of algebras.
+Nie jest to pomysł zupełnie obcy. W Scalaz staramy się ograniczyć używanie takich wartości jedynie
+do typeklas, ale czasem prosimy kompilator o dostarczenie różnego rodzaju *dowodów* co do wskazanych typów.
+Przykładem mogą być relacje Liskov i Leibniz (`<~<` i `===`) lub zdolność do wstrzyknięcia algebry free do koproduktu
+algebry (`Inject`).
 
-A> It is not necessary to understand Shapeless to be a Functional Programmer. If
-A> this chapter becomes too much, just skip to the next section.
+A> Nie trzeba rozumieć Shapelessa żeby być Programistą Funkcyjnym. Jeśli ten rozdział
+A> okaże się zbyt ciężki, to po prostu przejdź do następnego.
 
-To install Shapeless, add the following to `build.sbt`
+Aby zainstalować Shapeless musimy dodać poniższy fragment do `build.sbt`
 
 {lang="text"}
 ~~~~~~~~
   libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.3"
 ~~~~~~~~
 
-At the core of Shapeless are the `HList` and `Coproduct` data types
+Rdzeniem biblioteki są typy danych `HList` i `Coproduct`
 
 {lang="text"}
 ~~~~~~~~
@@ -11822,11 +11765,11 @@ At the core of Shapeless are the `HList` and `Coproduct` data types
   sealed trait CNil extends Coproduct // no implementations
 ~~~~~~~~
 
-which are *generic* representations of products and coproducts, respectively.
-The `sealed trait HNil` is for convenience so we never need to type `HNil.type`.
+które są *generycznymi* reprezentacjami odpowiednio produktów i koproduktów. `sealed trait HNil`
+służy tylko naszej wygodzie, abyśmy nie musieli pisać `HNil.type`.
 
-Shapeless has a clone of the `IsoSet` datatype, called `Generic`, which allows
-us to move between an ADT and its generic representation:
+Shapeless ma również kopię typu `IsoSet` pod nazwą `Generic`, która pozwala nam przechodzić
+między ADT i jego generyczną reprezentacją:
 
 {lang="text"}
 ~~~~~~~~
@@ -11842,10 +11785,9 @@ us to move between an ADT and its generic representation:
   }
 ~~~~~~~~
 
-Many of the types in Shapeless have a type member (`Repr`) and an `.Aux` type
-alias on their companion that makes the second type visible. This allows us to
-request the `Generic[Foo]` for a type `Foo` without having to provide the
-generic representation, which is generated by a macro.
+Wiele z tych typów zawiera abstrakcyjny typ `Repr`, a w swoich obiektach towarzyszących definiują
+alias typu `.Aux`, który pozwala go zobaczyć. Umożliwia to nam żądanie `Generic[Foo]` bez podawania
+generycznej reprezentacji, która będzie wygenerowana przez makro.
 
 {lang="text"}
 ~~~~~~~~
@@ -11868,7 +11810,7 @@ generic representation, which is generated by a macro.
   res: Bar = Irish
 ~~~~~~~~
 
-There is a complementary `LabelledGeneric` that includes the field names
+Istnieje również komplementarny typ `LabelledGeneric`, który zawiera nazwy pól.
 
 {lang="text"}
 ~~~~~~~~
@@ -11892,31 +11834,28 @@ There is a complementary `LabelledGeneric` that includes the field names
        Inl(Irish)
 ~~~~~~~~
 
-Note that the **value** of a `LabelledGeneric` representation is the same as the
-`Generic` representation: field names only exist in the type and are erased at
-runtime.
+Zwróć uwagę, że **wartość** typu `LabelledGeneric` jest taka sama jak `Generic`. Nazwy pól istnieją
+jedynie na poziomie typów i są wymazywane w czasie wykonania.
 
-We never need to type `KeyTag` manually, we use the type alias:
+Nie musimy używać typu `KeyTag` bezpośrednio, a zamiast tego możemy użyć aliasu:
 
 {lang="text"}
 ~~~~~~~~
   type FieldType[K, +V] = V with KeyTag[K, V]
 ~~~~~~~~
 
-If we want to access the field name from a `FieldType[K, A]`, we ask for
-implicit evidence `Witness.Aux[K]`, which allows us to access the value of `K`
-at runtime.
+Jeśli chcemy uzyskać dostęp do nazwy pola z `FieldType[K, A]`, musimy poprosić o
+niejawny dowód typu `Witness.Aux[K]`, który dostarczy nam wartość `K` w czasie wykonania.
 
-Superficially, this is all we need to know about Shapeless to be able to derive
-a typeclass. However, things get increasingly complex, so we will proceed with
-increasingly complex examples.
+Na pierwszy rzut oka jest to wszystko co musimy wiedzieć, aby móc wyderywować instancję typeklasy
+z użyciem Shapelessa. Jednak z czasem wszystko się komplikuje, więc my również przejdziemy przez przykłady
+o rosnącym poziomie skomplikowania.
 
+ 
+### Przykład: `Equal`
 
-### Example: Equal
-
-A typical pattern to follow is to extend the typeclass that we wish to derive,
-and put the Shapeless code on its companion. This gives us an implicit scope
-that the compiler can search without requiring complex imports
+Standardowym podejściem jest rozszerzenie typeklasy i umieszczenie jej derywacji z obiekcie towarzyszącym.
+W taki sposób znajduje się ona w niejawnym zakresie przeszukiwanym przez kompilator bez dopisywania dodatkowych importów.
 
 {lang="text"}
 ~~~~~~~~
@@ -11926,11 +11865,9 @@ that the compiler can search without requiring complex imports
   }
 ~~~~~~~~
 
-The entry point to a Shapeless derivation is a method, `gen`, requiring two type
-parameters: the `A` that we are deriving and the `R` for its generic
-representation. We then ask for the `Generic.Aux[A, R]`, relating `A` to `R`,
-and an instance of the `Derived` typeclass for the `R`. We begin with this
-signature and simple implementation:
+Punktem wejścia do derywacji jest metoda `.gen`, wymagająca dwóch parametrów typu: `A`, dla którego derywujemy instancję
+oraz `R` czyli jego generycznej reprezentacji. Następnie żądamy wartości `Generic.Aux[A, R]`, która łączy `A` z `R`, oraz
+instancji `DerivedEqual` dla `R`. Zacznijmy od takiej właśnie sygnatury i prostej implementacji:
 
 {lang="text"}
 ~~~~~~~~
@@ -11942,25 +11879,24 @@ signature and simple implementation:
   }
 ~~~~~~~~
 
-We've reduced the problem to providing an implicit `Equal[R]` for an `R` that is
-the `Generic` representation of `A`. First consider products, where `R <:
-HList`. This is the signature we want to implement:
+Tym samym zredukowaliśmy problem do dostarczenia `DerivedEqual[R]`, a więc instancji dla generycznej 
+reprezentacji `A`. Najpierw rozważmy produkty, czyli sytuację gdzie `R <: HList`. Chcielibyśmy 
+zaimplementować taką sygnaturę:
 
 {lang="text"}
 ~~~~~~~~
   implicit def hcons[H: Equal, T <: HList: DerivedEqual]: DerivedEqual[H :: T]
 ~~~~~~~~
 
-because if we can implement it for a head and a tail, the compiler will be able
-to recurse on this method until it reaches the end of the list. Where we will
-need to provide an instance for the empty `HNil`
+Jeśli ją zaimplementujemy to kompilator będzie w stanie rekursywnie ją wywoływać aż dotrze do końca listy.
+W tym momencie będzie potrzebował instancji dla pustego `HNil`
 
 {lang="text"}
 ~~~~~~~~
   implicit def hnil: DerivedEqual[HNil]
 ~~~~~~~~
 
-We implement these methods
+Zaimplementujmy je
 
 {lang="text"}
 ~~~~~~~~
@@ -11970,7 +11906,7 @@ We implement these methods
   implicit val hnil: DerivedEqual[HNil] = (_, _) => true
 ~~~~~~~~
 
-and for coproducts we want to implement these signatures
+Dla koproduktów z kolei, chcielibyśmy zaimplementować podobne sygnatury
 
 {lang="text"}
 ~~~~~~~~
@@ -11978,8 +11914,7 @@ and for coproducts we want to implement these signatures
   implicit def cnil: DerivedEqual[CNil]
 ~~~~~~~~
 
-A> Scalaz and Shapeless share many type names, when mixing them we often need to
-A> exclude certain elements from the import, e.g.
+A> Scalaz i Shapeless współdzielą wiele nazw typów. Gdy używamy ich jednocześnie często musimy wyłączyć niektóre elementy z importów, np.
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -11987,17 +11922,17 @@ A>   import scalaz.{ Coproduct => _, :+: => _, _ }, Scalaz._
 A>   import shapeless._
 A> ~~~~~~~~
 
-`.cnil` will never be called for a typeclass like `Equal` with type parameters
-only in contravariant position, but the compiler doesn't know that so we have to
-provide a stub:
+
+`.cnil` nie zostanie nigdy zawołany dla typeklas takich jak `Equal`, gdzie parametr typu występuje jedynie w 
+pozycji kontrawariantnej, ale kompilator tego nie wie, a więc musimy dostarczyć jakąkolwiek jego implementację:
 
 {lang="text"}
 ~~~~~~~~
   implicit val cnil: DerivedEqual[CNil] = (_, _) => sys.error("impossible")
 ~~~~~~~~
 
-For the coproduct case we can only compare two things if they align, which is
-when they are both `Inl` or `Inr`
+W przypadku koproduktów, możemy porównywać jedynie instancje tego samego typu, a więc wtedy gdy
+mamy do czynienia z dwukrotnym `Inl` lub `Inr`
 
 {lang="text"}
 ~~~~~~~~
@@ -12008,12 +11943,11 @@ when they are both `Inl` or `Inr`
   }
 ~~~~~~~~
 
-It is noteworthy that our methods align with the concept of `conquer` (`hnil`),
-`divide2` (`hlist`) and `alt2` (`coproduct`)! However, we don't get any of the
-advantages of implementing `Decidable`, as now we must start from scratch when
-writing tests for this code.
+Warto zaznaczyć, że nasze metody pokrywają się z konceptami `conquer` (`hnil`),
+`divide2` (`hlist`) i `alt2` (`coproduct`)! Jedak nic nie zyskamy definiując `Decidable`,
+gdyż musielibyśmy zaczynać od zera pisząc testy dla tego kodu.
 
-So let's test this thing with a simple ADT
+Przetestujmy więc go prostym ADT
 
 {lang="text"}
 ~~~~~~~~
@@ -12023,7 +11957,7 @@ So let's test this thing with a simple ADT
   final case object Baz                    extends Foo
 ~~~~~~~~
 
-We need to provide instances on the companions:
+Dostarczamy odpowiednie instancje:
 
 {lang="text"}
 ~~~~~~~~
@@ -12041,7 +11975,7 @@ We need to provide instances on the companions:
   }
 ~~~~~~~~
 
-But it doesn't compile
+ale kod się nie kompiluje!
 
 {lang="text"}
 ~~~~~~~~
@@ -12053,18 +11987,17 @@ But it doesn't compile
   [error]                                      ^
 ~~~~~~~~
 
-Welcome to Shapeless compilation errors!
+Witaj w Shapelessowym świecie błędów kompilacji!
 
-The problem, which is not at all evident from the error, is that the compiler is
-unable to work out what `R` is, and gets caught thinking it is something else.
-We need to provide the explicit type parameters when calling `gen`, e.g.
+Problem, który wcale nie jest jasno widoczny w komunikacie błędu, wynika z faktu, że kompilator
+nie umie domyślić się czym jest `R`. Musimy więc dostarczyć mu ten parametr wprost:
 
 {lang="text"}
 ~~~~~~~~
   implicit val equal: Equal[Baz.type] = DerivedEqual.gen[Baz.type, HNil]
 ~~~~~~~~
 
-or we can use the `Generic` macro to help us and let the compiler infer the generic representation
+lub użyć makra `Generic`, które dostarczy kompilatorowi generyczną reprezentację
 
 {lang="text"}
 ~~~~~~~~
@@ -12075,44 +12008,41 @@ or we can use the `Generic` macro to help us and let the compiler infer the gene
   ...
 ~~~~~~~~
 
-A> At this point, ignore any red squigglies and only trust the compiler. This is
-A> the point where Shapeless departs from IDE support.
+A> W tym momencie zacznij ignorować wszelkie podkreślenia i ufaj jedynie kompilatorowi. To jest punkt,
+A> w którym Shapeless i wsparcie IDE się rozchodzą.
 
-The reason why this fixes the problem is because the type signature
+Powodem, dla którego to rozwiązanie działa, jest sygnatura metody `.gen`
 
 {lang="text"}
 ~~~~~~~~
   def gen[A, R: DerivedEqual](implicit G: Generic.Aux[A, R]): Equal[A]
 ~~~~~~~~
 
-desugars into
+która rozwijana jest do
 
 {lang="text"}
 ~~~~~~~~
   def gen[A, R](implicit R: DerivedEqual[R], G: Generic.Aux[A, R]): Equal[A]
 ~~~~~~~~
 
-The Scala compiler solves type constraints left to right, so it finds many
-different solutions to `DerivedEqual[R]` before constraining it with the
-`Generic.Aux[A, R]`. Another way to solve this is to not use context bounds.
+Kompilator Scali rozwiązuje ograniczenia od lewej do prawej, a więc znajduje wiele różnych rozwiązań dla
+`DerivedEqual` zanim ograniczy je z użyciem `Generic.Aux[A, R]`. Innym rozwiązaniem jest nie używanie ograniczeń kontekstu.
 
-A> Rather than present the fully working version, we feel it is important to show
-A> when obvious code fails, such is the reality of Shapeless. Another thing we
-A> could have reasonably done here is to have `sealed` the `DerivedEqual` trait so
-A> that only derived versions are valid. But `sealed trait` is not compatible with
-A> SAM types! Living at the razor's edge, expect to get cut.
+A> Zamiast prezentować w pełni działającą wersje, uważamy że ważniejsze jest pokazać kiedy,
+A> wydawałoby się, oczywisty kod nie działa, gdyż tak właśnie wygląda rzeczywistość pracy z Shapelessem. 
+A> Innym rozwiązaniem, które moglibyśmy tu zastosować, jest użycie `sealed` na `DerivedEqual`
+A> sprawiając, że jedynie wyderywowane wersje są poprawne. Ale `sealed trait`y nie są kompatybilne z
+A> typami SAM! Żyjąc na krawędzi ostrza spodziewaj się zacięć.
 
-With this in mind, we no longer need the `implicit val generic` or the explicit
-type parameters on the call to `.gen`. We can wire up `@deriving` by adding an
-entry in `deriving.conf` (assuming we want to override the `scalaz-deriving`
-implementation)
+Tym samym nie potrzebujemy już `implicit val generic` ani parametrów typu przekazywanych wprost i możemy
+podłączyć `@deriving` dodając wpis w `deriving.conf` (zakładając, że chcemy nadpisać implementację ze `scalaz-deriving`)
 
 {lang="text"}
 ~~~~~~~~
   scalaz.Equal=fommil.DerivedEqual.gen
 ~~~~~~~~
 
-and write
+i napisać
 
 {lang="text"}
 ~~~~~~~~
@@ -12122,15 +12052,15 @@ and write
   @deriving(Equal) final case object Baz
 ~~~~~~~~
 
-But replacing the `scalaz-deriving` version means that compile times get slower.
-This is because the compiler is solving `N` implicit searches for each product
-of `N` fields or coproduct of `N` products, whereas `scalaz-deriving` and
-Magnolia do not.
+Ale zastąpienie wersji ze `scalaz-deriving` oznacza, że zwiększy się czas kompilacji naszego projektu.
+Wynika to z faktu, że kompilator musi rozwiązać `N` niejawnych przeszukiwań dla każdego produktu o `N` polach
+lub koproduktu o `N` wariantach, podczas gdy `scalaz-deriving` i `Magnolia` nie mają tego problemu.
 
-Note that when using `scalaz-deriving` or Magnolia we can put the `@deriving` on
-just the top member of an ADT, but for Shapeless we must add it to all entries.
+Zauważ, że używając `scalaz-deriving` lub `Magnolii` wystarczy umieścić anotację `@deriving` na korzeniu ADT,
+a w przypadku Shapelessa musi się ona pojawić osobno przy każdym z wariantów.
 
-However, this implementation still has a bug: it fails for recursive types **at runtime**, e.g.
+Jednak taka implementacja nadal jest błędna: nie działa dla rekurencyjnych typów danych i informuje nas o tym
+**w czasie wykonania**. Przykład:
 
 {lang="text"}
 ~~~~~~~~
@@ -12153,19 +12083,16 @@ However, this implementation still has a bug: it fails for recursive types **at 
           ...
 ~~~~~~~~
 
-The reason why this happens is because `Equal[Tree]` depends on the
-`Equal[Branch]`, which depends on the `Equal[Tree]`. Recursion and BANG!
-It must be loaded lazily, not eagerly.
+Dzieje się tak, ponieważ `Equal[Tree]` zależy od `Equal[Branch]`, które z kolei zależy od `Equal[Tree]`.
+Rekurencja i BUM! Rozwiązaniem jest załadować je leniwie, a nie zachłannie.
 
-Both `scalaz-deriving` and Magnolia deal with lazy automatically, but in
-Shapeless it is the responsibility of the typeclass author.
+Zarówno `scalaz-deriving` jak i Magnolia obsługują ten przypadek automatycznie, lecz tutaj
+leży to w gestii programisty.
 
-The macro types `Cached`, `Strict` and `Lazy` modify the compiler's type
-inference behaviour allowing us to achieve the laziness we require. The pattern
-to follow is to use `Cached[Strict[_]]` on the entry point and `Lazy[_]` around
-the `H` instances.
+Typy `Cached`, `Strict` i `Lazy`, oparte o makra, zmieniają zachowanie kompilatora, pozwalając nam na osiągnięcie
+potrzebnej leniwości. Generalną zasadą jest użycie `Cached[Strict[_]]` w punkcie wejścia i `Lazy[_]` w okolicach instancji dla typu `H`.
 
-It is best to depart from context bounds and SAM types entirely at this point:
+W tym momencie najlepiej będzie jeśli zupełnie zapomnimy o ograniczeniach kontekstu i typach SAM:
 
 {lang="text"}
 ~~~~~~~~
@@ -12212,25 +12139,23 @@ It is best to depart from context bounds and SAM types entirely at this point:
   }
 ~~~~~~~~
 
-While we were at it, we optimised using the `quick` shortcut from
-`scalaz-deriving`.
+Przy okazji dokonaliśmy optymalizacji z użyciem `quick` ze `scalaz-deriving`.
 
-We can now call
+Możemy teraz wywołać
 
 {lang="text"}
 ~~~~~~~~
   assert(tree1 /== tree2)
 ~~~~~~~~
 
-without a runtime exception.
+bez wyjątków rzucanych w czasie działania.
 
 
-### Example: `Default`
+### Przykład: `Default`
 
-There are no new snares in the implementation of a typeclass with a type
-parameter in covariant position. Here we create `HList` and `Coproduct` values,
-and must provide a value for the `CNil` case as it corresponds to the case where
-no coproduct is able to provide a value.
+Implementując derywację typeklasy z parametrem typu w pozycji kowariantnej nie natkniemy się na szczęście
+na żadne nowe pułapki. Tworzymy instancje dla `HList` i `Coproduct`, pamiętając, że musimy obsłużyć też
+przypadek `CNil`, gdyż odpowiada on sytuacji w której żaden z wariantów nie był w stanie dostarczyć wartości.
 
 {lang="text"}
 ~~~~~~~~
@@ -12271,31 +12196,29 @@ no coproduct is able to provide a value.
   }
 ~~~~~~~~
 
-Much as we could draw an analogy between `Equal` and `Decidable`, we can see the
-relationship to `Alt` in `.point` (`hnil`), `.apply2` (`.hcons`) and `.altly2`
-(`.ccons`).
+Analogicznie do relacji pomiędzy `Equal` i `Decidable`, możemy zauważyć relację z `Alt` w
+`.point` (`hnil`), `apply2` (`.hcons`), i `.altly2` (`.ccons`).
 
-There is little to be learned from an example like `Semigroup`, so we will skip
-to encoders and decoders.
+Niewiele nowego moglibyśmy nauczyć się z `Semigroup`, więc przejdziemy od razu do enkoderów i dekoderów.
 
 
-### Example: `JsEncoder`
+### Przykład: `JsEncoder`
 
-To be able to reproduce our Magnolia JSON encoder, we must be able to access:
+Aby odtworzyć nasz enkoder oparty o Magnolię, musimy mieć dostęp do:
 
-1.  field names and class names
-2.  annotations for user preferences
-3.  default values on a `case class`
+1. nazw pól i klas
+2. anotacji odzwierciedlających preferencje użytkownika
+3. domyślnych wartości pól
 
-We will begin by creating an encoder that handles only the sensible defaults.
+Zacznijmy od wersji obsługującej jedynie nasze domyślne zachowania.
 
-To get field names, we use `LabelledGeneric` instead of `Generic`, and when
-defining the type of the head element, use `FieldType[K, H]` instead of just
-`H`. A `Witness.Aux[K]` provides the value of the field name at runtime.
+Aby uzyskać nazwy pól, użyjemy `LabelledGeneric` zamiast `Generic`, definiując typ 
+pierwszego elementu posłużymy się `FieldType[K, H]` zamiast prostym `H`, a wartość 
+typu `Witness.Aux[K]` dostarczy nam nazwę pola w czasie wykonania.
 
-All of our methods are going to return `JsObject`, so rather than returning a
-`JsValue` we can specialise and create `DerivedJsEncoder` that has a different
-type signature to `JsEncoder`.
+Wszystkie nasze metody będą zwracać `JsObject`, więc zamiast uogólniać te wartości do `JsValue`
+możemy stworzyć wyspecjalizowaną typeklasę `DerivedJsEncoder` o sygnaturze innej niż
+ta w `JsEncoder`.
 
 {lang="text"}
 ~~~~~~~~
@@ -12363,8 +12286,9 @@ type signature to `JsEncoder`.
   }
 ~~~~~~~~
 
-A> A pattern has emerged in many Shapeless derivation libraries that introduce
-A> "hints" with a default `implicit`
+
+A> Wiele bibliotek dokonujących derywacji w oparciu o Shapelessa używa wzorca, 
+A> wg. którego derywacją bazuje na "podpowiedziach" dostarczanych za pomocą niejawnej wartości
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -12380,18 +12304,16 @@ A>     }
 A>   }
 A> ~~~~~~~~
 A> 
-A> Users are supposed to provide a custom instance of `ProductHint` on their
-A> companions or package objects. This is a **terrible idea** that relies on fragile
-A> implicit ordering and is a source of typeclass decoherence: if we derive a
-A> `JsEncoder[Foo]`, we will get a different result depending on which
-A> `ProductHint[Foo]` is in scope. It is best avoided.
+A> Użytkownicy mogą zdefiniować własne instancje `ProductHint` w swoich obiektach towarzyszących
+A> lub obiektach pakietu (_package objects_). Jest to **okropny pomysł**, który opiera się na
+A> mechanizmie priorytetów wartości niejawnych, który bardzo łatwo jest zepsuć. Jednocześnie
+A> łatwo jest doprowadzić do dekoherencji typeklas, gdzie derywacja `JsEncoder[Foo]` zakończy się innym rezultatem
+A> zależnie od tego jaka instancja `ProductHint[Foo]` jest dostępna. Najlepiej unikać tego podejścia.
 
-Shapeless selects codepaths at compiletime based on the presence of annotations,
-which can lead to more optimised code, at the expense of code repetition. This
-means that the number of annotations we are dealing with, and their subtypes,
-must be manageable or we can find ourselves writing 10x the amount of code. We
-change our three annotations into one containing all the customisation
-parameters:
+Shapeless obiera ścieżkę wykonania na etapie kompilacji bazując na obecności anotacji, co może prowadzić
+do bardziej wydajnego kodu kosztem jego powtarzania. Oznacza to, że liczba anotacji i ich podtypów, z którymi mamy do czynienia
+musi być rozsądnie mała, gdyż inaczej okaże się ze jesteśmy zmuszenie pisać 10x więcej kodu. Zamieńmy więc
+nasze trzy anotacje na jedną z trzema parametrami:
 
 {lang="text"}
 ~~~~~~~~
@@ -12402,9 +12324,8 @@ parameters:
   ) extends Annotation
 ~~~~~~~~
 
-All users of the annotation must provide all three values since default values
-and convenience methods are not available to annotation constructors. We can
-write custom extractors so we don't have to change our Magnolia code
+Każde użycie takiej anotacji wymaga od użytkownika podania wszystkich 3 parametrów, gdyż wartości domyślne nie są dostępne
+w konstruktorach anotacji. Możemy napisać własne destruktory aby nie musieć modyfikować kodu, który napisaliśmy dla Magnolii.
 
 {lang="text"}
 ~~~~~~~~
@@ -12421,26 +12342,25 @@ write custom extractors so we don't have to change our Magnolia code
   }
 ~~~~~~~~
 
-We can request `Annotation[json, A]` for a `case class` or `sealed trait` to get access to the annotation, but we must write an `hcons` and a `ccons` dealing with both cases because the evidence will not be generated if the annotation is not present. We therefore have to introduce a lower priority implicit scope and put the "no annotation" evidence there.
+Możemy zażądać `Annotation[json, A]` dla `case class` lub `sealed trait`ów aby zyskać dostęp do anotacji, 
+ale musimy stworzyć warianty `hcons` i `ccons` obsługujące oba przypadki, gdyż wartość taka nie zostanie wygenerowana
+gdy anotacja nie jest obecna. Tym samym musimy wprowadzić wartości niejawne o niższym priorytecie i za ich
+pomocą obsłużyć brak anotacji.
 
-We can also request `Annotations.Aux[json, A, J]` evidence to obtain an `HList`
-of the `json` annotation for type `A`. Again, we must provide `hcons` and
-`ccons` dealing with the case where there is and is not an annotation.
+Możemy też zażądać `Annotations.Aux[json, A, J]` aby otrzymać `HList`ę anotacji `json` dla typu `A`.
+Jednak tak samo musimy powtórzyć `hcons` i `ccons` dla przypadku gdy anotacja nie jest obecna.
 
-To support this one annotation, we must write four times as much code as before!
+Aby wesprzeć tą jedną anotację musimy napisać czterokrotnie więcej kodu!
 
-Lets start by rewriting the `JsEncoder`, only handling user code that doesn't
-have any annotations. Now any code that uses the `@json` will fail to compile,
-which is a good safety net.
+Zacznijmy od przepisania derywacji `JsEncoder` tak, aby obsługiwała kod bez jakichkolwiek anotacji.
+Teraz kod, który użyje `@json` się nie skompiluje, co jest dobrym zabezpieczeniem.
 
-We must add an `A` and `J` type to the `DerivedJsEncoder` and thread through the
-annotations on its `.toJsObject` method. Our `.hcons` and `.ccons` evidence now
-provides instances for `DerivedJsEncoder` with a `None.type` annotation and we
-move them to a lower priority so that we can deal with `Annotation[json, A]` in
-the higher priority.
+Musimy dodać `A` i `J` do `DerivedJsEncoder` i przeciągnąć je poprzez metodę `.toJsObject`. Nasze
+`.hcons` i `ccons` produkują instancje `DerivedJsEncoder` z anotacja `None.type`. Przeniesiemy je
+do zakresu o niższym priorytecie, tak abyśmy mogli obsłużyć `Annotation[json, A]` w pierwszej kolejności.
 
-Note that the evidence for `J` is listed before `R`. This is important, since
-the compiler must first fix the type of `J` before it can solve for `R`.
+Zauważ, że instancje dla `J` pojawiają się przed `R`. Jest to ważne, gdyż kompilator musi najpierw
+określić typ `J` zanim będzie w stanie ustalić `R`.
 
 {lang="text"}
 ~~~~~~~~
@@ -12508,14 +12428,12 @@ the compiler must first fix the type of `J` before it can solve for `R`.
   }
 ~~~~~~~~
 
-Now we can add the type signatures for the six new methods, covering all the
-possibilities of where the annotation can be. Note that we only support **one**
-annotation in each position. If the user provides multiple annotations, anything
-after the first will be silently ignored.
+Teraz możemy dodać sygnatury dla sześciu nowych metod, które pokryją wszystkie możliwe warianty
+tego, gdzie może pojawić się anotacja. Zauważ, że wspieramy tylko jedną anotacje w każdej pozycji,
+każda następna będzie po cichu zignorowana.
 
-We're now running out of names for things, so we will arbitrarily call it
-`Annotated` when there is an annotation on the `A`, and `Custom` when there is
-an annotation on a field:
+Powoli kończą nam się nazwy, więc arbitralnie dodamy `Annotated` gdy anotacja jest na typie `A` i
+`Custom` gdy jest ona umieszczona na polu:
 
 {lang="text"}
 ~~~~~~~~
@@ -12571,12 +12489,11 @@ an annotation on a field:
   }
 ~~~~~~~~
 
-We don't actually need `.hconsAnnotated` or `.hconsAnnotatedCustom` for
-anything, since an annotation on a `case class` does not mean anything to the
-encoding of that product, it is only used in `.cconsAnnotated*`. We can therefore
-delete two methods.
+Tak na prawdę wcale nie potrzebujemy `.hconsAnnotated` ani `.hconsAnnotatedCustom`, ponieważ
+anotacja umieszczona na case klasie nie ma żadnego wpływu na logikę, ma ona jedynie sens w przypadku koproduktów w `.cconsAnnotated`.
+Tym samym możemy usunąć dwie metody.
 
-`.cconsAnnotated` and `.cconsAnnotatedCustom` can be defined as
+`.cconsAnnotated` i `cconsAnnotatedCustom` mogą być zdefiniowane jako
 
 {lang="text"}
 ~~~~~~~~
@@ -12593,7 +12510,7 @@ delete two methods.
   }
 ~~~~~~~~
 
-and
+oraz
 
 {lang="text"}
 ~~~~~~~~
@@ -12615,10 +12532,10 @@ and
   }
 ~~~~~~~~
 
-The use of `.head` and `.get` may be concerned but recall that the types here
-are `::` and `Some` meaning that these methods are total and safe to use.
+Użycie metod `.head` i `.get` może być niepokojące, ale zauważmy że `anns` jest typu `Some[json] :: J`, a więc obie 
+są totalne i zupełnie bezpieczne.
 
-`.hconsCustom` and `.cconsCustom` are written
+`.hconsCustom` i `cconsCustom` zapiszemy jako
 
 {lang="text"}
 ~~~~~~~~
@@ -12637,7 +12554,7 @@ are `::` and `Some` meaning that these methods are total and safe to use.
   }
 ~~~~~~~~
 
-and
+oraz
 
 {lang="text"}
 ~~~~~~~~
@@ -12658,23 +12575,21 @@ and
   }
 ~~~~~~~~
 
-Obviously, there is a lot of boilerplate, but looking closely one can see that
-each method is implemented as efficiently as possible with the information it
-has available: codepaths are selected at compiletime rather than runtime.
+Oczywiście, jest tutaj dużo boilerplate'u, ale jeśli przyjrzymy się bliżej, to zobaczymy, że
+każda z metod jest zaimplementowana tak wydajnie jak to możliwe biorąc pod uwagę dostępne informacje,
+a ścieżki wykonania wybierane są w czasie kompilacji.
 
-The performance obsessed may be able to refactor this code so all annotation
-information is available in advance, rather than injected via the `.toJsFields`
-method, with another layer of indirection. For absolute performance, we could
-also treat each customisation as a separate annotation, but that would multiply
-the amount of code we've written yet again, with additional cost to compilation
-time on downstream users. Such optimisations are beyond the scope of this book,
-but they are possible and people do them: the ability to shift work from runtime
-to compiletime is one of the most appealing things about generic programming.
+Ci z obsesją na punkcie wydajności mogą przerefaktorować ten kod, tak, aby wszystkie anotacje były
+dostępne zawczasu, a nie wstrzykiwane przez metodę `.toJsFields`. Dla absolutnej wydajności moglibyśmy
+potraktować każdą customizację jako osobną anotację, ale tym samym po raz kolejny kilkukrotnie 
+zwiększylibyśmy ilość kodu, wydłużając jeszcze bardziej czas kompilacji dla naszych użytkowników.
+Tego typu optymalizacje są poza zakresem tej książki, ale jak najbardziej są one nie tylko możliwe
+ale i implementowane w praktyce. Zdolność do przeniesienia pracy z czasu wykonania do czasu kompilacji
+jest jedną z najbardziej pociągających rzeczy w programowaniu generycznym.
 
-One more caveat that we need to be aware of: [`LabelledGeneric` is not compatible
-with `scalaz.@@`](https://github.com/milessabin/shapeless/issues/309), but there is a workaround. Say we want to effectively ignore
-tags so we add the following derivation rules to the companions of our encoder
-and decoder
+Dodatkowy haczyk o którym musimy pamiętać, to to, że [`LabelledGeneric` nie jest kompatybilny ze
+`scalaz.@@`](https://github.com/milessabin/shapeless/issues/309), ale na szczęście istnieje obejście tego problemu.
+Powiedzmy, że chcielibyśmy w wydajny sposób zignorować tagi. Musimy więc dodać dodatkowe reguły derywacji:
 
 {lang="text"}
 ~~~~~~~~
@@ -12690,8 +12605,7 @@ and decoder
   }
 ~~~~~~~~
 
-We would then expect to be able to derive a `JsDecoder` for something like our
-`TradeTemplate` from Chapter 5
+W tym momencie powinniśmy móc wyderywować instancję `JsDecoder` dla typów podobnych do naszego `TradeTemplate` z Rozdziału 5
 
 {lang="text"}
 ~~~~~~~~
@@ -12703,7 +12617,7 @@ We would then expect to be able to derive a `JsDecoder` for something like our
   }
 ~~~~~~~~
 
-But we instead get a compiler error
+Jednak zamiast tego otrzymujemy błąd kompilacji
 
 {lang="text"}
 ~~~~~~~~
@@ -12712,7 +12626,8 @@ But we instead get a compiler error
   [error]                                                                     ^
 ~~~~~~~~
 
-The error message is as helpful as always. The workaround is to introduce evidence for `H @@ Z` on the lower priority implicit scope, and then just call the code that the compiler should have found in the first place:
+Komunikat błędu jest, tak jak zawsze, niezbyt pomocny. Obejściem jest wprowadzenie dowodu dla `H @@ Z` o niższym priorytecie, a następnie 
+ręczne wywołanie kodu, który kompilator powinien był znaleźć na samym początku:
 
 {lang="text"}
 ~~~~~~~~
@@ -12739,14 +12654,13 @@ The error message is as helpful as always. The workaround is to introduce eviden
   }
 ~~~~~~~~
 
-Thankfully, we only need to consider products, since coproducts cannot be tagged.
-
+Na szczęście musimy obsłużyć jedynie produkty, bo tylko one mogą być otagowane.
 
 ### `JsDecoder`
 
-The decoding side is much as we can expect based on previous examples. We can
-construct an instance of a `FieldType[K, H]` with the helper `field[K](h: H)`.
-Supporting only the sensible defaults means we write:
+Dekodowanie wygląda dokładnie tak jak mogliśmy się tego spodziewać po poprzednich przykładach. 
+Możemy tworzyć instancje `FieldType[K, H]` za pomocą funkcji pomocniczej `field[K](h: H)`.
+Chcąc obsłużyć jedynie zachowania domyślne musimy napisać:
 
 {lang="text"}
 ~~~~~~~~
@@ -12812,17 +12726,17 @@ Supporting only the sensible defaults means we write:
   }
 ~~~~~~~~
 
-Adding user preferences via annotations follows the same route as
-`DerivedJsEncoder` and is mechanical, so left as an exercise to the reader.
+Dodanie obsługi preferencji użytkownika przebiega podobnie jak w przypadku `DerivedJsEncoder` i jest równie mechaniczne,
+więc zostawimy to jako ćwiczenie dla czytelnika.
 
-One final thing is missing: `case class` default values. We can request evidence
-but a big problem is that we can no longer use the same derivation mechanism for
-products and coproducts: the evidence is never created for coproducts.
+Brakuje już tylko jednej rzeczy: obsługi domyślnych wartości w case klasach. Możemy zażądać
+odpowiedniej wartości, ale większym problemem jest to, że nie będziemy mogli używać tej samej
+logiki do derywacji instancji dla produktów i koproduktów, gdyż dla tych drugich taka wartość nigdy nie zostanie 
+wygenerowana.
 
-The solution is quite drastic. We must split our `DerivedJsDecoder` into
-`DerivedCoproductJsDecoder` and `DerivedProductJsDecoder`. We will focus our
-attention on the `DerivedProductJsDecoder`, and while we are at it we will
-use a `Map` for faster field lookup:
+Rozwiązanie jest dość drastyczne: musimy podzielić nasz `DerivedJsDecoder` na `DerivedCoproductJsDecoder`
+i `DerivedProductJsDecoder`. Skupimy się na tym drugim i jednocześnie użyjemy typu `Map`
+dla szybszego dostępu do pól:
 
 {lang="text"}
 ~~~~~~~~
@@ -12835,10 +12749,9 @@ use a `Map` for faster field lookup:
   }
 ~~~~~~~~
 
-We can request evidence of default values with `Default.Aux[A, D]` and duplicate
-all the methods to deal with the case where we do and do not have a default
-value. However, Shapeless is merciful (for once) and provides
-`Default.AsOptions.Aux[A, D]` letting us handle defaults at runtime.
+Możemy zażądać dowodu domyślnych wartości używając `Default.Aux[A, D]` a następnie zduplikować wszystkie
+metody, tak aby obsłużyć sytuacje gdy są i nie są one zdefiniowane. Jednak Shapeless jest litościwy (choć raz)
+i dostarcza `Default.AsOptions.Aux[A, D]`, pozwalając nam obsłużyć je w czasie wykonania.
 
 {lang="text"}
 ~~~~~~~~
@@ -12859,8 +12772,8 @@ value. However, Shapeless is merciful (for once) and provides
   }
 ~~~~~~~~
 
-We must move the `.hcons` and `.hnil` methods onto the companion of the new
-sealed typeclass, which can handle default values
+Musimy przenieść metody `.hcons` i `.hnil` do obiektu towarzyszącego nowej typeklasy, która
+potrafi obsłużyć domyślne wartości
 
 {lang="text"}
 ~~~~~~~~
@@ -12901,10 +12814,10 @@ sealed typeclass, which can handle default values
   }
 ~~~~~~~~
 
-We can no longer use `@deriving` for products and coproducts: there can only be
-one entry in the `deriving.conf` file.
+Niestety nie możemy już używać `@deriving` dla produktów i koproduktów, gdyż w pliku `deriving.conf` może być tylko jeden wpis
+dla danej typeklasy.
 
-Oh, and don't forget to add `@@` support
+No i nie zapomnijmy o wsparciu dla `@@`
 
 {lang="text"}
 ~~~~~~~~
@@ -12945,11 +12858,11 @@ Oh, and don't forget to add `@@` support
 ~~~~~~~~
 
 
-### Complicated Derivations
+### Skomplikowane Derywacje
 
-Shapeless allows for a lot more kinds of derivations than are possible with
-`scalaz-deriving` or Magnolia. As an example of an encoder / decoder that are
-not possible with Magnolia, consider this XML model from [`xmlformat`](https://github.com/scalaz/scalaz-deriving/tree/master/examples/xmlformat)
+Shapeless pozwala na dużo więcej rodzajów derywacji niż jest możliwe do osiągnięcia z użyciem
+`scalaz-deriving` lub Magnolii. Jako przykład takiego nieosiągalnego enkodera/dekodera może posłużyć
+model XML z  [`xmlformat`](https://github.com/scalaz/scalaz-deriving/tree/master/examples/xmlformat).
 
 {lang="text"}
 ~~~~~~~~
@@ -12976,26 +12889,19 @@ not possible with Magnolia, consider this XML model from [`xmlformat`](https://g
   final case class XString(text: String) extends XNode
 ~~~~~~~~
 
-Given the nature of XML it makes sense to have separate encoder / decoder pairs
-for `XChildren` and `XString` content. We could provide a derivation for the
-`XChildren` with Shapeless but we want to special case fields based on the kind
-of typeclass they have, as well as `Option` fields. We could even require that
-fields are annotated with their encoded name. In addition, when decoding we wish
-to have different strategies for handling XML element bodies, which can be
-multipart, depending on if our type has a `Semigroup`, `Monoid` or neither.
+Znając naturę XMLa, sensownym wydaje się mieć osobne pary dekoderów i enkoderów dla `XChildren` i `XString`.
+Z użyciem Shapelessa moglibyśmy je wyderywować implementując specjalną obsługę pól zależnie od typeklas jakie są dla nich dostępne oraz
+od tego czy jest to `Option` czy nie. Dodatkowo przy dekodowaniu moglibyśmy mieć różne strategie dekodowania
+ciał elementów, które mogą być wieloczęściowe, zależnie czy nasz typ ma instancję `Semigroup`, `Monoid` czy też nie ma żadnej z nich.
 
-A> Many developers believe XML is simply a more verbose form of JSON, with angle
-A> brackets instead of curlies. However, an attempt to write a round trip converter
-A> between `XNode` and `JsValue` should convince us that JSON and XML are different
-A> species, with conversions only possible on a case-by-case basis.
+A> Wielu deweloperów wierzy, że XML to jedynie bardziej rozwlekła forma JSONa z ostrymi nawiasami zamiast klamer.
+A> Jednak próba implementacji dwukierunkowego konwertera między `XNode` i `JsValue` szybko udowadnia, że są to dwa kompletnie różne gatunki,
+A> a konwersja jest możliwa jedynie dla konkretnych przypadków.
 
+### Przykład: `UrlQueryWriter`
 
-### Example: `UrlQueryWriter`
-
-Along similar lines as `xmlformat`, our `drone-dynamic-agents` application could
-benefit from a typeclass derivation of the `UrlQueryWriter` typeclass, which is
-built out of `UrlEncodedWriter` instances for each field entry. It does not
-support coproducts:
+Nasza aplikacja `drone-dynamic-agents` mogłaby skorzystać z derywacji dla typu `UrlQueryWriter`, gdzie
+każde pole kodowane jest za pomocą odpowiedniej instancji `UrlEncodedWriter`, a koprodukty nie są wspierane:
 
 {lang="text"}
 ~~~~~~~~
@@ -13029,11 +12935,11 @@ support coproducts:
   }
 ~~~~~~~~
 
-It is reasonable to ask if these 30 lines are actually an improvement over the 8
-lines for the 2 manual instances our application needs: a decision to be taken
-on a case by case basis.
+Pytanie "Czy te 30 linii kodu jest faktycznie lepsze niż 8 linii dla dwóch ręcznie stworzonych
+instancji, których potrzebujemy?" jest całkowicie rozsądne, ale trzeba odpowiedzieć sobie na nie
+od nowa w każdym konkretnym przypadku.
 
-For completeness, the `UrlEncodedWriter` derivation can be written with Magnolia
+Dla kompletności, derywacja `UrlEncodedWriter` może być też zaimplementowana za pomocą Magnolii:
 
 {lang="text"}
 ~~~~~~~~
@@ -13048,25 +12954,23 @@ For completeness, the `UrlEncodedWriter` derivation can be written with Magnolia
 ~~~~~~~~
 
 
-### The Dark Side of Derivation
+### Ciemna Strona Derywacji
 
-> "Beware fully automatic derivation. Anger, fear, aggression; the dark side of
-> the derivation are they. Easily they flow, quick to join you in a fight. If once
-> you start down the dark path, forever will it dominate your compiler, consume
-> you it will."
-> 
-> ― an ancient Shapeless master
+> "Strzeż się w pełni automatycznej derywacji. Złość, strach, agresja; ciemną stroną derywacji są one.
+> Łatwo wypływają, szybko dołączają do ciebie w walce. Gdy raz wstąpisz na ciemną ścieżkę, na zawsze
+> zawładną twoim kompilatorem, a ciebie pochłoną.
+>
+> - starożytny mistrz Shapelessa
 
-In addition to all the warnings about fully automatic derivation that were
-mentioned for Magnolia, Shapeless is **much** worse. Not only is fully automatic
-Shapeless derivation [the most common cause of slow compiles](https://www.scala-lang.org/blog/2018/06/04/scalac-profiling.html), it is also a
-painful source of typeclass coherence bugs.
+W dodatku do wszystkich ostrzeżeń co do w pełni automatycznej derywacji, wspomnianych dla Magnolii,
+Shapeless jest **zdecydowanie** gorszy. Taka derywacja z jego użyciem jest nie tylko
+[najczęstszym źródłem powolnej kompilacji](https://www.scala-lang.org/blog/2018/06/04/scalac-profiling.html),
+ale również źródłem bolesnych błędów w kwestii ich koherencji.
 
-Fully automatic derivation is when the `def gen` are `implicit` such that a call
-will recurse for all entries in the ADT. Because of the way that implicit scopes
-work, an imported `implicit def` will have a higher priority than custom
-instances on companions, creating a source of typeclass decoherence. For
-example, consider this code if our `.gen` were implicit
+Derywacja w pełni automatyczna ma miejsce wtedy, gdy `def gen` jest opatrzona modyfikatorem `implicit`, sprawiając, 
+że wywołanie przejdzie rekurencyjnie przez całe ADT. Z racji tego jak działają niejawne zakresy,
+zaimportowany `implicit def` ma wyższy priorytet niż konkretne instancje w obiektach towarzyszących, co
+powoduje dekoherencję typeklas. Rozważmy taką właśnie sytuację:
 
 {lang="text"}
 ~~~~~~~~
@@ -13077,7 +12981,7 @@ example, consider this code if our `.gen` were implicit
   final case class Bar(foo: Foo)
 ~~~~~~~~
 
-We might expect the full-auto encoded form of `Bar("hello")` to look like
+Spodziewalibyśmy się, że zakodowana forma `Bar("hello")` będzie wyglądać tak:
 
 {lang="text"}
 ~~~~~~~~
@@ -13086,7 +12990,7 @@ We might expect the full-auto encoded form of `Bar("hello")` to look like
   }
 ~~~~~~~~
 
-because we have used `xderiving` for `Foo`. But it can instead be
+ponieważ użyliśmy `xderiving` dla `Foo`. Ale zamiast tego możemy otrzymać 
 
 {lang="text"}
 ~~~~~~~~
@@ -13097,31 +13001,29 @@ because we have used `xderiving` for `Foo`. But it can instead be
   }
 ~~~~~~~~
 
-Worse yet is when implicit methods are added to the companion of the typeclass,
-meaning that the typeclass is always derived at the point of use and users are
-unable opt out.
+Sytuacja jest jeszcze gorsza gdy taka niejawna derywacja jest dodana do obiektu towarzyszącego typeklasy,
+gdyż oznacza to że jej instancje będą **zawsze** derywowane w punkcie użycia a użytkownik nie może
+wpłynąć na ten mechanizm.
 
-Fundamentally, when writing generic programs, implicits can be ignored by the
-compiler depending on scope, meaning that we lose the compiletime safety that
-was our motivation for programming at the type level in the first place!
+Zasadniczo pisząc programy generyczne należy przyjąć, że wartości niejawne mogą być ignorowane przez kompilator
+zależnie od zakresu, co oznacza że tracimy bezpieczeństwo w czasie kompilacji, które było naszą główną motywacją
+do pisania tego typu programów!
 
-Everything is much simpler in the light side, where `implicit` is only used for
-coherent, globally unique, typeclasses. Fear of boilerplate is the path to the
-dark side. Fear leads to anger. Anger leads to hate. Hate leads to suffering.
-
-
-## Performance
-
-There is no silver bullet when it comes to typeclass derivation. An axis to
-consider is performance: both at compiletime and runtime.
+Wszystko jest dużo prostsze po jasnej stronie, gdzie modyfikator `implicit` jest używany jedynie dla
+koherentnych, globalnie unikatowych instancji typeklas. Strach przed boilerplatem jest drogą na 
+ciemną stronę. Strach prowadzi do złości. Złość prowadzi do nienawiści. Nienawiść prowadzi do cierpienia.
 
 
-#### Compile Times
+## Wydajność
 
-When it comes to compilation times, Shapeless is the outlier. It is not uncommon
-to see a small project expand from a one second compile to a one minute compile.
-To investigate compilation issues, we can profile our applications with the
-`scalac-profiling` plugin
+Nie ma złotego środka w kwestii derywacji typeklas. Aspektem do rozważenia jest wydajność,
+zarówno w czasie kompilacji jak i wykonania.
+
+#### Czasy Kompilacji
+
+Kiedy mówimy o czasach kompilacji to Shapeless zdecydowanie wychodzi przed szereg. Nie jest
+niczym nadzwyczajnym aby mały projekt przeszedł od jednej sekundy do jednej minuty czasu kompilacji.
+Aby prześledzić przyczyny takich zachowań możemy użyć pluginu `scalac-profiling`
 
 {lang="text"}
 ~~~~~~~~
@@ -13129,45 +13031,42 @@ To investigate compilation issues, we can profile our applications with the
   scalacOptions ++= Seq("-Ystatistics:typer", "-P:scalac-profiling:no-profiledb")
 ~~~~~~~~
 
-It produces output that can generate a *flame graph*.
+który wyprodukuje raport mogący posłużyć do wygenerowania *flame grafu*.
 
-For a typical Shapeless derivation, we get a lively chart
+Dla typowej derywacji opartej o Shapelessa, dostajemy żywy wykres:
 
 {width=90%}
 ![](images/implicit-flamegraph-jsonformat-jmh.png)
 
-almost the entire compile time is spent in implicit resolution. Note that this
-also includes compiling the `scalaz-deriving`, Magnolia and manual instances,
-but the Shapeless computations dominate.
+Niemal cały czas jest poświęcony na niejawne rozstrzyganie. Wprawdzie obejmuje to też kompilacje
+instancji tworzonych z użyciem `scalaz-deriving` i Magnolii, ale to Shapeless dominuje.
 
-And this is when it works. If there is a problem with a shapeless derivation,
-the compiler can get stuck in an infinite loop and must be killed.
+A wszystko to gdy wszystko działa. Jeśli zdarzy się problem z Shapelssową derywacją, to kompilator może
+się zaciąć w nieskończonej pętli i musi być zabity.
 
+#### Wydajność Czasu Uruchomienia
 
-#### Runtime Performance
+Kiedy mówimy o wydajności wykonania, odpowiedzią zawsze jest *to zależy*.
 
-If we move to runtime performance, the answer is always *it depends*.
+Zakładając ze logika derywacji została optymalnie zaimplementowana, to jedynym sposobem
+aby dowiedzieć, która jest szybsza jest eksperymentowanie.
 
-Assuming that the derivation logic has been written in an efficient way, it is
-only possible to know which is faster through experimentation.
+Biblioteka `jsonformat` używa [Java Microbenchmark Harness (JMH)](http://openjdk.java.net/projects/code-tools/jmh/)
+na modelach pochodzących z API GeoJSONa, Google Maps i Twittera, które zostały skontrybuowane przez Andrity'ego Plokhotnyuka.
+Dla każdego modelu mamy trzy testy:
 
-The `jsonformat` library uses the [Java Microbenchmark Harness (JMH)](http://openjdk.java.net/projects/code-tools/jmh/) on models
-that map to GeoJSON, Google Maps, and Twitter, contributed by Andriy
-Plokhotnyuk. There are three tests per model:
+- kodowanie `ADT` do `JsValue`
+- pomyślne dekodowanie tego samego `JsValue` z powrotem do ADT
+- dekodowanie `JsValue` z błędnymi danymi
 
--   encoding the `ADT` to a `JsValue`
--   a successful decoding of the same `JsValue` back into an ADT
--   a failure decoding of a `JsValue` with a data error
+zaaplikowane do trzech implementacji:
 
-applied to the following implementations:
+-   opartych o Magnolię
+-   opartych o Shapeless
+-   napisanych ręcznie
 
--   Magnolia
--   Shapeless
--   manually written
-
-with the equivalent optimisations in each. The results are in operations per
-second (higher is better), on a powerful desktop computer, using a single
-thread:
+z odpowiadającymi optymalizacjami w każdej z nich. Wyniki prezentowane są w operacjach na sekundę
+(im więcej tym lepiej) i pochodzą z wykonania na mocnej maszynie i jednym wątku:
 
 {lang="text"}
 ~~~~~~~~
@@ -13187,9 +13086,8 @@ thread:
   TwitterAPIBenchmarks.encodeManual        thrpt    5  281606.574 ± 1975.873  ops/s
 ~~~~~~~~
 
-We see that the manual implementations are in the lead, followed by Magnolia,
-with Shapeless from 30% to 70% the performance of the manual instances. Now for
-decoding
+Widzimy, że przodują implementacje ręczne, za którymi podąża Magnolia. Shapeless
+osiągnął od 30% do 70% wydajności ręcznie tworzonych instancji. Teraz spójrzmy na dekodowanie
 
 {lang="text"}
 ~~~~~~~~
@@ -13209,9 +13107,8 @@ decoding
   TwitterAPIBenchmarks.decodeManualSuccess        thrpt    5   71962.394 ±  465.752  ops/s
 ~~~~~~~~
 
-This is a tighter race for second place, with Shapeless and Magnolia keeping
-pace. Finally, decoding from a `JsValue` that contains invalid data (in an
-intentionally awkward position)
+Tutaj walka o drugie miejsce między Magnolią i Shapelessem jest bardziej zażarta. W końcu
+test dekodujący niepoprawne dane
 
 {lang="text"}
 ~~~~~~~~
@@ -13231,14 +13128,13 @@ intentionally awkward position)
   TwitterAPIBenchmarks.decodeManualError        thrpt    5   148814.730 ±  1105.316  ops/s
 ~~~~~~~~
 
-Just when we thought we were seeing a pattern, both Magnolia and Shapeless win
-the race when decoding invalid GeoJSON data, but manual instances win the Google
-Maps and Twitter challenges.
+Gdy już wydawało się, że widzimy wzór, okazało się że zarówno Magnolia jak i Shapeless 
+wygrały w przypadku danych dla API GeoJSONa, ale ręczne instancje osiągnęły lepszy wyniki
+dla Google Maps i Twittera.
 
-We want to include `scalaz-deriving` in the comparison, so we compare an
-equivalent implementation of `Equal`, tested on two values that contain the same
-contents (`True`) and two values that contain slightly different contents
-(`False`)
+Chcielibyśmy dołączyć do porównania `scalaz-deriving`, więc porównamy odpowiadające sobie implementacje
+`Equal`, przetestowane na dwóch wartościach które mają tę samą zawartość (`True`) i dwóch o różnej
+zawartości (`False`).
 
 {lang="text"}
 ~~~~~~~~
@@ -13261,10 +13157,9 @@ contents (`True`) and two values that contain slightly different contents
   TwitterAPIBenchmarks.equalManualTrue         thrpt    5   865845.158 ±  6339.379  ops/s
 ~~~~~~~~
 
-As expected, the manual instances are far ahead of the crowd, with Shapeless
-mostly leading the automatic derivations. `scalaz-deriving` makes a great effort
-for GeoJSON but falls far behind in both the Google Maps and Twitter tests. The
-`False` tests are more of the same:
+Tak jak można było się spodziewać, instancje stworzone ręczenie są daleko z przodu. Z kolei
+Shapeless prawie zawsze wygrywa wśród automatycznych derywacji. Biblioteka `scalaz-deriving` miała dobry start
+z `GeoJSON` ale nie poradziła sobie w testach Google Maps i Twittera. Wyniki `False` są niemal identyczne
 
 {lang="text"}
 ~~~~~~~~
@@ -13287,51 +13182,45 @@ for GeoJSON but falls far behind in both the Google Maps and Twitter tests. The
   TwitterAPIBenchmarks.equalManualFalse        thrpt    5  1631964.531 ± 13110.291  ops/s
 ~~~~~~~~
 
-The runtime performance of `scalaz-deriving`, Magnolia and Shapeless is usually
-good enough. We should be realistic: we are not writing applications that need to
-be able to encode more than 130,000 values to JSON, per second, on a single
-core, on the JVM. If that is a problem, look into C++.
+Wydajność wykonania `scalaz-deriving`, Magnolii i Shapelessa jest zazwyczaj wystarczająca.
+Bądźmy realistami, rzadko kiedy piszemy aplikacje, które muszą kodować do JSONa więcej niż 130 000
+wartości na sekundę, na jednym wątku, na JVMie. Jeśli takie jest wymaganie to może warto spojrzeć w stronę C i C++?
 
-It is unlikely that derived instances will be an application's bottleneck. Even
-if it is, there is the manually written escape hatch, which is more powerful and
-therefore more dangerous: it is easy to introduce typos, bugs, and even
-performance regressions by accident when writing a manual instance.
+Mało prawdopodobne jest żeby wyderywowane instancje stały się wąskim gardłem aplikacji. Jeśli jednak tak się stanie,
+to zawsze istnieje opcja ręcznych instancji, które są bardziej potężne, ale też tym samym bardziej niebezpieczne. Łatwo
+jest przy ich tworzeniu popełnić błędy, literówki a nawet przypadkowo obniżyć wydajność.
 
-In conclusion: hokey derivations and ancient macros are no match for a good hand
-written instance at your side, kid.
+Podsumowując, derywacje i antyczne makra nie są żadną konkurencją dla dobrych, własnoręcznie napisanych instancji!
 
-A> We could spend a lifetime with the [`async-profiler`](https://github.com/jvm-profiling-tools/async-profiler) investigating CPU and object
-A> allocation flame graphs to make any of these implementations faster. For
-A> example, there are some optimisations in the actual `jsonformat` codebase not
-A> reproduced here, such as a more optimised `JsObject` field lookup, and inclusion
-A> of `.xmap`, `.map` and `.contramap` on the relevant typeclasses, but it is fair
-A> to say that the codebase primarily focuses on readability over optimisation and
-A> still achieves incredible performance.
+A> Moglibyśmy poświęcić życie na badania zużycia CPU i alokacji obiektów używając [`async-profilera`](https://github.com/jvm-profiling-tools/async-profiler)
+A> i na próby optymalizacji naszych implementacji. Przykładowo, w samym `jsonformat` jest kilka optymalizacji, których tutaj
+A> nie powtórzyliśmy, a które polegają na bardziej zoptymalizowanym dostępie do pól i dodaniu `.xmap`, `.map` oraz `.contramap` w odpowiednich typeklasach.
+A> Można uczciwie powiedzieć, że kod tej biblioteki przedkłada czytelność nad optymalizacje, a mimo to nadal
+A> osiąga niewiarygodną wydajność.
 
 
-## Summary
+## Podsumowanie
 
-When deciding on a technology to use for typeclass derivation, this feature
-chart may help:
+Gdy musimy zdecydować jakiej technologii użyć do derywacji typeklas, pomocny może okazać się poniższy
+wykaz funkcjonalności:
 
-| Feature        | Scalaz | Magnolia | Shapeless    | Manual       |
-|-------------- |------ |-------- |------------ |------------ |
-| `@deriving`    | yes    | yes      | yes          |              |
-| Laws           | yes    |          |              |              |
-| Fast compiles  | yes    | yes      |              | yes          |
-| Field names    |        | yes      | yes          |              |
-| Annotations    |        | yes      | partially    |              |
-| Default values |        | yes      | with caveats |              |
-| Complicated    |        |          | painfully so |              |
-| Performance    |        |          |              | hold my beer |
+| Funkcjonalność    | Scalaz | Magnolia | Shapeless   | Manual            |
+|-------------------|--------|----------|-------------|-------------------|
+| `@deriving`       | tak    | tak      | tak         |                   |
+| Prawa             | tak    |          |             |                   |
+| Szybka kompilacja | tak    | tak      |             | tak               |
+| Nazwy pól         |        | tak      | tak         |                   |
+| Anotacje          |        | tak      | częściowo   |                   |
+| Domyślne wartości |        | tak      | z haczykami |                   |
+| Skomplikowanie    |        |          | boleśnie    |                   |
+| Wydajność         |        |          |             | potrzymaj mi piwo |
 
-Prefer `scalaz-deriving` if possible, using Magnolia for encoders / decoders or
-if performance is a larger concern, escalating to Shapeless for complicated
-derivations only if compilation times are not a concern.
+Polecamy używanie `scalaz-deriving` gdy to tylko możliwe, Magnolii do enkoderów i dekoderów oraz gdy
+wydajność jest bardzo istotna, a Shapelessa tam, gdzie derywacje są bardzo skomplikowane a czasy kompilacji
+nie mają dużego znaczenia.
 
-Manual instances are always an escape hatch for special cases and to achieve the
-ultimate performance. Avoid introducing typo bugs with manual instances by using
-a code generation tool.
+Instancje pisane ręcznie pozostają zawsze pod ręką na specjalne okazje oraz gdy trzeba osiągnąć
+maksymalną wydajność. Jeśli je piszesz, to staraj się unikać literówek i błędów używając narzędzi do generacji kodu.
 
 
 # Wiring up the Application
