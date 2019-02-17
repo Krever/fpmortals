@@ -13211,7 +13211,7 @@ wykaz funkcjonalności:
 | Szybka kompilacja | tak    | tak      |             | tak               |
 | Nazwy pól         |        | tak      | tak         |                   |
 | Anotacje          |        | tak      | częściowo   |                   |
-| Domyślne wartości |        | tak      | z haczykami |                   |
+e/| Domyślne wartości |        | tak      | z haczykami |                   |
 | Skomplikowanie    |        |          | boleśnie    |                   |
 | Wydajność         |        |          |             | potrzymaj mi piwo |
 
@@ -13223,23 +13223,21 @@ Instancje pisane ręcznie pozostają zawsze pod ręką na specjalne okazje oraz 
 maksymalną wydajność. Jeśli je piszesz, to staraj się unikać literówek i błędów używając narzędzi do generacji kodu.
 
 
-# Wiring up the Application
+# Zmontowanie Aplikacji
 
-To finish, we will apply what we have learnt to wire up the example application,
-and implement an HTTP client and server using the [http4s](https://http4s.org/) pure FP library.
+Na zakończenie zaaplikujemy zdobytą wiedzę do naszej przykładowej aplikacji i zaimplementujemy klienta oraz serwer
+HTTP za pomocą czysto funkcyjnej biblioteki [http4s](https://http4s.org/).
 
-The source code to the `drone-dynamic-agents` application is available along
-with the book's source code at `https://github.com/fommil/fpmortals` under the
-`examples` folder. It is not necessary to be at a computer to read this chapter,
-but many readers may prefer to explore the codebase in addition to this text.
+Kod źródłowy `drone-dynamic-agents` jest dostępny wraz z kodem źródłowym tej książki na `https://github.com/fommil/fpmortals`
+w folderze `examples`. Obecność przy komputerze w trakcie lektury tego rozdziału nie jest co prawda obowiązkowa,
+ale wielu czytelników może zechcieć śledzić kod źródłowy wraz z tekstem tego rozdziału.
 
-Some parts of the application have been left unimplemented, as an exercise to
-the reader. See the `README` for further instructions.
+Niektóre części aplikacji pozostały niezaimplementowane i pozostawione jako ćwiczenie dla czytelnika. Więcej
+instrukcji znajdziesz w `README`.
 
+## Przegląd
 
-## Overview
-
-Our main application only requires an implementation of the `DynAgents` algebra.
+Nasza główna aplikacja wymaga jedynie implementacji algebry `DynAgents`.
 
 {lang="text"}
 ~~~~~~~~
@@ -13250,12 +13248,11 @@ Our main application only requires an implementation of the `DynAgents` algebra.
   }
 ~~~~~~~~
 
-We have an implementation already, `DynAgentsModule`, which requires
-implementations of the `Drone` and `Machines` algebras, which require a
-`JsonClient`, `LocalClock` and OAuth2 algebras, etc, etc, etc.
+Mamy już taką implementację w postaci `DynAgentsModule`, ale wymaga ona implementacji algebr `Drone` i `Machines`,
+które z kolei wymagają algebr `JsonClient`, `LocalClock` i Oauth2, itd., itd., itd.
 
-It is helpful to get a complete picture of all the algebras, modules and
-interpreters of the application. This is the layout of the source code:
+Przydatnym bywa spojrzenie z lotu ptaka na wszystkie algebry, moduły i interpretery naszej aplikacji.
+Oto jak ułożony jest nasz kod źródłowy:
 
 {lang="text"}
 ~~~~~~~~
@@ -13290,7 +13287,7 @@ interpreters of the application. This is the layout of the source code:
       └── Sleep.scala
 ~~~~~~~~
 
-The signatures of all the algebras can be summarised as
+Sygnatury wszystkich algebr możemy podsumować jako
 
 {lang="text"}
 ~~~~~~~~
@@ -13348,10 +13345,10 @@ The signatures of all the algebras can be summarised as
   }
 ~~~~~~~~
 
-Note that some signatures from previous chapters have been refactored to use
-Scalaz data types, now that we know why they are superior to the stdlib.
+Zauważ, że niektóre sygnatury z poprzednich rozdziałów zostały przerefaktorowane tak, aby
+używały typów danych ze Scalaz, skoro już wiemy, że są lepsze od tych z biblioteki standardowej.
 
-The data types are:
+Definiowane typy danych to:
 
 {lang="text"}
 ~~~~~~~~
@@ -13380,7 +13377,7 @@ The data types are:
   final case class UrlQuery(params: IList[(String, String)]) extends AnyVal
 ~~~~~~~~
 
-and the typeclasses are
+Oraz typeklasy:
 
 {lang="text"}
 ~~~~~~~~
@@ -13392,12 +13389,10 @@ and the typeclasses are
   }
 ~~~~~~~~
 
-We derive useful typeclasses using `scalaz-deriving` and Magnolia. The
-`ConfigReader` typeclass is from the `pureconfig` library and is used to read
-runtime configuration from HOCON property files.
+Derywujemy przydatne typeklasy używając `scalaz-deriving` oraz Magnolii. `ConfigReader` pochodzi
+z biblioteki `pureconfig` i służy do odczytywania konfiguracji z plików HOCON.
 
-And without going into the detail of how to implement the algebras, we need to
-know the dependency graph of our `DynAgentsModule`.
+Przeanalizujmy też, bez zaglądania do implementacji, jak kształtuje się graf zależności w `DynAgentsModule`.
 
 {lang="text"}
 ~~~~~~~~
@@ -13415,7 +13410,7 @@ know the dependency graph of our `DynAgentsModule`.
   ) extends Machines[F] { ... }
 ~~~~~~~~
 
-There are two modules implementing `OAuth2JsonClient`, one that will use the OAuth2 `Refresh` algebra (for Google) and another that reuses a non-expiring `BearerToken` (for Drone).
+Dwa moduły implementują `OAuth2JsonClient`, jeden używa algebry `Refresh` dla usług Google'a, a drugi niewygasającego `BearerToken` dla `Drone'a.
 
 {lang="text"}
 ~~~~~~~~
@@ -13436,11 +13431,11 @@ There are two modules implementing `OAuth2JsonClient`, one that will use the OAu
   ) extends OAuth2JsonClient[F] { ... }
 ~~~~~~~~
 
-So far we have seen requirements for `F` to have an `Applicative[F]`, `Monad[F]`
-and `MonadState[F, BearerToken]`. All of these requirements can be satisfied by
-using `StateT[Task, BearerToken, ?]` as our application's context.
+Do tej pory widzieliśmy wymagania względem `F` mówiące, że musimy dostarczyć `Applicative[F]`, `Monad[F]`
+oraz `MonadState[F, BearerToken]`. Wszystkie te wymagania spełnia `StateT[Task, BearerToken, ?]` co pozwala
+nam uczynić ten typ kontekstem naszej aplikacji.
 
-However, some of our algebras only have one interpreter, using `Task`
+Jednak niektóre algebry mają interpretery używające bezpośrednio typu `Task`
 
 {lang="text"}
 ~~~~~~~~
@@ -13448,14 +13443,12 @@ However, some of our algebras only have one interpreter, using `Task`
   final class SleepTask extends Sleep[Task] { ... }
 ~~~~~~~~
 
-But recall that our algebras can provide a `liftM` on their companion, see
-Chapter 7.4 on the Monad Transformer Library, allowing us to lift a
-`LocalClock[Task]` into our desired `StateT[Task, BearerToken, ?]` context, and
-everything is consistent.
+Przypomnijmy, że nasze algebry mogą dostarczać `liftM` w swoich obiektach towarzyszących (patrz rozdział
+7.4 na temat Biblioteki Transformatorów Monad), co pozwala nam wynieść `LocalClock[Task]` do pożądanego
+`StateT[Task, BearerToken, ?]` czyniąc wszystko idealnie spójnym.
 
-Unfortunately, that is not the end of the story. Things get more complicated
-when we go to the next layer. Our `JsonClient` has an interpreter using a
-different context
+Niestety to nie koniec. Sprawy komplikują się na następnej warstwie, gdyż `JsonClient` posiada interpreter używający
+innego kontekstu
 
 {lang="text"}
 ~~~~~~~~
@@ -13473,31 +13466,26 @@ different context
   }
 ~~~~~~~~
 
-Note that the `BlazeJsonClient` constructor returns a `Task[JsonClient[F]]`, not
-a `JsonClient[F]`. This is because the act of creating the client is effectful:
-mutable connection pools are created and managed internally by http4s.
+Zauważ, że konstruktor `BlazeJsonClient` zwraca `Task[JsonClient[F]]`, a nie `JsonClient[F]`.
+Dzieje się tak, ponieważ stworzenie tego klient powoduje efekt w postaci utworzenia mutowalnej puli połączeń
+zarządzanej wewnętrznie przez http4s.
 
-A> `OAuth2JsonClientModule` requires a `MonadState` and `BlazeJsonClient` requires
-A> `MonadError` and `MonadIO`. Our application's context will now likely be the
-A> combination of both:
+A> `OAuth2JsonClientModule` wymaga instancji `MonadState`, a `BlazeJsonClient` instancji
+A> `MonadError` i `MonadIO`. Nasz kontekst musi więc przyjąć formę posiadającą ja wszystkie:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
 A>   StateT[EitherT[Task, JsonClient.Error, ?], BearerToken, ?]
 A> ~~~~~~~~
 A> 
-A> A monad stack. Monad stacks automatically provide appropriate instances of
-A> `MonadState` and `MonadError` when nested, so we don't need to think about it.
-A> If we had hard-coded the implementation in the interpreter, and returned an
-A> `EitherT[Task, Error, ?]` from `BlazeJsonClient`, it would make it a lot harder
-A> to instantiate.
+A> Stos monad. Stosy monad automatycznie dostarczają odpowiednie instancje `MonadState` i `MonadError` kiedy
+A> są zagnieżdżane, więc nie musimy się tym martwić. Gdybyśmy zahardkodowali implementacje w interpreterze i 
+A> zwracali `EitherT[Task, Error, ?]` z `BlazeJsonClient` to wszystko stałoby się dużo trudniejsze.
 
-We must not forget that we need to provide a `RefreshToken` for
-`GoogleMachinesModule`. We could ask the user to do all the legwork, but we are
-nice and provide a separate one-shot application that uses the `Auth` and
-`Access` algebras. The `AuthModule` and `AccessModule` implementations bring in
-additional dependencies, but thankfully no change to the application's `F[_]`
-context.
+Nie możemy zapomnieć o dostarczeniu `RefreshToken` dla `GoogleMachinesModule`. Moglibyśmy zrzucić to zadanie
+na użytkownika, ale jesteśmy mili i dostarczamy osobną aplikację, która używając algebr `Auth` i `Access` rozwiązuje 
+ten problem. Implementacje `AuthModule` i `AccessModule` niosą ze sobą kolejne wymagania, ale na szczęście żadnych
+zmian co do kontekstu `F[_]`.
 
 {lang="text"}
 ~~~~~~~~
@@ -13523,27 +13511,25 @@ context.
   }
 ~~~~~~~~
 
-The interpreter for `UserInteraction` is the most complex part of our codebase:
-it starts an HTTP server, sends the user to visit a webpage in their browser,
-captures a callback in the server, and then returns the result while safely
-shutting down the web server.
+Interpreter algebry `UserInteraction` jest najbardziej skomplikowanym elementem naszego
+kodu. Startuje on serwer HTTP, prosi użytkownika o otworzenie strony w przeglądarce,
+odbiera wywołanie zwrotne w serwerze i zwraca wynik jednocześnie zakańczając pracę serwera
+w bezpieczny sposób.
 
-Rather than using a `StateT` to manage this state, we use a `Promise` primitive
-(from `ioeffect`). We should always use `Promise` (or `IORef`) instead of a
-`StateT` when we are writing an `IO` interpreter since it allows us to contain
-the abstraction. If we were to use a `StateT`, not only would it have a
-performance impact on the entire application, but it would also leak internal
-state management to the main application, which would become responsible for
-providing the initial value. We also couldn't use `StateT` in this scenario
-because we need "wait for" semantics that are only provided by `Promise`.
+Zamiast używać `StateT` do zarządzania tym stanem użyliśmy typu `Promise` (pochodzącego z `ioeffect`).
+Powinniśmy zawsze używać `Promise` (lub `IORef`) zamiast `StateT` gdy piszemy interpreter oparty o 
+`IO`, gdyż pozwala nam to opanować abstrakcje. Gdybyśmy użyli `StateT`, to nie tylko miałoby to wpływ
+na całą aplikacje, ale również powodowałoby wyciek lokalnego stanu do głównej aplikacji, która musiałaby
+przejąc odpowiedzialność za dostarczenie inicjalnej wartości. W tym wypadku nie moglibyśmy użyć `StateT`
+również dlatego, że potrzebujemy możliwości "czekania", którą daje nam jedynie `Promise`.
 
 
 ## `Main`
 
-The ugliest part of FP is making sure that monads are all aligned and this tends
-to happen in the `Main` entrypoint.
+Najbrzydsza część FP pojawia się, gdy musimy sprawić by wszystkie monady się zgadzały. Najczęściej ma to miejsce
+w punkcie wejściowym naszej aplikacji, czyli klasie `Main`.
 
-Our main loop is
+Nasza główna pętla wyglądała tak
 
 {lang="text"}
 ~~~~~~~~
@@ -13553,7 +13539,7 @@ Our main loop is
     state = act(state)
 ~~~~~~~~
 
-and the good news is that the actual code will look like
+Dobra wiadomość jest taka, że teraz ten kod będzie wyglądał tak:
 
 {lang="text"}
 ~~~~~~~~
@@ -13566,15 +13552,14 @@ and the good news is that the actual code will look like
   } yield ()
 ~~~~~~~~
 
-where `F` holds the state of the world in a `MonadState[F, WorldView]`. We can
-put this into a method called `.step` and repeat it forever by calling
-`.step[F].forever[Unit]`.
+gdzie `F` przechowuje stan świata w `MonadState[F, WoldView]`. Możemy zamknąć ten fragment
+w metodzie `.step` i powtarzać ją w nieskończoność wywołując `.step[F].forever[Unit]`.
 
-There are two approaches we can take, and we will explore both. The first, and
-simplest, is to construct one monad stack that all algebras are compatible with.
-Everything gets a `.liftM` added to it to lift it into the larger stack.
+W tym momencie mamy do wyboru dwa podejścia i oba omówimy. Pierwszym i jednocześnie najprostszym
+jest skonstruowanie stosu monad kompatybilnego ze wszystkimi algebrami, a każda z nich musi definiować `liftM` aby
+wynieść ją do większego stosu.
 
-The code we want to write for the one-shot authentication mode is
+Kod, który chcemy napisać dla trybu jednorazowego uwierzytelnienia to
 
 {lang="text"}
 ~~~~~~~~
@@ -13593,25 +13578,21 @@ The code we want to write for the one-shot authentication mode is
   }.run
 ~~~~~~~~
 
-where `.readConfig` and `.putStrLn` are library calls. We can think of them as
-`Task` interpreters of algebras that read the application's runtime
-configuration and print a string to the screen.
+gdzie `.readConfig` i `.putStrLn` to wywołania funkcji z bibliotek. Możemy potraktować je jako interpretery
+oparte o `Task` dla algebr odczytujących konfigurację i wypisująca ciąg znaków.
 
-But this code does not compile, for two reasons. Firstly, we need to consider
-what our monad stack is going to be. The `BlazeJsonClient` constructor returns a
-`Task` but the `JsonClient` methods require a `MonadError[...,
-JsonClient.Error]`. This can be provided by `EitherT`. We can therefore
-construct the common monad stack for the entire `for` comprehension as
+Ten kod jednak się nie kompiluje z dwóch powodów. Po pierwsze, musimy zdecydować jak będzie wyglądał nasz
+stos monad. Konstruktor `BlazeJsonClient` zwraca `Task`, ale `JsonClient`wymaga `MonadError[..., JsonClient.Error]`,
+co można rozwiązać za pomocą `EitherT`. Możemy więc skonstruować nasz stos dla całej konstrukcji `for` jako
 
 {lang="text"}
 ~~~~~~~~
   type H[a] = EitherT[Task, JsonClient.Error, a]
 ~~~~~~~~
 
-Unfortunately this means we must `.liftM` everything that returns a `Task`,
-which adds quite a lot of boilerplate. Unfortunately, the `.liftM` method does
-not take a type of shape `H[_]`, it takes a type of shape `H[_[_], _]`, so we
-need to create a type alias to help out the compiler:
+Niestety, oznacza to, że musimy wywołać `.liftM` dla wszystkiego co zwraca `Task`,
+co dodaje dość dużo boilerplate'u. Niestety metoda `liftM` nie przyjmuje typów o kształcie
+`H[_]` tylko `H[_[_]. _]`, więc musimy stworzyć alias, który pomoże kompilatorowi:
 
 {lang="text"}
 ~~~~~~~~
@@ -13619,7 +13600,7 @@ need to create a type alias to help out the compiler:
   type H[a]        = HT[Task, a]
 ~~~~~~~~
 
-we can now call `.liftM[HT]` when we receive a `Task`
+możemy teraz wywołać `.liftM[HT]` kiedy dostajemy `Task`
 
 {lang="text"}
 ~~~~~~~~
@@ -13636,29 +13617,29 @@ we can now call `.liftM[HT]` when we receive a `Task`
   } yield ()
 ~~~~~~~~
 
-But this still doesn't compile, because `clock` is a `LocalClock[Task]` and `AccessModule` requires a `LocalClock[H]`. We simply add the necessary `.liftM` boilerplate to the companion of `LocalClock` and can then lift the entire algebra
+Ale nasz kod nadal się nie kompiluje. Tym razem dlatego, że `clock` jest typu `LocalClock[Task]` a `AccessModule` wymaga `LocalClock[H]`. 
+Dodajmy więc potrzebny boilerplate `.liftM` do obiektu towarzyszącego `LocalClock` i wynieśmy całą algebrę
 
 {lang="text"}
 ~~~~~~~~
   clock     = LocalClock.liftM[Task, HT](new LocalClockTask)
 ~~~~~~~~
 
-and now everything compiles!
+Wreszcie wszystko się kompiluje!
 
-The second approach to wiring up an application is more complex, but necessary
-when there are conflicts in the monad stack, such as we need in our main loop.
-If we perform an analysis we find that the following are needed:
+Drugie podejście do zmontowywania aplikacji jest bardziej złożone, ale niezbędne gdy pojawiają się
+konflikty w stosie monad, tak jak w naszej głównej pętli. Jeśli przeanalizujemy wymagania,
+zobaczymy że potrzebujemy poniższych instancji:
 
--   `MonadError[F, JsonClient.Error]` for uses of the `JsonClient`
--   `MonadState[F, BearerToken]` for uses of the `OAuth2JsonClient`
--   `MonadState[F, WorldView]` for our main loop
+-   `MonadError[F, JsonClient.Error]` w `JsonClient`
+-   `MonadState[F, BearerToken]` w `OAuth2JsonClient`
+-   `MonadState[F, WorldView]` w głównej pętli
 
-Unfortunately, the two `MonadState` requirements are in conflict. We could
-construct a data type that captures all the state of the program, but that is a
-leaky abstraction. Instead, we nest our `for` comprehensions and provide state
-where it is needed.
+Niestety, dwa wymagania na `MonadState` są ze sobą sprzeczne. Moglibyśmy
+skonstruować typ danych, który przechowuje cały stan aplikacji, ale byłaby to
+cieknąca abstrakcja. Zamiast tego zagnieździmy konstrukcję `for` i dostarczymy stan tam gdzie jest potrzebny
 
-We now need to think about three layers, which we will call `F`, `G`, `H`
+Musimy teraz przemyśleć trzy warstwy, które nazwiemy `F`, `G` i `H`
 
 {lang="text"}
 ~~~~~~~~
@@ -13671,10 +13652,9 @@ We now need to think about three layers, which we will call `F`, `G`, `H`
   type F[a]        = FT[G, a]
 ~~~~~~~~
 
-Now some bad news about `.liftM`... it only works for one layer at a time. If we
-have a `Task[A]` and we want an `F[A]`, we have to go through each step and type
-`ta.liftM[HT].liftM[GT].liftM[FT]`. Likewise, when lifting algebras we have to
-call `liftM` multiple times. To get a `Sleep[F]`, we have to type
+Teraz złe wieści: `liftM` obsługuje tylko jedną warstwę na raz. Jeśli mamy `Task[A]`, a chcemy
+uzyskać `F[A]` to musimy przejść przez wszystkie kroki i wywołać `ta.liftM[HT].liftM[GT].liftM[FT]`.
+Podobnie, gdy wynosimy algebry, musimy zawołać `liftM` wielokrotnie. Aby uzyskać `Sleep[F]`, musimy napisać
 
 {lang="text"}
 ~~~~~~~~
@@ -13684,7 +13664,7 @@ call `liftM` multiple times. To get a `Sleep[F]`, we have to type
   }
 ~~~~~~~~
 
-and to get a `LocalClock[G]` we do two lifts
+a żeby dostać `LocalClock[G]` robimy dwa wyniesienia
 
 {lang="text"}
 ~~~~~~~~
@@ -13694,7 +13674,7 @@ and to get a `LocalClock[G]` we do two lifts
   }
 ~~~~~~~~
 
-The main application then becomes
+Główna aplikacja wygląda więc tak:
 
 {lang="text"}
 ~~~~~~~~
@@ -13723,14 +13703,12 @@ The main application then becomes
   }
 ~~~~~~~~
 
-where the outer loop is using `Task`, the middle loop is using `G`, and the
-inner loop is using `F`.
+gdzie zewnętrzna pętla używa `Task`, środkowa `G` a wewnętrzna `F`.
 
-The calls to `.run(start)` and `.eval(bearer)` are where we provide the initial
-state for the `StateT` parts of our application. The `.run` is to reveal the
-`EitherT` error.
+Wywołania `.run(start)` oraz `.eval(bearer)` dostarczają inicjalny stan dla części bazujących na `StateT`.
+`.run` z kolei pokazuje błędy zgromadzone w `EitherT`.
 
-We can call these two application entry points from our `SafeApp`
+Na koniec wołamy te dwie aplikacji z naszej instancji `SafeApp`
 
 {lang="text"}
 ~~~~~~~~
@@ -13745,7 +13723,7 @@ We can call these two application entry points from our `SafeApp`
   }
 ~~~~~~~~
 
-and then run it!
+i uruchamiamy ją!
 
 {lang="text"}
 ~~~~~~~~
@@ -13763,15 +13741,16 @@ and then run it!
   [info] got token: "<elided>"
 ~~~~~~~~
 
-Yay!
+Hurra!
 
 
 ## Blaze
 
-We implement the HTTP client and server with the third party library `http4s`.
-The interpreters for their client and server algebras are called *Blaze*.
+Server i klienta HTTP zaimplementujemy z użyciem zewnętrznej biblioteki `http4s`. Interpretery
+dla odpowiednich algebr dostaną w związku z tym prefiks *Blaze*, gdyż tak też nazywa się 
+właściwy komponent tej biblioteki.
 
-We need the following dependencies
+Dodajemy poniższe zależności
 
 {lang="text"}
 ~~~~~~~~
@@ -13786,7 +13765,7 @@ We need the following dependencies
 
 ### `BlazeJsonClient`
 
-We will need some imports
+Będziemy potrzebować kilku dodatkowych importów
 
 {lang="text"}
 ~~~~~~~~
@@ -13797,7 +13776,7 @@ We will need some imports
   import org.http4s.client.blaze.{ BlazeClientConfig, Http1Client }
 ~~~~~~~~
 
-The `Client` module can be summarised as
+Moduł `Client` może być podsumowany jako
 
 {lang="text"}
 ~~~~~~~~
@@ -13809,7 +13788,7 @@ The `Client` module can be summarised as
   }
 ~~~~~~~~
 
-where `Request` and `Response` are data types:
+gdzie `Request` i `Response` to typy danych:
 
 {lang="text"}
 ~~~~~~~~
@@ -13831,7 +13810,7 @@ where `Request` and `Response` are data types:
   )
 ~~~~~~~~
 
-made of
+składające się z 
 
 {lang="text"}
 ~~~~~~~~
@@ -13853,16 +13832,13 @@ made of
   type EntityBody[F[_]] = fs2.Stream[F, Byte]
 ~~~~~~~~
 
-The `EntityBody` type is an alias to `Stream` from the [`fs2`](https://github.com/functional-streams-for-scala/fs2) library. The
-`Stream` data type can be thought of as an effectful, lazy, pull-based stream of
-data. It is implemented as a `Free` monad with exception catching and
-interruption. `Stream` takes two type parameters: an effect type and a content
-type, and has an efficient internal representation for batching the data. For
-example, although we are using `Stream[F, Byte]`, it is actually wrapping the
-raw `Array[Byte]` that arrives over the network.
+`EntityBody` jest aliasem na typ `Stream` z biblioteki [`fs2`](https://github.com/functional-streams-for-scala/fs2). Możemy rozumieć go jako
+leniwy strumień danych wykonujący efekty, bazujący na wyciąganiu danych (_pull-based_). Zaimplementowany jest jako monada `Free` z
+dodatkowym łapaniem wyjątków i obsługą przerwań. `Stream` przyjmuje dwa parametry typu: typ efektów i typ zawartości. Dodatkowo posiada
+wewnątrz wydajną reprezentację pozwalającą na łączenie danych (_batching_), więc przykładowo, używając `Stream[F, Byte]` tak naprawdę mamy do czynienia
+z opakowaną tablicą `Array[Byte]`, która przybywa do nas za pośrednictwem sieci.
 
-We need to convert our header and URL representations into the versions required
-by http4s:
+Musimy przekonwertować nasze reprezentacje nagłówków i URLi na wersje wymagane przez http4s:
 
 {lang="text"}
 ~~~~~~~~
@@ -13877,9 +13853,8 @@ by http4s:
     http4s.Uri.unsafeFromString(uri.value) // we already validated our String
 ~~~~~~~~
 
-Both our `.get` and `.post` methods require a conversion from the http4s
-`Response` type into an `A`. We can factor this out into a single function,
-`.handler`
+Obie nasze metody `.get` i `.post` muszą przekonwertować instancję `Response` pochodząca z `http4s` na typ `A`. 
+Możemy wydzielić tę logikę do pojedynczej funkcji `.handler`
 
 {lang="text"}
 ~~~~~~~~
@@ -13905,15 +13880,14 @@ Both our `.get` and `.post` methods require a conversion from the http4s
   }
 ~~~~~~~~
 
-The `.through(fs2.text.utf8Decode)` is to convert a `Stream[Task, Byte]` into a
-`Stream[Task, String]`, with `.compile.foldMonoid` interpreting it with our
-`Task` and combining all the parts using the `Monoid[String]`, giving us a
-`Task[String]`.
 
-We then parse the string as JSON and use the `JsDecoder[A]` to create the
-required output.
+`through(fs2.text.utf8Decode)` pozwala przekonwertować `Stream[Task, Byte]` na `Stream[Task, String]`.
+`compile.foldMonoid` interpretuje strumień z użyciem naszego `Task`a i łączy wyniki przy pomocy
+`Monoid[String]`, zwracając `Task[String]`.
 
-This is our implementation of `.get`
+Następnie parsujemy string do JSONa, a `JsDecoder[A]`dostarcza potrzebny rezultat.
+
+Oto nasza implementacja `.get`
 
 {lang="text"}
 ~~~~~~~~
@@ -13932,14 +13906,12 @@ This is our implementation of `.get`
       .emap(identity)
 ~~~~~~~~
 
-`.get` is all plumbing: we convert our input types into the `http4s.Request`,
-then call `.fetch` on the `Client` with our `handler`. This gives us back a
-`Task[Error \/ A]`, but we need to return a `F[A]`. Therefore we use the
-`MonadIO.liftIO` to create a `F[Error \/ A]` and then `.emap` to push the error
-into the `F`.
+Trzeba przyznać, że jest to w 100% łączenie istniejących kawałków. Konwertujemy nasze typy wejściowe
+do `http4s.Request`, wołamy `.fetch` na kliencie przekazując nasz `handler`, w odpowiedzi dostajemy
+`Task[Error \/ A]`. Musimy jednak zwrócić `F[A]`, więc używamy `MonadIO.liftIO` do stworzenia
+`F[Error \/ ]`, na którym z kolei wywołujemy `emap` umieszczając błąd wewnątrz `F`.
 
-Unfortunately, if we try to compile this code it will fail. The error will look
-something like
+Niestety, próba skompilowania tego kodu zakończy się porażką, a błąd będzie wyglądał mniej więcej tak:
 
 {lang="text"}
 ~~~~~~~~
@@ -13947,12 +13919,11 @@ something like
   [error]  F: cats.effect.Sync[scalaz.ioeffect.Task]
 ~~~~~~~~
 
-Basically, something about a missing cat.
+Coś na temat zaginionego kota?
 
-The reason for this failure is that http4s is using a different core FP library,
-not Scalaz. Thankfully, `scalaz-ioeffect` provides a compatibility layer and the
-[shims](https://github.com/djspiewak/shims) project provides seamless (until it isn't) implicit conversions. We can
-get our code to compile with these dependencies:
+Dzieje się tak, gdyż `http4s` używa innej biblioteki wspomagającej FP niż Scalaz. Na szczęście `scalaz-ioeffect` dostarcza
+warstwę dodającą kompatybilność z tą biblioteką, a projekt [shims](https://github.com/djspiewak/shims) definiuje
+niezauważalne (zazwyczaj) niejawne konwersje. Tak więc możemy sprawić, że nasz kod zacznie się kompilować dodając zależności
 
 {lang="text"}
 ~~~~~~~~
@@ -13962,7 +13933,7 @@ get our code to compile with these dependencies:
   )
 ~~~~~~~~
 
-and these imports
+i importy
 
 {lang="text"}
 ~~~~~~~~
@@ -13970,15 +13941,15 @@ and these imports
   import scalaz.ioeffect.catz._
 ~~~~~~~~
 
-The implementation of `.post` is similar but we must also provide an instance of
+Implementacja `.post` jest podobna, ale musimy jeszcze dostarczyć instancję
 
 {lang="text"}
 ~~~~~~~~
   EntityEncoder[Task, String Refined UrlEncoded]
 ~~~~~~~~
 
-Thankfully, the `EntityEncoder` typeclass provides conveniences to let us derive
-one from the existing `String` encoder
+Na szczęście typeklasa `EntityEncoder` pozwala nam łatwo ją wyderywować z istniejącego
+enkodera dla typu `String`
 
 {lang="text"}
 ~~~~~~~~
@@ -13990,7 +13961,7 @@ one from the existing `String` encoder
       )
 ~~~~~~~~
 
-The only difference between `.get` and `.post` is the way we construct our `http4s.Request`
+Jedyną różnicą między `.get` i `.post` jest sposób w jaki konstruujemy `http4s.Request`
 
 {lang="text"}
 ~~~~~~~~
@@ -14002,8 +13973,7 @@ The only difference between `.get` and `.post` is the way we construct our `http
   .withBody(payload.toUrlEncoded)
 ~~~~~~~~
 
-and the final piece is the constructor, which is a case of calling `Http1Client`
-with a configuration object
+Ostatnim fragmentem układanki jest konstruktor, w którym wywołujemy `Http1Client` przekazując obiekt konfiguracyjny
 
 {lang="text"}
 ~~~~~~~~
@@ -14020,8 +13990,7 @@ with a configuration object
 
 ### `BlazeUserInteraction`
 
-We need to spin up an HTTP server, which is a lot easier than it sounds. First,
-the imports
+Musimy uruchomić serwer HTTP, co jest dużo łatwiejsze niż może się wydawać. Po pierwsze, importy
 
 {lang="text"}
 ~~~~~~~~
@@ -14031,7 +14000,7 @@ the imports
   import org.http4s.server.blaze._
 ~~~~~~~~
 
-We need to create a `dsl` for our effect type, which we then import
+Następnie musimy utworzyć `dsl` dla naszego typu efektów, z którego zaimportujemy zawartość
 
 {lang="text"}
 ~~~~~~~~
@@ -14039,9 +14008,9 @@ We need to create a `dsl` for our effect type, which we then import
   import dsl._
 ~~~~~~~~
 
-Now we can use the [http4s dsl](https://http4s.org/v0.18/dsl/) to create HTTP endpoints. Rather than describe
-everything that can be done, we will simply implement the endpoint which is
-similar to any of other HTTP DSLs
+Teraz możemy używać [dsla http4s](https://http4s.org/v0.18/dsl/) do obsługi żądań HTTP. Zamiast opisywać wszystko
+co jest możliwe zaimplementujemy po prostu pojedynczą końcówkę (_endpoint_), która przypomina
+każdy inny DSL HTTP
 
 {lang="text"}
 ~~~~~~~~
@@ -14051,8 +14020,8 @@ similar to any of other HTTP DSLs
   }
 ~~~~~~~~
 
-The return type of each pattern match is a `Task[Response[Task]]`. In our
-implementation we want to take the `code` and put it into the `ptoken` promise:
+Każde dopasowanie musi zwrócić `Task[Response[Task]]`. W naszym przypadku chcemy wziąć `code` i 
+ukończyć obietnicę `ptoken`:
 
 {lang="text"}
 ~~~~~~~~
@@ -14071,8 +14040,8 @@ implementation we want to take the `code` and put it into the `ptoken` promise:
   }
 ~~~~~~~~
 
-but the definition of our services routes is not enough, we need to launch a
-server, which we do with `BlazeBuilder`
+ale zdefiniowanie logiki nie wystarczy, musimy jeszcze uruchomić nasz serwer, co też zrobimy
+używając `BlazeBuilder`
 
 {lang="text"}
 ~~~~~~~~
@@ -14080,11 +14049,10 @@ server, which we do with `BlazeBuilder`
     BlazeBuilder[Task].bindHttp(0, "localhost").mountService(service, "/").start
 ~~~~~~~~
 
-Binding to port `0` makes the operating system assign an ephemeral port. We can
-discover which port it is actually running on by querying the `server.address`
-field.
+Przypisanie do portu `0` sprawia, że system operacyjny użyje tymczasowego portu, który możemy
+odczytać z pola `server.address`.
 
-Our implementation of the `.start` and `.stop` methods is now straightforward
+Nasza implementacja `.start` i `.stop` jest więc bardzo prosta
 
 {lang="text"}
 ~~~~~~~~
@@ -14111,12 +14079,10 @@ Our implementation of the `.start` and `.stop` methods is now straightforward
     Task.fail(new IOException(s) with NoStackTrace)
 ~~~~~~~~
 
-The `1.second` sleep is necessary to avoid shutting down the server before the
-response is sent back to the browser. IO doesn't mess around when it comes to
-concurrency performance!
+Uśpienie wątku na `1.second` jest niezbędne aby uniknąć wyłączenia serwera zanim odpowiedź trafi z powrotem
+do przeglądarki. Z wydajnością współbieżności `IO` nie ma żartów!
 
-Finally, to create a `BlazeUserInteraction`, we just need the two uninitialised
-promises
+W końcu, aby utworzyć `BlazeUserInteraction` potrzebuje jedynie dwóch niezainicjalizowanych obietnic
 
 {lang="text"}
 ~~~~~~~~
@@ -14130,21 +14096,17 @@ promises
   }
 ~~~~~~~~
 
-We could use `IO[Void, ?]` instead, but since the rest of our application is
-using `Task` (i.e. `IO[Throwable, ?]`), we `.widenError` to avoid introducing
-any boilerplate that would distract us.
+Mogliśmy użyć `IO[Void, ?]`, ale skoro reszta naszej aplikacji używa `Task` (czyli `IO[Throwable, ?]`), wywołujemy
+`.widenError` aby nie wprowadzać zbędnego boilerplate'u.
 
 
-## Thank You
+## Podziękowania
 
-And that is it! Congratulations on reaching the end.
+I to tyle! Gratulujemy dotarcia do końca podróży.
 
-If you learnt something from this book, then please tell your friends. This book
-does not have a marketing department, so word of mouth is the only way that
-readers find out about it.
+Jeśli w trakcie jej trwania nauczyłeś się czegoś, to proszę, powiedz o tym swoim znajomym. 
+Ta książka nie ma działu marketingu, więc jest to jedyny sposób w jaki potencjalni czytelnicy mogą się o niej dowiedzieć.
 
-Get involved with Scalaz by joining the [gitter chat room](https://gitter.im/scalaz/scalaz). From there you can ask
-for advice, help newcomers (you're an expert now), and contribute to the next
-release.
-
+Aby zaangażować się w rozwój Scalaz wystarczy dołączyć do [pokoju na gitterze](https://gitter.im/scalaz/scalaz). Stamtąd
+możesz zadawać pytania, pomagać innym (teraz jesteś ekspertem!) i pomagać w tworzeniu kolejnych wersji biblioteki.
 
