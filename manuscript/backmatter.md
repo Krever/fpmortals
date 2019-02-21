@@ -61,7 +61,10 @@ Haskell ma bardzo schludną składnię dla ADT. Oto tradycyjna lista:
 
 `List` jest *konstruktorem typu*, `a` to *parametr typu*, a `|` rozdziela *konstruktory danych*, które w tym wypadku to:
 `Nil` czyli pusta lista oraz `Cons` czyli komórka listy. `Cons` przyjmuje dwa parametry, które są rozdzielone białym znakiem. Nie ma
-tu przecinków ani nawiasów. W Haskellu nie ma też podtypowania.
+tu przecinków ani nawiasów. 
+
+W Haskellu nie ma też podtypowania, więc nie ma czegoś takiego jak typ `Nil`
+lub `Cons`, oba tworzą typ `List`.
 
 Przybliżone tłumaczenie na Scalę:
 
@@ -152,8 +155,14 @@ w klamrach i dodanie do pól *anotacji typów* za podwójnym dwukropkiem aby okr
   data Company  = Company String [Resource]
   
   -- with record syntax
-  data Resource = Human { serial :: Int, humanName :: String }
-  data Company  = Company { companyName :: String, employees :: [Resource] }
+  data Resource = Human
+                  { serial    :: Int
+                  , humanName :: String
+                  }
+  data Company  = Company
+                  { companyName :: String
+                  , employees   :: [Resource]
+                  }
 ~~~~~~~~
 
 Zauważ, że konstruktor danych `Human` i typ `Resource` nie muszą mieć tej samej nazwy. 
@@ -187,13 +196,19 @@ A> {lang="text"}
 A> ~~~~~~~~
 A>   {-# LANGUAGE DuplicateRecordFields #-}
 A>   
-A>   data Resource = Human { serial :: Int, name :: String }
-A>   data Company  = Company { name :: String, employees :: [Resource] }
+A>   data Resource = Human
+A>                   { serial :: Int
+A>                   , name   :: String
+A>                   }
+A>   data Company  = Company
+A>                   { name      :: String
+A>                   , employees :: [Resource]
+A>                   }
 A> ~~~~~~~~
 A> 
 A> Istnieje wiele takich rozszerzeń i nie jest niczym nadzwyczajnym aby mały projekt korzystał
 A> z 20 albo i więcej z nich. Haskell jest bardzo konserwatywnym językiem i nowe funkcjonalności
-A> są domyślnie wyłączone przez długi czas zanim zostaną zaakceptowane do wersji bazowej.
+A> są domyślnie wyłączone przez długi czas zanim zostaną zaakceptowane do standardu języka.
 
 
 ## Funkcje
@@ -342,7 +357,7 @@ Poniższe definicje `map` dla listy są równoznaczne (apostrof jest poprawnym i
                            else filter f tail
 ~~~~~~~~
 
-ale w lepszym stylu jest używanie *ograniczeń wariantów* (_case guards_)
+Alternatywnie możemy użyć *ograniczeń wariantów* (_case guards_)
 
 {lang="text"}
 ~~~~~~~~
@@ -480,7 +495,7 @@ która była inspiracją dla Scalowej konstrukcji `for`:
     a <- f
     b <- g
     c <- h
-    return (a, b, c)
+    pure (a, b, c)
 ~~~~~~~~
 
 Powyższy kod rozwijany jest do
@@ -490,7 +505,7 @@ Powyższy kod rozwijany jest do
   f >>= \a ->
     g >>= \b ->
       h >>= \c ->
-        return (a, b, c)
+        pure (a, b, c)
 ~~~~~~~~
 
 gdzie `>>=` to `=<<` z parametrami zamienionymi miejscami
@@ -536,7 +551,7 @@ Niemonadyczne wartości mogą być przypisywane z użyciem słowa kluczowego `le
                   last  <- getLine
                   let full = first ++ " " ++ last
                   putStrLn ("Pleased to meet you, " ++ full ++ "!")
-                  return full
+                  pure full
 ~~~~~~~~
 
 Na koniec, Haskell pozwala na derywację typeklas za pomocą słowa kluczowego `deriving`, a mechanizm ten
@@ -550,6 +565,67 @@ temat, ale sama derywacja dla ADT jest bardzo prosta:
 ~~~~~~~~
 
 
+## Algebras
+
+In Scala, typeclasses and algebras are both defined as a `trait` interface.
+Typeclasses are injected by the `implicit` feature and algebras are passed as
+explicit parameters. There is no language-level support in Haskell for algebras:
+they are just data!
+
+Consider the simple `Console` algebra from the introduction. We can rewrite it
+into Haskell as a *record of functions*:
+
+{lang="text"}
+~~~~~~~~
+  data Console m = Console
+                    { println :: Text -> m ()
+                    , readln  :: m Text
+                    }
+~~~~~~~~
+
+with business logic using a `Monad` constraint
+
+{lang="text"}
+~~~~~~~~
+  echo :: (Monad m) => Console m -> m ()
+  echo c = do line <- readln c
+              println c line
+~~~~~~~~
+
+A production implementation of `Console` would likely have type `Console IO`.
+The Scalaz `liftIO` function is inspired by a Haskell function of the same name
+and can lift `Console IO` into any Advanced Monad stack.
+
+Two additional language extensions make the business logic even cleaner. For
+example, `RecordWildCards` allows us to import all the fields of a data type by
+using `{..}`:
+
+{lang="text"}
+~~~~~~~~
+  echo :: (Monad m) => Console m -> m ()
+  echo Console{..} = do line <- readln
+                        println line
+~~~~~~~~
+
+`NamedFieldPuns` requires each imported field to be listed explicitly, which is
+more boilerplate but makes the code easier to read:
+
+{lang="text"}
+~~~~~~~~
+  echo :: (Monad m) => Console m -> m ()
+  echo Console{readln, println} = do line <- readln
+                                     println line
+~~~~~~~~
+
+Whereas in Scala this encoding may be called *Finally Tagless*, in Haskell it is
+known as MTL style. Without going into details, some Scala developers didn't
+understand a research paper about the performance benefits of [Generalised ADTs
+in Haskell](http://okmij.org/ftp/tagless-final/index.html#tagless-final).
+
+An alternative to MTL style are *Extensible Effects*, also known as [Free Monad
+style](http://okmij.org/ftp/Haskell/extensible/more.pdf).
+
+
 ## Moduły
 
 Kod źródłowy napisany w Haskellu układa się w hierarchiczne moduły, a kod każdego z nich musi być zawarty z jednym pliku.
@@ -560,7 +636,7 @@ Pierwsza linia w pliku określa jego nazwę
   module Silly.Tree where
 ~~~~~~~~
 
-Kod organizowany jest za pomocą katalogów, tak więc plik ten znajdzie się w `Silly/Tree.hs`.
+Kod organizowany jest według konwencji za pomocą katalogów, tak więc plik ten znajdzie się w `Silly/Tree.hs`.
 
 Domyślnie wszystkie symbole w pliku są eksportowane, ale możemy kontrolować to zachowanie. 
 Dla przykładu wyeksportujmy typ `Tree` wraz z konstruktorami danych i funkcje `fringe`, a ominiemy
@@ -568,7 +644,7 @@ funkcję `sapling`:
 
 {lang="text"}
 ~~~~~~~~
-  module Silly.Tree (Tree(Leaf, Branch), fringe) where
+  module Silly.Tree (Tree(..), fringe) where
   
   data Tree a = Leaf a | Branch (Tree a) (Tree a)
   
@@ -598,6 +674,20 @@ które są importowane to wystarczy wymienić je w nawiasach zaraz za nazwą imp
   import Silly.Tree (Tree, fringe)
 ~~~~~~~~
 
+Tutaj importujemy jedynie kontruktor typu `Tree` (bez konstruktorów danych)
+i funkcję `fringe`. Jeśli chcielibyśmy zaimportować wszystkie konstruktory danych możemy
+użyć `Tree(..)`. Jeśli potrzebujemy jedynie `Branch` to wystarczy to zadeklarować:
+
+Here we only import the `Tree` type constructor (not the data constructors) and
+the `fringe` function. If we want to import all the data constructors (and
+pattern matchers) we can use `Tree(..)`. If we only want to import the `Branch`
+constructor we can list it explicitly:
+
+{lang="text"}
+~~~~~~~~
+  import Silly.Tree (Tree(Branch), fringe)
+~~~~~~~~
+
 Jeśli okaże się że nazwy importowanych symboli kolidują ze sobą możemy rozwiązać ten problem używając importu kwalifikowanego
 (`qualified`) z opcjonalną listą importowanych symboli
 
@@ -614,7 +704,7 @@ możemy też zmienić nazwę modułu
   import qualified Silly.Tree as T
 ~~~~~~~~
 
-tym samym `fringe` stało się `T.fringe`.
+tym samym `fringe` jest teraz dostępne jako`T.fringe`.
 
 Alternatywnie, zamiast deklarować importowane symbole możemy wybrać to czego **nie** chcemy importować
 
@@ -631,12 +721,7 @@ nasza wersja będzie użyta. Możemy użyć tego triku aby ukryć niebezpieczne 
   import Prelude hiding ((!!), head)
 ~~~~~~~~
 
-Możemy też całkowicie się go pozbyć za pomocą rozszerzenia języka:
-
-{lang="text"}
-~~~~~~~~
-  {-# LANGUAGE NoImplicitPrelude #-}
-~~~~~~~~
+Możemy też całkowicie się go pozbyć za pomocą rozszerzenia języka `NoImplicitPrelude`.
 
 
 ## Ewaluacja
@@ -708,7 +793,10 @@ Możemy też użyć wykrzyknika na parametrach konstruktorów danych:
 ~~~~~~~~
   data StrictList t = StrictNil | !t :. !(StrictList t)
   
-  data Employee = Employee { name :: !Text, age :: !Int}
+  data Employee = Employee
+                    { name :: !Text
+                    , age :: !Int
+                    }
 ~~~~~~~~
 
 Rozszerzenie języka `StrictData` sprawia, że wszystkie parametry danych w danym module są ściśle ewaluowane.
@@ -750,7 +838,7 @@ pytania możesz zawsze zadać w pokoju `#qfpl` na `freenode.net`.
 
 O to parę dodatkowych materiałów, które mogą być pomocne w nauce:
 
--   [Haskell Book](http://haskellbook.com/) to bardzo wyczerpujące wprowadzenie do języka. Tych, którzy wolą szybszą drogę może zainteresować [Programming in Haskell](http://www.cs.nott.ac.uk/~pszgmh/pih.html)
+-   [Programming in Haskell](http://www.cs.nott.ac.uk/~pszgmh/pih.html) nauczy nas języka od podstaw
 -   [Parallel and Concurrent Programming in Haskell](http://shop.oreilly.com/product/0636920026365.do) oraz [What I Wish I Knew When
     Learning Haskell](http://dev.stephendiehl.com/hask/#data-kinds) dostarczają wiedzy na poziomie zaawansowanym.
 -   [Glasgow Haskell Compiler User Guide](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/) i [HaskellWiki](https://wiki.haskell.org) to z kolei same twarde fakty.

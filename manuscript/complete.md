@@ -2328,6 +2328,9 @@ Musimy zapewnić instancje dla typów podstawowych:
     implicit val string: UrlEncodedWriter[String] =
       (s => Refined.unsafeApply(URLEncoder.encode(s, "UTF-8")))
   
+    implicit val url: UrlEncodedWriter[String Refined Url] =
+      (s => s.value.toUrlEncoded)
+  
     implicit val long: UrlEncodedWriter[Long] =
       (s => Refined.unsafeApply(s.toString))
   
@@ -2405,7 +2408,7 @@ oczyścić nieco kod, który już napisaliśmy. Na razie jednak napiszmy boilerp
   }
   object AccessRequest {
     implicit val encoded: UrlEncodedWriter[AccessRequest] = { a =>
-      List(
+      IList(
         "code"          -> a.code.toUrlEncoded,
         "redirect_uri"  -> a.redirect_uri.toUrlEncoded,
         "client_id"     -> a.client_id.toUrlEncoded,
@@ -2417,7 +2420,7 @@ oczyścić nieco kod, który już napisaliśmy. Na razie jednak napiszmy boilerp
   }
   object RefreshRequest {
     implicit val encoded: UrlEncodedWriter[RefreshRequest] = { r =>
-      List(
+      IList(
         "client_secret" -> r.client_secret.toUrlEncoded,
         "refresh_token" -> r.refresh_token.toUrlEncoded,
         "client_id"     -> r.client_id.toUrlEncoded,
@@ -2448,7 +2451,7 @@ instancję `JsDecoder`, a żądania `UrlEncodedWriter`:
     def post[P: UrlEncodedWriter, A: JsDecoder](
       uri: String Refined Url,
       payload: P,
-      headers: IList[(String, String]
+      headers: IList[(String, String] = IList.empty
     ): F[A]
   }
 ~~~~~~~~
@@ -3606,7 +3609,7 @@ wyderywować potrzebne nam instancje spełniając kontrakt:
 {lang="text"}
 ~~~~~~~~
   object Alpha {
-    implicit val decoder: JsDecoder[Alpha] = JsEncoder[Double].map(_.value)
+    implicit val decoder: JsDecoder[Alpha] = JsDecoder[Double].map(Alpha(_))
     implicit val encoder: JsEncoder[Alpha] = JsEncoder[Double].contramap(_.value)
   }
 ~~~~~~~~
@@ -7668,7 +7671,7 @@ Niejawna konwersja widoczna w obiekcie towarzyszącym pozwala nam używać `Klei
 w efekcie czego możemy przekazywać instancje tego typu jako parametr do `.bind` lub `>>=`.
 
 Najpopularniejszym zastosowaniem `ReaderT` jest dostarczanie informacji ze środowiska do naszego programu.
-W `drone-dynamic-agents` potrzebujemy dostępu do tokenu odświeżającego Oauth 2.0 dla naszego użytkownika, aby
+W `drone-dynamic-agents` potrzebujemy dostępu do tokenu odświeżającego OAuth 2.0 dla naszego użytkownika, aby
 móc połączyć się z serwerem Google'a. Oczywistym wydaje się odczytanie `RefreshTokens` z dysku przy starcie aplikacji i
 dodanie parametru `RefreshToken` do każdej metody. Okazuje się że jest to problem na tyle częsty ze Martin Odersky
 zaproponował nowy mechanizm [funkcji niejawnych](https://www.scala-lang.org/blog/2016/12/07/implicit-function-types.html),
@@ -9486,17 +9489,17 @@ typeklasy `Functor` dla dowolnej algebry `S[_]`, tak długo, jak mamy w planie p
 
 {lang="text"}
 ~~~~~~~~
-  sealed abstract class Coyoneda[S[_], A] {
-    def run(implicit S: Functor[S]): S[A] = ...
+  sealed abstract class Coyoneda[F[_], A] {
+    def run(implicit F: Functor[F]): F[A] = ...
     def trans[G[_]](f: F ~> G): Coyoneda[G, A] = ...
     ...
   }
   object Coyoneda {
-    implicit def functor[S[_], A]: Functor[Coyoneda[S, A]] = ...
+    implicit def functor[F[_], A]: Functor[Coyoneda[F, A]] = ...
   
     private final case class Map[F[_], A, B](fa: F[A], f: A => B) extends Coyoneda[F, A]
-    def apply[S[_], A, B](sa: S[A])(f: A => B) = Map[S, A, B](sa, f)
-    def lift[S[_], A](sa: S[A]) = Map[S, A, A](sa, identity)
+    def apply[F[_], A, B](sa: F[A])(f: A => B) = Map[F, A, B](sa, f)
+    def lift[F[_], A](sa: F[A]) = Map[F, A, A](sa, identity)
     ...
   }
 ~~~~~~~~
@@ -9505,18 +9508,18 @@ również w wersji kontrawariantnej
 
 {lang="text"}
 ~~~~~~~~
-  sealed abstract class ContravariantCoyoneda[S[_], A] {
-    def run(implicit S: Contravariant[S]): S[A] = ...
+  sealed abstract class ContravariantCoyoneda[F[_], A] {
+    def run(implicit F: Contravariant[F]): F[A] = ...
     def trans[G[_]](f: F ~> G): ContravariantCoyoneda[G, A] = ...
     ...
   }
   object ContravariantCoyoneda {
-    implicit def contravariant[S[_], A]: Contravariant[ContravariantCoyoneda[S, A]] = ...
+    implicit def contravariant[F[_], A]: Contravariant[ContravariantCoyoneda[F, A]] = ...
   
     private final case class Contramap[F[_], A, B](fa: F[A], f: B => A)
       extends ContravariantCoyoneda[F, A]
-    def apply[S[_], A, B](sa: S[A])(f: B => A) = Contramap[S, A, B](sa, f)
-    def lift[S[_], A](sa: S[A]) = Contramap[S, A, A](sa, identity)
+    def apply[F[_], A, B](sa: F[A])(f: B => A) = Contramap[F, A, B](sa, f)
+    def lift[F[_], A](sa: F[A]) = Contramap[F, A, A](sa, identity)
     ...
   }
 ~~~~~~~~
@@ -10335,7 +10338,7 @@ Zanim przejdziemy dalej, szybka powtórka z kluczowych typeklas w Scalaz:
   }
   @typeclass trait MonadError[F[_], E] extends Monad[F] {
     def raiseError[A](e: E): F[A]
-    def emap[A, B](fa: F[A])(f: A => S \/ B): F[B] = ...
+    def emap[A, B](fa: F[A])(f: A => E \/ B): F[B] = ...
     ...
   }
 ~~~~~~~~
@@ -11377,7 +11380,7 @@ Na przykład
   final case class Money(@json.field("integer") i: Int) extends Cost
 ~~~~~~~~
 
-Zacznijmy z enkoderem, który obsługuje jedynie ustawienia domyślne:
+Zacznijmy od enkodera, który obsługuje jedynie ustawienia domyślne:
 
 {lang="text"}
 ~~~~~~~~
