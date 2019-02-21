@@ -7082,7 +7082,7 @@ na przykład wskazać algebrę `Drone` lub `Machines` z rozdziału 3 jako `S` i 
 Zastanowimy się jak może nam się to przydać pod koniec tego rozdziału.
 
 
-### `Trampoline`
+### `Trampoline
 
 `Free` jest typem bardziej ogólnym niż w tym momencie potrzebujemy. Ustawiając algebrę `S[_]` na `() => ?`, czyli odroczone wykonanie
 znane jako *thunk*, otrzymamy typ `Trampoline`, który pozwoli nam zaimplementować bezpieczną instancję `Monad`y
@@ -13211,7 +13211,7 @@ wykaz funkcjonalności:
 | Szybka kompilacja | tak    | tak      |             | tak               |
 | Nazwy pól         |        | tak      | tak         |                   |
 | Anotacje          |        | tak      | częściowo   |                   |
-e/| Domyślne wartości |        | tak      | z haczykami |                   |
+| Domyślne wartości |        | tak      | z haczykami |                   |
 | Skomplikowanie    |        |          | boleśnie    |                   |
 | Wydajność         |        |          |             | potrzymaj mi piwo |
 

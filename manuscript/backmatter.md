@@ -1,10 +1,10 @@
 {backmatter}
 
 
-# Typeclass Cheatsheet
+# Skrót Typeklas
 
-| Typeclass          | Method          | From            | Given                  | To             |
-|------------------ |--------------- |--------------- |---------------------- |-------------- |
+| Typeklasa          | Metoda          | Z               | Mając                  | Do             |
+|--------------------|-----------------|-----------------|------------------------|----------------|
 | `InvariantFunctor` | `xmap`          | `F[A]`          | `A => B, B => A`       | `F[B]`         |
 | `Contravariant`    | `contramap`     | `F[A]`          | `B => A`               | `F[B]`         |
 | `Functor`          | `map`           | `F[A]`          | `A => B`               | `F[B]`         |
@@ -38,34 +38,32 @@
 |                    | `leftMap`       | `F[A, B]`       | `A => C`               | `F[C, B]`      |
 |                    | `rightMap`      | `F[A, B]`       | `B => C`               | `F[A, C]`      |
 | `Bifoldable`       | `bifoldMap`     | `F[A, B]`       | `A => C, B => C`       | `C`            |
-| (with `MonadPlus`) | `separate`      | `F[G[A, B]]`    |                        | `(F[A], F[B])` |
+| (z `MonadPlus`)    | `separate`      | `F[G[A, B]]`    |                        | `(F[A], F[B])` |
 | `Bitraverse`       | `bitraverse`    | `F[A, B]`       | `A => G[C], B => G[D]` | `G[F[C, D]]`   |
 |                    | `bisequence`    | `F[G[A], G[B]]` |                        | `G[F[A, B]]`   |
 
 
 # Haskell
 
-Scalaz documentation often cites libraries or papers written in the Haskell
-programming language. In this short chapter, we will learn enough Haskell to be
-able to understand the source material, and to attend Haskell talks at
-functional programming conferences.
+Dokumentacja Scalaz często odwołuje się do bibliotek lub artykułów używających Haskella jako języka programowania.
+W tym krótkim rozdziale poznamy jego podstawy, tak, aby móc zrozumieć wspomniane materiały oraz móc uczestniczyć
+w Haskellowych prezentacjach na konferencjach o programowaniu funkcyjnym.
 
 
-## Data
+## Dane
 
-Haskell has a very clean syntax for ADTs. This is a linked list structure:
+Haskell ma bardzo schludną składnię dla ADT. Oto tradycyjna lista:
 
 {lang="text"}
 ~~~~~~~~
   data List a = Nil | Cons a (List a)
 ~~~~~~~~
 
-`List` is a *type constructor*, `a` is the *type parameter*, `|` separates the
-*data constructors*, which are: `Nil` the empty list and a `Cons` cell. `Cons`
-takes two parameters, which are separated by whitespace: no commas and no
-parameter brackets. There is no subtyping in Haskell.
+`List` jest *konstruktorem typu*, `a` to *parametr typu*, a `|` rozdziela *konstruktory danych*, które w tym wypadku to:
+`Nil` czyli pusta lista oraz `Cons` czyli komórka listy. `Cons` przyjmuje dwa parametry, które są rozdzielone białym znakiem. Nie ma
+tu przecinków ani nawiasów. W Haskellu nie ma też podtypowania.
 
-Roughly translated to Scala:
+Przybliżone tłumaczenie na Scalę:
 
 {lang="text"}
 ~~~~~~~~
@@ -80,12 +78,11 @@ Roughly translated to Scala:
   }
 ~~~~~~~~
 
-i.e. the type constructor is like `sealed abstract class`, and each data
-constructor is `.apply` / `.unapply`. Note that Scala does not perform
-exhaustive pattern matches on this encoding, which is why Scalaz does not use
-it.
+A więc, konstruktor typu to odpowiednik `sealed abstract class` a każdy z konstruktorów danych
+to para `.apply`/`.unapply`. Warto zauważyć, że przy takim kodowaniu Scala nie jest w stanie sprawdzić
+czy pattern matching jest wyczerpujący, i dlatego też nie jest ono używane w Scalaz.
 
-We can use infix, a nicer definition might use the symbol `:.` instead of `Cons`
+Możemy też użyć infiksu, tworząc ładniejszą definicję z `:.` zamiast `Cons`
 
 {lang="text"}
 ~~~~~~~~
@@ -93,17 +90,17 @@ We can use infix, a nicer definition might use the symbol `:.` instead of `Cons`
   infixr 5 :.
 ~~~~~~~~
 
-where we specify a *fixity*, which can be `infix`, `infixl` or `infixr` for no,
-left and right associativity, respectively. A number from 0 (loose) to 9 (tight)
-specifies precedence. We can now create a list of integers by typing
+Specyfikujemy tutaj *fixity*, które może przyjąć jedną z wartości `infix`, `infixl` lub `infixr`, które oznaczają odpowiednio
+brak łączności, łączność lewostronną i prawostronną. Liczby od 0 do 9 określają priorytet operacji.
+Możemy teraz stworzyć listę liczb całkowitych za pomocą
 
 {lang="text"}
 ~~~~~~~~
   1 :. 2 :. Nil
 ~~~~~~~~
 
-Haskell already comes with a linked list, which is so fundamental to functional
-programming that it gets language-level square bracket syntax `[a]`
+Haskell posiada już definicję listy i jest ona na tyle ważna dla programowania funkcyjnego, że zasłużyła
+na osobną składnię zdefiniowaną na poziomie języka: `[a]`.
 
 {lang="text"}
 ~~~~~~~~
@@ -111,22 +108,20 @@ programming that it gets language-level square bracket syntax `[a]`
   infixr 5 :
 ~~~~~~~~
 
-and a convenient multi-argument value constructor: `[1, 2, 3]` instead of `1 :
-2 : 3 : []`.
+oraz wygodny wielowartościowy konstruktor `[1, 2, 3]` zamiast `1 : 2 : 3 : []`.
 
-Ultimately our ADTs need to hold primitive values. The most common primitive
-data types are:
+Koniec końców nasze ADT musi przechowywać wartości prymitywne. Najpopularniejsze z nich to:
 
--   `Char` a unicode character
--   `Text` for blocks of unicode text
--   `Int` a machine dependent, fixed precision signed integer
--   `Word` an unsigned `Int`, and fixed size `Word8` / `Word16` / `Word32` / `Word64`
--   `Float` / `Double` IEEE single and double precision numbers
--   `Integer` / `Natural` arbitrary precision signed / non-negative integers
--   `(,)` tuples, from 0 (also known as *unit*) to 62 fields
--   `IO` the inspiration for Scalaz's `IO`, implemented in the runtime.
+-   `Char` - znak unikodu
+-   `Text` - blok tekstu opartego o unikod
+-   `Int` - zależna od sprzętu liczba całkowita ze znakiem o stałej precyzji
+-   `Word` - liczba całkowita bez znaku z wariantami o stałym rozmiarze `Word8` / `Word16` / `Word32` / `Word64`
+-   `Float` / `Double` - liczby zmiennoprzecinkowe o pojedynczej i podwójnej precyzji, zgodne z IEEE
+-   `Integer` / `Natural` - liczba całkowita o arbitralnej precyzji. Ze znakiem oraz dodatnia.
+-   `(,)` - tuple o rozmiarach od 0 do 62
+-   `IO` - inspiracja dla `IO` w Scalaz, implementowana na poziomie środowiska uruchomieniowego
 
-with honorary mentions for
+z honorowym miejscem dla
 
 {lang="text"}
 ~~~~~~~~
@@ -136,20 +131,19 @@ with honorary mentions for
   data Ordering   = LT | EQ | GT
 ~~~~~~~~
 
-Like Scala, Haskell has type aliases: an alias or its expanded form can be used
-interchangeably. For legacy reasons, `String` is defined as a linked list of
-`Char`
+Haskell, podobnie jak Scala, pozwala na definiowanie aliasów typów. Alias i jego rozwiniętą
+forma mogą być używane zamiennie. Z powodów historycznych `String` zdefiniowany jest alias na listę
+`Char`ów
 
 {lang="text"}
 ~~~~~~~~
   type String = [Char]
 ~~~~~~~~
 
-which is very inefficient and we always want to use `Text` instead.
+co jest reprezentacją bardzo niewydajną i dlatego właśnie powinniśmy używać typu `Text`.
 
-Finally we can define field names on ADTs using *record syntax*, which means we
-contain the data constructors in curly brackets and use double colon *type
-annotations* to indicate the types
+Możemy też definiować nazwy pól w ADT używając *składni rekordów*, co oznacza umieszczenie konstruktorów danych
+w klamrach i dodanie do pól *anotacji typów* za podwójnym dwukropkiem aby określić ich typ.
 
 {lang="text"}
 ~~~~~~~~
@@ -162,9 +156,8 @@ annotations* to indicate the types
   data Company  = Company { companyName :: String, employees :: [Resource] }
 ~~~~~~~~
 
-Note that the `Human` data constructor and `Resource` type do not need to be the
-same name. Record syntax generates the equivalent of a field accessor and a copy
-method.
+Zauważ, że konstruktor danych `Human` i typ `Resource` nie muszą mieć tej samej nazwy. 
+Rekordy generują dla nas metody pozwalające na dostęp do pól i łatwe kopiowanie danych.
 
 {lang="text"}
 ~~~~~~~~
@@ -176,20 +169,20 @@ method.
   eve = adam { humanName = "Eve" }
 ~~~~~~~~
 
-A more efficient alternative to single field `data` definitions is to use a
-`newtype`, which has no runtime overhead:
+Bardziej wydajną alternatywą dla pojedynczych definicji danych jest użycie słowa kluczowego
+`newtype`, które nie niesie ze sobą żadnego narzutu wydajnościowego:
 
 {lang="text"}
 ~~~~~~~~
   newtype Alpha = Alpha { underlying :: Double }
 ~~~~~~~~
 
-equivalent to `extends AnyVal` but without the caveats.
+Jest to odpowiednik `extends AnyVal`, tyle że bez żadnych haczyków.
 
-A> A limitation of Haskell's record syntax is that a field name cannot be used in
-A> different data types. However, we can workaround this by enabling a `LANGUAGE`
-A> extension, allowing us to use `name` in both `Human` and `Company`:
-A> 
+A> Ograniczeniem Haskellowych rekordów jest to, że nazwy pól nie mogą się powtarzać.
+A> Możemy to jednak obejść stosując rozszerzenie języka, które pozwoli nam użyć `name`
+A> zarówno w `Human` jak i `Company`:
+A>
 A> {lang="text"}
 A> ~~~~~~~~
 A>   {-# LANGUAGE DuplicateRecordFields #-}
@@ -198,41 +191,39 @@ A>   data Resource = Human { serial :: Int, name :: String }
 A>   data Company  = Company { name :: String, employees :: [Resource] }
 A> ~~~~~~~~
 A> 
-A> There are a lot of language extensions and it is not uncommon to have 20 or more
-A> in a small project. Haskell is extremely conservative and new language features
-A> are opt in for a long period of time before they can be accepted into the
-A> vanilla language.
+A> Istnieje wiele takich rozszerzeń i nie jest niczym nadzwyczajnym aby mały projekt korzystał
+A> z 20 albo i więcej z nich. Haskell jest bardzo konserwatywnym językiem i nowe funkcjonalności
+A> są domyślnie wyłączone przez długi czas zanim zostaną zaakceptowane do wersji bazowej.
 
 
-## Functions
+## Funkcje
 
-Although not necessary, it is good practice to explicitly write the type
-signature of a function: its name followed by its type. For example `foldl`
-specialised for a linked list
+Mimo że nie jest to konieczne, to dobrą praktyką jest opatrywanie funkcji sygnaturami typu,
+co wyrażane jest jako nazwa funkcji za którą podąża jej typ. Dla przykładu, oto `foldl` wyspecjalizowany
+dla listy
 
 {lang="text"}
 ~~~~~~~~
   foldl :: (b -> a -> b) -> b -> [a] -> b
 ~~~~~~~~
 
-All functions are *curried* in Haskell, each parameter is separated by a `->`
-and the final type is the return type. This is equivalent to the following Scala
-signature:
+Wszystkie funkcje w Haskellu są domyślnie *rozwinięte* (_curried_), parametry rozdzielone są
+`->, a ostatni typ to typ zwracany przez funkcję. Powyższy przykład to odpowiednik Scalowej sygnatury
 
 {lang="text"}
 ~~~~~~~~
   def foldLeft[A, B](f: (B, A) => B)(b: B)(as: List[A]): B
 ~~~~~~~~
 
-Some observations:
+Tyle, że:
 
--   there is no keyword
--   there is no need to declare the types that are introduced
--   there is no need to name the parameters
+- bez słów kluczowych
+- bez deklaracji typów które wyprowadzamy
+- bez nazywania parametrów
 
-which makes for terse code.
+Wszystko to sprawia, że kod jest bardziej zwięzły.
 
-Infix functions are defined in parentheses and need a fixity definition:
+Funkcje infiksowe definiowane są w nawiasach i wymagają określenia fixity:
 
 {lang="text"}
 ~~~~~~~~
@@ -240,9 +231,9 @@ Infix functions are defined in parentheses and need a fixity definition:
   infixr 5 ++
 ~~~~~~~~
 
-Regular functions can be called in infix position by surrounding their name with
-backticks, and an infix function can be called like a regular function if we
-keep it surrounded by brackets. The following are equivalent:
+Zwykłe funkcje mogą być wołane w pozycji infiksowej poprzez otoczenie nazwy apostrofami,
+a infiksowe możemy wywoływać tak jak normalne jeśli pozostawimy nawiasy wokół nazwy. Poniższe wywołania są 
+równoznaczne:
 
 {lang="text"}
 ~~~~~~~~
@@ -250,8 +241,8 @@ keep it surrounded by brackets. The following are equivalent:
   foo a b
 ~~~~~~~~
 
-An infix function can be curried on either the left or the right, often giving
-different semantics:
+Funkcja infiksowa może być rozwinięta z lewej bądź prawej strony, często dając różną
+semantykę:
 
 {lang="text"}
 ~~~~~~~~
@@ -259,12 +250,12 @@ different semantics:
   half   = (/ 2.0)
 ~~~~~~~~
 
-Functions are typically written with the most general parameter first, to enable
-maximum reuse of the curried forms.
+Funkcje zazwyczaj pisane są tak, aby najbardziej ogólny parametr był na początku, co pozwala zmaksymalizować
+reużywalność domyślnej rozwiniętej formy.
 
-The definition of a function may use pattern matching, with one line per case.
-This is where we may name the parameters, using the data constructors to extract
-parameters much like a Scala `case` clause:
+Definicje funkcji mogą używać dopasowywania wzorców z jedną linią na wariant. W tym miejscu możemy
+nazwać nasze parametry używając konstruktorów danych do ich wyekstrahowania, podobnie jak w Scalowej 
+klauzuli `case`:
 
 {lang="text"}
 ~~~~~~~~
@@ -273,8 +264,8 @@ parameters much like a Scala `case` clause:
   fmap _ Nothing  = Nothing
 ~~~~~~~~
 
-Underscores are a placeholder for ignored parameters and function names can be
-in infix position:
+Podkreślenie służy do ignorowania nieistotnych parametrów. Nazwy funkcji mogą
+występować w pozycji infiksowej również w definicjach:
 
 {lang="text"}
 ~~~~~~~~
@@ -284,8 +275,8 @@ in infix position:
   Empty  <+> Empty  = Empty
 ~~~~~~~~
 
-We can define anonymous lambda functions with a backslash, which looks like the
-Greek letter λ. The following are equivalent:
+Funkcje anonimowe (lambdy) definiujemy z pomocą odwrotnego ukośnika, co przypomina grecką literę λ. Poniższe definicje są
+równoznaczne:
 
 {lang="text"}
 ~~~~~~~~
@@ -294,32 +285,30 @@ Greek letter λ. The following are equivalent:
   (\a1 a2     -> a1 * a2)
 ~~~~~~~~
 
-Pattern matched Haskell functions are just syntax sugar for nested lambda
-functions. Consider a simple function that creates a tuple when given three
-inputs:
+Funkcje używające dopasowań w Haskellu to tak naprawdę jedynie syntax sugar ponad zagnieżdżonymi
+lambdami. Rozważmy prostą funkcję, która tworzy tuple z 3 argumentów:
 
 {lang="text"}
 ~~~~~~~~
   tuple :: a -> b -> c -> (a, b, c)
 ~~~~~~~~
 
-The implementation
+Jej implementacja
 
 {lang="text"}
 ~~~~~~~~
   tuple a b c = (a, b, c)
 ~~~~~~~~
 
-desugars into
+jest rozwijana przez kompilator do 
 
 {lang="text"}
 ~~~~~~~~
   tuple = \a -> \b -> \c -> (a, b, c)
 ~~~~~~~~
 
-In the body of a function we can create local value bindings with `let` or
-`where` clauses. The following are equivalent definitions of `map` for a linked
-list (an apostrophe is a valid identifier name):
+W ciele funkcji możemy tworzyć lokalne przypisania za pomocą klauzul `let` i `where`.
+Poniższe definicje `map` dla listy są równoznaczne (apostrof jest poprawnym identyfikatorem):
 
 {lang="text"}
 ~~~~~~~~
@@ -342,7 +331,7 @@ list (an apostrophe is a valid identifier name):
   map f (x : xs) = f x : map f xs
 ~~~~~~~~
 
-`if` / `then` / `else` are keywords for conditional statements:
+`if` / `then` / `else` to słowa kluczowe do definiowania wyrażeń warunkowych:
 
 {lang="text"}
 ~~~~~~~~
@@ -353,7 +342,7 @@ list (an apostrophe is a valid identifier name):
                            else filter f tail
 ~~~~~~~~
 
-But it is considered better style to use *case guards*
+ale w lepszym stylu jest używanie *ograniczeń wariantów* (_case guards_)
 
 {lang="text"}
 ~~~~~~~~
@@ -361,7 +350,7 @@ But it is considered better style to use *case guards*
                          | otherwise = filter f tail
 ~~~~~~~~
 
-Pattern matching on any term is with `case ... of`
+Dopasowania dla dowolnego wyrażenia definiujemy używają `case ... of`
 
 {lang="text"}
 ~~~~~~~~
@@ -371,8 +360,8 @@ Pattern matching on any term is with `case ... of`
                   Nothing       -> []
 ~~~~~~~~
 
-Guards can be used within matches. For example, say we want to special case
-zeros:
+Ograniczenia mogą być używane wewnątrz dopasowań. Możemy, na przykład, chcieć
+potraktować zera w specjalny sposób:
 
 {lang="text"}
 ~~~~~~~~
@@ -383,7 +372,7 @@ zeros:
                      Nothing                  -> []
 ~~~~~~~~
 
-Finally, two functions that are worth noting are `($)` and `(.)`
+Na koniec dwie funkcje warte wspomnienia: `($)` i `(.)`
 
 {lang="text"}
 ~~~~~~~~
@@ -396,9 +385,9 @@ Finally, two functions that are worth noting are `($)` and `(.)`
   infixr 9
 ~~~~~~~~
 
-Both of these functions are stylistic alternatives to nested parentheses.
+Obie są stylistycznymi alternatywami dla zagnieżdżonych nawiasów.
 
-The following are equivalent:
+Poniższe wywołania są równoznaczne
 
 {lang="text"}
 ~~~~~~~~
@@ -406,7 +395,7 @@ The following are equivalent:
   Just $ f a
 ~~~~~~~~
 
-as are
+tak jak i
 
 {lang="text"}
 ~~~~~~~~
@@ -414,8 +403,7 @@ as are
   putStrLn $ show $ 1 + 1
 ~~~~~~~~
 
-There is a tendency to prefer function composition with `.` instead of multiple
-`$`
+Składanie funkcji za pomocą `.` jest przez wielu preferowane ponad wielokrotne użycie `$`
 
 {lang="text"}
 ~~~~~~~~
@@ -423,12 +411,11 @@ There is a tendency to prefer function composition with `.` instead of multiple
 ~~~~~~~~
 
 
-## Typeclasses
+## Typeklasy
 
-To define a typeclass we use the `class` keyword, followed by the name of the
-typeclass, its type parameter, then the required members in a `where` clause. If
-there are dependencies between typeclasses, i.e. `Applicative` requires a
-`Functor`, use `=>` notation
+Aby zdefiniować typeklasę używamy słowa kluczowego `class`, za którym podąża jej nazwa oraz parametry typu, a wymagane
+metody trafiają do klauzuli `where`. Jeśli między typeklasami istnieje zależność, jak np. w przypadku `Applicative` i
+`Functor`, to może być ona wyrażona za pomocą notacji `=>`
 
 {lang="text"}
 ~~~~~~~~
@@ -446,9 +433,8 @@ there are dependencies between typeclasses, i.e. `Applicative` requires a
     infixr 1 =<<
 ~~~~~~~~
 
-We provide an implementation of a typeclass with the `instance` keyword. If we
-wish to repeat the type signature on instance functions, useful for clarity, we
-must enable the `InstanceSigs` language extension.
+Implementację danej typeklasy możemy dostarczyć za pomocą słowa kluczowego `instance`. Jeśli chcielibyśmy
+powtórzyć sygnatury metod, co dodaje nieco czytelności, musimy włączyć rozszerzenie języka `InstanceSigs`.
 
 {lang="text"}
 ~~~~~~~~
@@ -476,8 +462,8 @@ must enable the `InstanceSigs` language extension.
     f =<< list = flatMap f list
 ~~~~~~~~
 
-If we want to make use of a typeclass in a function we require it with `=>`. For
-example we can define something similar to Scalaz's `Apply.apply2`
+Gdy chcemy skorzystać z typeklasy w funkcji, deklarujemy to za pomocą `=>`. Możemy na przykład
+zdefiniować odpowiednik `Apply.apply2` ze Scalaz
 
 {lang="text"}
 ~~~~~~~~
@@ -485,8 +471,8 @@ example we can define something similar to Scalaz's `Apply.apply2`
   apply2 f fa fb = f <$> fa <*> fb
 ~~~~~~~~
 
-Since we have introduced `Monad`, it is a good time to introduce `do` notation,
-which was the inspiration for Scala's `for` comprehensions:
+Skoro wprowadziliśmy już typeklasę `Monad` to jest to dobry moment na omówienie notacji `do`,
+która była inspiracją dla Scalowej konstrukcji `for`:
 
 {lang="text"}
 ~~~~~~~~
@@ -497,7 +483,7 @@ which was the inspiration for Scala's `for` comprehensions:
     return (a, b, c)
 ~~~~~~~~
 
-desugars to
+Powyższy kod rozwijany jest do
 
 {lang="text"}
 ~~~~~~~~
@@ -507,7 +493,7 @@ desugars to
         return (a, b, c)
 ~~~~~~~~
 
-where `>>=` is `=<<` with parameters flipped
+gdzie `>>=` to `=<<` z parametrami zamienionymi miejscami
 
 {lang="text"}
 ~~~~~~~~
@@ -519,10 +505,9 @@ where `>>=` is `=<<` with parameters flipped
   flip :: (a -> b -> c) -> b -> a -> c
 ~~~~~~~~
 
-and `return` is a synonym for `pure`.
+a `return` to synonim do `pure`.
 
-Unlike Scala, we do not need to bind unit values, or provide a `yield` if we are
-returning `()`. For example
+W przeciwieństwie do Scali, nie musimy przypisywać pustych wartości ani używać `yield` gdy zwracamy `()`.
 
 {lang="text"}
 ~~~~~~~~
@@ -532,7 +517,7 @@ returning `()`. For example
   } yield ()
 ~~~~~~~~
 
-translates to
+jest odpowiednikiem
 
 {lang="text"}
 ~~~~~~~~
@@ -540,7 +525,7 @@ translates to
      putStr " world"
 ~~~~~~~~
 
-Non-monadic values can be bound with the `let` keyword:
+Niemonadyczne wartości mogą być przypisywane z użyciem słowa kluczowego `let`:
 
 {lang="text"}
 ~~~~~~~~
@@ -554,9 +539,9 @@ Non-monadic values can be bound with the `let` keyword:
                   return full
 ~~~~~~~~
 
-Finally, Haskell has typeclass derivation with the `deriving` keyword, the
-inspiration for `@scalaz.deriving`. Defining the derivation rules is an advanced
-topic, but it is easy to derive a typeclass for an ADT:
+Na koniec, Haskell pozwala na derywację typeklas za pomocą słowa kluczowego `deriving`, a mechanizm ten
+był inspiracją dla poznanego przez nas `@scalaz.deriving`. Definiowanie zasad derywacji to dość zaawansowany
+temat, ale sama derywacja dla ADT jest bardzo prosta:
 
 {lang="text"}
 ~~~~~~~~
@@ -565,23 +550,21 @@ topic, but it is easy to derive a typeclass for an ADT:
 ~~~~~~~~
 
 
-## Modules
+## Moduły
 
-Haskell source code is arranged into hierarchical modules with the restriction
-that all contents of a `module` must live in a single file. The top of a file
-declares the `module` name
+Kod źródłowy napisany w Haskellu układa się w hierarchiczne moduły, a kod każdego z nich musi być zawarty z jednym pliku.
+Pierwsza linia w pliku określa jego nazwę
 
 {lang="text"}
 ~~~~~~~~
   module Silly.Tree where
 ~~~~~~~~
 
-Directories are used on disk to organise the code, so this file would go into
-`Silly/Tree.hs`.
+Kod organizowany jest za pomocą katalogów, tak więc plik ten znajdzie się w `Silly/Tree.hs`.
 
-By default all symbols in the file are exported but we can choose to export
-specific members, for example the `Tree` type and data constructors, and a
-`fringe` function, omitting `sapling`:
+Domyślnie wszystkie symbole w pliku są eksportowane, ale możemy kontrolować to zachowanie. 
+Dla przykładu wyeksportujmy typ `Tree` wraz z konstruktorami danych i funkcje `fringe`, a ominiemy
+funkcję `sapling`:
 
 {lang="text"}
 ~~~~~~~~
@@ -597,63 +580,58 @@ specific members, for example the `Tree` type and data constructors, and a
   sapling = Leaf ""
 ~~~~~~~~
 
-Interestingly, we can export symbols that are imported into the module, allowing
-library authors to package up their entire API into a single module, regardless
-of how it is implemented.
+Co ciekawe, możemy eksportować symbole, które są zaimportowane z zewnątrz. Pozwala to autorom bibliotek
+spakować całe API do jednego modułu niezależnie od tego jak zostało zaimplementowane.
 
-In a different file we can import all the exported members from `Silly.Tree`
+W innym pliku możemy zaimportować wcześniej zdefiniowane `Silly.Tree`.
 
 {lang="text"}
 ~~~~~~~~
   import Silly.Tree
 ~~~~~~~~
 
-which is roughly equivalent to Scala's `import silly.tree._` syntax. If we want
-to restrict the symbols that we import we can provide an explicit list in
-parentheses after the import
+co jest równoznaczne ze Scalowym `import silly.tree._`. Jeśli chcielibyśmy ograniczyć symbole,
+które są importowane to wystarczy wymienić je w nawiasach zaraz za nazwą importowanego modułu:
 
 {lang="text"}
 ~~~~~~~~
   import Silly.Tree (Tree, fringe)
 ~~~~~~~~
 
-If we have a name collision on a symbol we can use a `qualified` import, with an
-optional list of symbols to import
+Jeśli okaże się że nazwy importowanych symboli kolidują ze sobą możemy rozwiązać ten problem używając importu kwalifikowanego
+(`qualified`) z opcjonalną listą importowanych symboli
 
 {lang="text"}
 ~~~~~~~~
   import qualified Silly.Tree (fringe)
 ~~~~~~~~
 
-and now to call the `fringe` function we have to type `Silly.Tree.fringe`
-instead of just `fringe`. We can also change the name of the module when
-importing it
+Teraz by wywołać `fringe` musimy posłużyć się identyfikatorem `Silly.Tree.fringe` zamiast zwykłego `fringe`. Podczas importowania
+możemy też zmienić nazwę modułu
 
 {lang="text"}
 ~~~~~~~~
   import qualified Silly.Tree as T
 ~~~~~~~~
 
-The `fringe` function is now `T.fringe`.
+tym samym `fringe` stało się `T.fringe`.
 
-Alternatively, rather than select what we want to import, we can choose what to
-**not** import
+Alternatywnie, zamiast deklarować importowane symbole możemy wybrać to czego **nie** chcemy importować
 
 {lang="text"}
 ~~~~~~~~
   import Silly.Tree hiding (fringe)
 ~~~~~~~~
 
-By default the `Prelude` module is implicitly imported but if we add an explicit
-import from the `Prelude` module, only our version is used. We can use this
-technique to hide unsafe legacy functions
+Domyślnie moduł `Prelude` jest niejawnie importowany, ale jeśli zaimportujemy go wprost, to tylko
+nasza wersja będzie użyta. Możemy użyć tego triku aby ukryć niebezpieczne funkcje
 
 {lang="text"}
 ~~~~~~~~
   import Prelude hiding ((!!), head)
 ~~~~~~~~
 
-or use a custom prelude and disable the default prelude with a language extension
+Możemy też całkowicie się go pozbyć za pomocą rozszerzenia języka:
 
 {lang="text"}
 ~~~~~~~~
@@ -661,25 +639,22 @@ or use a custom prelude and disable the default prelude with a language extensio
 ~~~~~~~~
 
 
-## Evaluation
+## Ewaluacja
 
-Haskell compiles to native code, there is no virtual machine, but there is a
-garbage collector. A fundamental aspect of the runtime is that all parameters
-are **lazily evaluated** by default. Haskell treats all terms as a promise to
-provide a value when needed, called a *thunk*. Thunks get reduced only as much
-as necessary to proceed, no more.
+Haskell kompiluje się do kodu natywnego, nie ma więc maszyny wirtualnej, ale nadal jest garbage collector.
+Podstawową właściwością Haskellowego środowiska uruchomieniowego, jest to, że wszystkie parametry są domyślnie
+**leniwie ewaluowane**. Wyrażenia traktowane są jako "thunki", czyli obietnice dostarczenia wartości gdy będzie ona potrzebna.
+Thunki są redukowane tylko gdy jest to absolutnie niezbędne do kontynuowania obliczeń.
 
-A huge advantage of lazy evaluation is that it is much harder to trigger a stack
-overflow! A disadvantage is that there is an overhead compared to strict
-evaluation, which is why Haskell allows us to opt in to strict evaluation on a
-per parameter basis.
+Dużą zaletą leniwej ewaluacji jest to, że zdecydowanie trudniej jest przepełnić stos! Wadą jest nieuchronny
+narzut wydajnościowy, dlatego też Haskell pozwala nam przełączyć się na ścisłą ewaluację dla wybranych przez
+nas parametrów.
 
-Haskell is also nuanced about what strict evaluation means: a term is said to be
-in *weak head normal-form* (WHNF) if the outermost code blocks cannot be reduced
-further, and *normal form* if the term is fully evaluated. Scala's default
-evaluation strategy roughly corresponds to normal form.
+Nie jest też takie oczywiste co tak na prawdę oznacza ścisła ewaluacja. Określa się, że wyrażenie jest w *słabej czołowej postaci normalnej* (WHNF, _weak head normal form_)
+jeśli najbardziej zewnętrzne bloki nie mogą być bardziej zredukowane, oraz w *postaci normalnej* jeśli wyrażenie jest w pełni wyewaluowane.
+Domyślna strategia ewaluacji w Scali odpowiada właśnie postaci normalnej.
 
-For example, these terms are normal form:
+Dla przykładu, te wyrażenia są w postaci normalnej:
 
 {lang="text"}
 ~~~~~~~~
@@ -688,7 +663,7 @@ For example, these terms are normal form:
   \x -> x + 1
 ~~~~~~~~
 
-whereas these are not in normal form (they can be reduced further):
+natomiast poniższe nie są (mogą być dalej redukowane):
 
 {lang="text"}
 ~~~~~~~~
@@ -698,8 +673,8 @@ whereas these are not in normal form (they can be reduced further):
   (1 + 1, "foo")   -- reduces to (2, "foo")
 ~~~~~~~~
 
-The following terms are in WHNF because the outer code cannot be reduced further
-(even though the inner parts can be):
+Następujące wyrażenia są w WHNF ponieważ zewnętrzny kod nie może być zredukowany (mimo że
+części wewnętrzne mogą):
 
 {lang="text"}
 ~~~~~~~~
@@ -708,7 +683,7 @@ The following terms are in WHNF because the outer code cannot be reduced further
   'f' : ("oo" ++ "bar")
 ~~~~~~~~
 
-and the following are not in WHNF
+a te wyrażenia już w WHNF nie są
 
 {lang="text"}
 ~~~~~~~~
@@ -717,9 +692,8 @@ and the following are not in WHNF
   "foo" ++ "bar"     -- reduces to "foobar"
 ~~~~~~~~
 
-The default evaluation strategy is to perform no reductions when passing a term
-as a parameter. Language level support allows us to request WHNF for any term
-with `($!)`
+Domyślną strategią ewaluacji jest niewykonywanie żadnych redukcji gdy wyrażenie przekazywane jest jako parametr.
+Wsparcie na poziomie języka pozwala nam wymusić WHNF dla dowolnego wyrażenia za pomocą `($!)`
 
 {lang="text"}
 ~~~~~~~~
@@ -728,7 +702,7 @@ with `($!)`
   infixr 0
 ~~~~~~~~
 
-We can use an exclamation mark `!` on `data` parameters
+Możemy też użyć wykrzyknika na parametrach konstruktorów danych:
 
 {lang="text"}
 ~~~~~~~~
@@ -737,15 +711,12 @@ We can use an exclamation mark `!` on `data` parameters
   data Employee = Employee { name :: !Text, age :: !Int}
 ~~~~~~~~
 
-The `StrictData` language extension enables strict parameters for all data in
-the module.
+Rozszerzenie języka `StrictData` sprawia, że wszystkie parametry danych w danym module są ściśle ewaluowane.
 
-Another extension, `BangPatterns`, allows `!` to be used on the arguments of
-functions. The `Strict` language extension makes all functions and data
-parameters in the module strict by default.
+Kolejne rozszerzenie, `BangPattern`, pozwala na używanie `!` na argumentach funkcji. Z kolei rozszerzenie
+`Strict` zamienia wszystkie argumenty funkcji na ściśle ewaluowane.
 
-Going to the extreme we can use `($!!)` and the `NFData` typeclass for normal
-form evaluation:
+W ekstremalnym przypadku możemy użyć `($!!)` i typeklasy `NFData` do wymuszenia ewaluacji do postaci normalnej
 
 {lang="text"}
 ~~~~~~~~
@@ -755,55 +726,47 @@ form evaluation:
   ($!!) :: (NFData a) => (a -> b) -> a -> b
 ~~~~~~~~
 
-which is subject to the availability of an `NFData` instance.
+jeśli tylko istnieje instancja tej typeklasy.
 
-The cost of strictness is that Haskell behaves like any other strict language
-and may perform unnecessary work. Opting in to strictness must therefore be done
-with great care, and only for measured performance improvements. If in doubt, be
-lazy and stick with the defaults.
+Kosztem ścisłej ewaluacji jest to, że Haskell zaczyna zachowywać się podobnie jak inne ścisłe języki
+i może wykonywać niepotrzebną pracę. Tym samym przełączanie się w ten tryb musi być wykonane
+z wielką uwagą i tylko gdy mamy do czynienia z mierzalnym wzrostem wydajności. Jeśli masz wątpliwości
+to lepiej zostać przy domyślnej leniwej ewaluacji.
 
-A> There is a big gotcha with lazy evaluation: if an I/O action is performed that
-A> populates a lazy data structure, the action will be performed when the data
-A> structure is evaluated, which can fail in unexpected parts of the code and
-A> outside of the resource handling logic. To avoid this gotcha, only read into
-A> strict data structures when performing I/O.
-A> 
-A> Thankfully this gotcha only affects developers writing low-level I/O code. Third
-A> party libraries such as `pipes-safe` and `conduits` provide safe abstractions
-A> for the typical Haskeller. Most raw byte and `Text` primitives are strict, with
-A> `Lazy` variants.
+A> Istnieje groźna pułapka dotycząca leniwej ewaluacji: jeśli akcja typu I/O populuje leniwą strukturę danych,
+A> to będzie ona wykonana gdy dana struktura jest ewaluowana, grożąc tym samym błędami pochodzącymi
+A> z zupełnie nieoczekiwanych miejsc oraz tym, że wymknie się ona z logiki obsługi zasobów. Aby uniknąć
+A> takich problemów powinniśmy zawsze wczytywać dane z I/O do ścisłych struktur danych.
+A>
+A> Na szczęście dotyczy to jedynie deweloperów piszących niskopoziomowy kod oparty o I/O. Zewnętrzne biblioteki,
+A> takie jak `pipes-safe` lub `conduits` dostarczają bezpieczne abstrakcje dla zwykłego Haskellera.
 
 
-## Next Steps
+## Kolejne kroki
 
-Haskell is a faster, safer and simpler language than Scala and has proven itself
-in industry. Consider taking the [data61 course on functional programming](https://github.com/data61/fp-course), and
-ask questions in the `#qfpl` chat room on `freenode.net`.
+Haskell jest językiem często szybszym, bezpieczniejszym i prostszym niż Scala, który używany jest również
+w biznesie. Rozważ [kurs programowania funkcyjnego od data61](https://github.com/data61/fp-course), a ewentualne
+pytania możesz zawsze zadać w pokoju `#qfpl` na `freenode.net`.
 
-Some additional learning materials are:
+O to parę dodatkowych materiałów, które mogą być pomocne w nauce:
 
--   [Haskell Book](http://haskellbook.com/) a very comprehensive introduction, or [Programming in Haskell](http://www.cs.nott.ac.uk/~pszgmh/pih.html) for
-    a faster ride.
--   [Parallel and Concurrent Programming in Haskell](http://shop.oreilly.com/product/0636920026365.do) and [What I Wish I Knew When
-    Learning Haskell](http://dev.stephendiehl.com/hask/#data-kinds) for intermediate wisdom.
--   [Glasgow Haskell Compiler User Guide](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/) and [HaskellWiki](https://wiki.haskell.org) for the cold hard facts.
--   [Eta](https://eta-lang.org/), i.e. Haskell for the JVM.
+-   [Haskell Book](http://haskellbook.com/) to bardzo wyczerpujące wprowadzenie do języka. Tych, którzy wolą szybszą drogę może zainteresować [Programming in Haskell](http://www.cs.nott.ac.uk/~pszgmh/pih.html)
+-   [Parallel and Concurrent Programming in Haskell](http://shop.oreilly.com/product/0636920026365.do) oraz [What I Wish I Knew When
+    Learning Haskell](http://dev.stephendiehl.com/hask/#data-kinds) dostarczają wiedzy na poziomie zaawansowanym.
+-   [Glasgow Haskell Compiler User Guide](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/) i [HaskellWiki](https://wiki.haskell.org) to z kolei same twarde fakty.
+-   [Eta](https://eta-lang.org/), czyli Haskell na JVMie.
 
-If you enjoy using Haskell and understand the value that it would bring to your
-business, then tell your managers! That way, the small percentage of managers
-who commission Haskell projects will be able to attract functional programming
-talent from the many teams who do not, and everybody will be happy.
+Jeśli podoba Ci się Haskell i doceniasz wartość jaką może przynieść twojej firmie, to powiedz to swoim przełożonym! W ten sposób
+ci nieliczni managerowie, którzy zdecydują się na ten krok mogą przyciągnąć utalentowanych programistów funkcyjnych
+z miejsc, które nie były dość odważne, a wszyscy będą szczęśliwi.
 
+# Licencje
 
-# Third Party Licenses
-
-Some of the source code in this book has been copied from free / libre
-software projects. The license of those projects require that the
-following texts are distributed with the source that is presented in
-this book.
+Niektóre części kodu źródłowego w tej książce zostały skopiowane z wolnego (_free / libre_) oprogramowania.
+Licencje tych projektów wymagają, aby poniższe licencje były rozprowadzane wraz ze wspomnianym kodem.
 
 
-## Scala License
+## Licencja Scali
 
 {lang="text"}
 ~~~~~~~~
@@ -838,7 +801,7 @@ this book.
 ~~~~~~~~
 
 
-## Scalaz License
+## Licencja Scalaz
 
 {lang="text"}
 ~~~~~~~~
