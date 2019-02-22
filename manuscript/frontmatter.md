@@ -14,8 +14,8 @@
 
 Książka ta jest kierowana do zwykłego programisty Scali, prawdopodobnie z
 doświadczeniem Javowym, który zaciekawiony jest paradygmatem **Programowania Funkcyjnego**.
-Każdy koncept, który przedstawiamy uzasadniany jest praktycznym przykładem, a cała książka
-zwięczona jest stworzeniem w pełni funkcjonalnej aplikacji webowej.
+Każdy koncept, który przedstawiamy, uzasadniany jest praktycznym przykładem, a cała książka
+zwieńczona jest stworzeniem w pełni funkcjonalnej aplikacji webowej.
 
 Niniejsza książka używa [Scalaz 7.2](https://github.com/scalaz/scalaz), najpopularniejszej, najstabilniejszej,
 najbardziej pryncypialnej[^principled] i najbardziej kompleksowej biblioteki do Programowania Funkcyjnego w Scali.
@@ -24,12 +24,12 @@ najbardziej pryncypialnej[^principled] i najbardziej kompleksowej biblioteki do 
 
 Książka ta została napisana z myślą o czytaniu jej od deski do deski, w zaprezentowanej kolejności i z 
 przerwami na odpoczynek między rozdziałami. Początkowe rozdziały zachęcają do programowania w sposób, który
-w później zdyskredytujemy: podobnie jak uczymy się teorii grawitacji Newtona jako dzieci
-aby później przejść do Riemanna / Einsteina / Maxwella jeśli zechcemy studiować fizykę.
+w później zdyskredytujemy: podobnie jak uczymy się teorii grawitacji Newtona jako dzieci,
+aby później przejść do Riemanna / Einsteina / Maxwella, jeśli zechcemy studiować fizykę.
 
-Komputer nie jest niezbędny aby podążać za treścią, ale zachęcamy do zgłębienia kodu źródłowego Scalaz. Niektóre z bardziej
-skomplikowanych fragmentów kodu są dostępne wraz z [źródłami tej książki](https://github.com/fommil/fpmortals/), a
-ci, którzy żądni są praktycznych ćwiczeń powinni spróbować (zre)implementować Scalaz (oraz naszą przykładową aplikację)
+Komputer nie jest niezbędny, aby podążać za treścią, ale zachęcamy do zgłębienia kodu źródłowego Scalaz. Niektóre z bardziej
+skomplikowanych fragmentów kodu są dostępne wraz ze [źródłami tej książki](https://github.com/fommil/fpmortals/), a
+ci, którzy żądni są praktycznych ćwiczeń, powinni spróbować (zre)implementować Scalaz (oraz naszą przykładową aplikację)
 używając częściowych opisów, które zaprezentujemy.
 
 Jako kolejny krok polecamy również [Czerwoną Książkę](https://www.manning.com/books/functional-programming-in-scala)[^redbook]. 
@@ -43,7 +43,7 @@ Pokazuje ona jak stworzyć bibliotekę wspierającą programowanie funkcyjne, ta
 [^copyleft]: _Copyleft notice_.
 
 Ta książka jest **Wolna**[^libre] i podąża za filozofią [Wolnego Oprogramowania](https://www.gnu.org/philosophy/free-sw.en.html):
-możesz używać jej jak tylko chcesz, [źródła są dostępne](https://github.com/fommil/fpmortals/), możesz ją redystrybuować 
+możesz używać jej, jak tylko chcesz, [źródła są dostępne](https://github.com/fommil/fpmortals/), możesz ją redystrybuować 
 oraz dystrybuować swoją własną wersję. Oznacza to że możesz ja wydrukować, fotokopiować, wysyłać mailem, uploadować 
 na strony internetowe, zmieniać, tłumaczyć, pobierać opłaty, remiksować, usuwać kawałki i malować po dowolnych fragmentach.
 
@@ -93,23 +93,23 @@ Christopher Davenport, Jose Cardona, Isaac Elliott.
 
 # Nota tłumacza
 
-Angielski stał się _de facto_ uniwersalnym językiem programistów, a zarówno dostępność jak i konsumpcja treści 
+Angielski stał się _de facto_ uniwersalnym językiem programistów, a zarówno dostępność, jak i konsumpcja treści 
 technicznych w innych językach jest bardzo niewielka. Niesie to ze sobą implikacje również i dla tej książki 
 oraz jej tłumaczenia. Przy tłumaczeniu staraliśmy się brać pod uwagę, że wszelkie kroki po przeczytaniu tej książki, 
 takie jak wyszukiwanie dodatkowych materiałów, zadawanie pytań lub zwykła komunikacja z innymi programistami,
 najprawdopodobniej odbywać się będą z użyciem języka angielskiego. Dlatego też staraliśmy się używać tłumaczeń jak 
 najbardziej zbliżonych do wersji oryginalnych, co poskutkowało tym, że duża ich część może brzmieć śmiesznie, dziwnie lub
-nawet absurdalnie. W wielu miejscach używamy form potocznych i słowotwórstwa, które nie znalazły by miejsca w 
-poważnej literaturze technicznej. Dodatkowo, w momencie gdy wprowadzamy tłumaczenie, dla którego odtworzenie 
+nawet absurdalnie. W wielu miejscach używamy form potocznych i słowotwórstwa, które nie znalazłyby miejsca w 
+poważnej literaturze technicznej. Co więcej, w momencie, gdy wprowadzamy tłumaczenie, dla którego odtworzenie 
 wersji oryginalnej może być nieoczywiste, podajemy tę wersję wprost, w nawiasach bądź przypisach.
 
 Pamiętajmy również, że jest to tłumaczenie amatorskie, motywowane jedynie chęcią popularyzacji Scali i 
 programowania funkcyjnego, a nie zyskiem, dlatego też w wielu miejscach może ono odbiegać od profesjonalnych
 standardów. Z kolei użycie liczby mnogiej w tej nocie i późniejszych przypisach, wynika z kolei jedynie z megalomanii 
-tłumacza, a nie z faktu że była to praca zespółu profesjonalistów.
+tłumacza, a nie z faktu, że była to praca zespołu profesjonalistów.
 
 Chcielibyśmy również uprzedzić, że część tłumaczeń może nie pokrywać się (z różnych powodów) z tłumaczeniami tych samych terminów
-wprowadzonymi przez innych autorów. Wynika to z 2 rzeczy. Po pierwsze, jak wspomniano wyżej, wierzymy że
+wprowadzonymi przez innych autorów. Wynika to z 2 rzeczy. Po pierwsze, jak wspomniano wyżej, wierzymy, że
 to wersje oryginalne są najistotniejsze, a polskie tłumaczenie jest tutaj jedynie pomocą obniżającą próg wejścia. Po drugie,
 jak również wspomniano powyżej, jest to tłumaczenie realizowane minimalnym wysiłkiem i bez zasobów potrzebnych na analizę
 wcześniejszych prac i tłumaczeń. Mimo to mamy nadzieję, że lektura sprawi wam przyjemność.
@@ -117,7 +117,7 @@ wcześniejszych prac i tłumaczeń. Mimo to mamy nadzieję, że lektura sprawi w
 
 # Aspekty praktyczne
 
-Aby skonfigurować projekt używający bibliotek prezentowanych w tej książce użyjemy aktualnej wersji Scali wraz
+Aby skonfigurować projekt używający bibliotek prezentowanych w tej książce, użyjemy aktualnej wersji Scali wraz
 z opcjami specyficznymi dla Programowania Funkcyjnego. Oto `build.sbt`:
 
 {lang="text"}
@@ -138,7 +138,7 @@ z opcjami specyficznymi dla Programowania Funkcyjnego. Oto `build.sbt`:
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
 ~~~~~~~~
 
-Aby fragmenty kodu były krótkie, ominiemy sekcje `import`ów i jeeśli nie zaznaczono inaczej,
+Aby fragmenty kodu były krótkie, ominiemy sekcje `import`ów i jeśli nie zaznaczono inaczej,
 to należy przyjąć, że wszystkie fragmenty zawierają:
 
 {lang="text"}
