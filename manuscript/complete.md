@@ -1,5 +1,5 @@
 
-# For Comprehensions
+# Konstrukcja `for`
 
 `for comprehension` to idealna abstrakcja do pisania funkcyjnych programów komunikujących się ze światem.
 Ponieważ będziemy używać jej bardzo często poświęcimy chwilę na przypomnienie sobie jej zasad działania a
