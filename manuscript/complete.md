@@ -2,21 +2,19 @@
 # Konstrukcja `for`
 
 `for comprehension` to idealna abstrakcja do pisania funkcyjnych programów komunikujących się ze światem.
-Ponieważ będziemy używać jej bardzo często poświęcimy chwilę na przypomnienie sobie jej zasad działania a
-przy okazji zobaczymy jak Scalaz może pomóc nam pisać czystszy kod.
+Ponieważ będziemy używać jej bardzo często, poświęcimy chwilę na przypomnienie sobie zasad jej działania, a
+przy okazji zobaczymy, jak Scalaz może pomóc nam pisać czystszy kod.
 
-Ten rozdział nie skupia się na programowaniu czysto funkcyjnym a techniki w nim opisane znajdą zastosowanie
-również w aplikacjach niefunkcyjnych.
+Ten rozdział nie skupia się na programowaniu czysto funkcyjnym, a techniki w nim opisane znajdą zastosowanie
+również w zwykłych aplikacjach.
 
-## Syntax Sugar
+## Wzbogacona składnia
 
-Konstrukcja `for` w Scali jest prostą reguła przepisania (_rewrite rule_), zwaną również *syntax sugar*[^syntaxsugar], 
+Konstrukcja `for` w Scali jest prostą regułę przepisania (_rewrite rule_), zwaną również *cukrem składniowym* (_syntactic sugar_), 
 i nie wnosi żadnych dodatkowych informacji do naszego programu.
 
-[^syntaxsugar]: Tłumaczenie _cukier składniowy_ jest tak niedorzeczne, że zdecydowaliśmy pozostać przy wersji angielskiej.
-
-Aby zobaczyć co tak na prawdę robi `for` użyjemy funkcji `show` i `reify` dostępnych w REPLu. Dzięki nim możemy
-wypisać kod w formie jaką przyjmuje po inferencji typów (_type inference_). 
+Aby zobaczyć, co tak naprawdę robi `for`, użyjemy funkcji `show` i `reify` dostępnych w REPLu. Dzięki nim możemy
+wypisać kod w formie, jaką przyjmuje po inferencji typów (_type inference_). 
 
 {lang="text"}
 ~~~~~~~~
@@ -33,9 +31,9 @@ wypisać kod w formie jaką przyjmuje po inferencji typów (_type inference_).
         ((k) => i.$plus(j).$plus(k)))))))
 ~~~~~~~~
 
-Widzimy dużo szumu spowodowanego dodatkowymi wzbogaceniami (np. `+` jest przepisany jako `$plus`, itp.). 
-Dla zwiększenia zwięzłości w dalszych przykładach pominiemy wywołania `show` oraz `reify` kiedy linia rozpoczyna się 
-od `reify>`. Dodatkowo generowany kod poddamy ręcznemu oczyszczeniu aby nie rozpraszać czytelnika.
+Widzimy dużo szumu spowodowanego dodatkowymi wzbogaceniami (np. `+` jest przepisany jako `$plus` itp.). 
+Dla zwiększenia zwięzłości w dalszych przykładach pominiemy wywołania `show` oraz `reify`, kiedy linia rozpoczyna się 
+od `reify>`. Dodatkowo generowany kod poddamy ręcznemu oczyszczeniu, aby nie rozpraszać czytelnika.
 
 {lang="text"}
 ~~~~~~~~
@@ -48,11 +46,11 @@ od `reify>`. Dodatkowo generowany kod poddamy ręcznemu oczyszczeniu aby nie roz
 ~~~~~~~~
 
 Zasadą kciuka jest, że każdy `<-` (zwany *generatorem*) jest równoznaczny z zagnieżdżonym wywołaniem `flatMap`,
-z wyjątkiem ostatniego, który jest wywołaniem funkcji `map` do której przekazane zostaje ciało bloku `yield`.
+z wyjątkiem ostatniego, który jest wywołaniem funkcji `map`, do której przekazane zostaje ciało bloku `yield`.
 
 ### Przypisania
 
-Możemy bezpośrednio przypisywać wartości do zmiennych za pomocą wyrażeń typu `ij = i + j` (słowo kluczowe `val` nie jest wymagane)
+Możemy bezpośrednio przypisywać wartości do zmiennych za pomocą wyrażeń typu `ij = i + j` (słowo kluczowe `val` nie jest wymagane).
 
 {lang="text"}
 ~~~~~~~~
@@ -69,11 +67,11 @@ Możemy bezpośrednio przypisywać wartości do zmiennych za pomocą wyrażeń t
         k => ij + k }}}
 ~~~~~~~~
 
-Wywołanie `map` na `b` wprowadza zmienną `ij` która jest flat-mapowana razem z `j`, a na końcu
+Wywołanie `map` na `b` wprowadza zmienną `ij`, która jest flat-mapowana razem z `j`, a na końcu
 wołane jest ostateczne `map` wykorzystujące kod z bloku `yield`.
 
 Niestety nie możemy deklarować przypisań przed użyciem generatora. Funkcjonalność ta
-została zasugerowana ale nie została jeszcze zaimplementowana: 
+została zasugerowana, ale nie została jeszcze zaimplementowana: 
 <https://github.com/scala/bug/issues/907>
 
 {lang="text"}
@@ -104,7 +102,7 @@ lub poprzez stworzenie `Option` z pierwotnej wartości
 ~~~~~~~~
 
 
-A> `val` oprócz przypisywania pojedynczych wartości wspiera także dowolne wyrażenia poprawne w kontekście `case` znanym z pattern matchingu.
+A> Słowo kluczowe `val`, oprócz przypisywania pojedynczych wartości, wspiera także dowolne wyrażenia dopasowania.
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -130,8 +128,8 @@ A>          } yield first
 A>   res: Some(hello)
 A> ~~~~~~~~
 A> 
-A> Trzeba jednak uważać aby nie pominąć żadnego z wariantów gdyż skutkować to będzie wyjątkiem wyrzuconym w trakcie 
-A> działania programu (zaburzenie *totalności*).
+A> Trzeba jednak uważać, aby nie pominąć żadnego z wariantów, gdyż skutkować to będzie wyjątkiem wyrzuconym w trakcie 
+A> działania programu (a w konsekwencji zaburzeniem *totalności*).
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -140,9 +138,9 @@ A>   caught scala.MatchError: List()
 A> ~~~~~~~~
 
 
-### Filter
+### Filtrowanie
 
-Możemy umieścić wyrażenie `if` za generatorem aby ograniczyć wartości za pomocą predykatu
+Możemy umieścić wyrażenie `if` za generatorem, aby ograniczyć wartości za pomocą predykatu
 
 {lang="text"}
 ~~~~~~~~
@@ -160,8 +158,8 @@ Możemy umieścić wyrażenie `if` za generatorem aby ograniczyć wartości za p
           k => i + j + k }}}
 ~~~~~~~~
 
-Starsze wersje Scali używały metody `filter`, ale ponieważ `Traversable.filter` tworzy nową kolekcje dla każdego predykatu,
-wprowadzono metodę `withFilter` jako bardziej wydajną alternatywę. Możemy przypadkowo wywołać `withFilter` podając informację 
+Starsze wersje Scali używały metody `filter`, ale ponieważ `Traversable.filter` tworzy nową kolekcję dla każdego predykatu,
+wprowadzono metodę `withFilter` jako bardziej wydajną alternatywę. Musimy uważać, aby przypadkowo nie wywołać `withFilter`, podając informację 
 co do oczekiwanego typu, którą kompilator interpretuje jako pattern matching.
 
 {lang="text"}
@@ -174,27 +172,32 @@ co do oczekiwanego typu, którą kompilator interpretuje jako pattern matching.
   }.map { case i: Int => i }
 ~~~~~~~~
 
-Podobnie do przypisywania zmiennych, generatory mogą używać pattern matchingu po swojej lewej stronie. W przeciwieństwie 
+Podobnie jak w przypadku przypisywania wartości do zmiennych, generatory mogą używać pattern matchingu po swojej lewej stronie. W przeciwieństwie 
 do przypisań (które rzucają `MatchError` w przypadku niepowodzenia), generatory są *filtrowane* i nie rzucają wyjątków 
-w czasie wykonania. Niestety dzieje się to kosztem podwójnego zaaplikowania wzoru (_pattern_).
+w czasie wykonania. Niestety dzieje się to kosztem podwójnego zaaplikowania wzoru.
 
 A> Plugin kompilatora [`better-monadic-for`](https://github.com/oleg-py/better-monadic-for) produkuje alternatywną, **lepszą**
-A> wersję kodu niż oryginalny kompilator Scali. Ten przykład jest interpretowany jako:
+A> wersję kodu niż oryginalny kompilator Scali. Poniższy przykład:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
 A>   reify> for { i: Int <- a } yield i
-A>   
+A> ~~~~~~~~
+A>
+A> jest interpretowany jako
+A>
+A> {lang="text"}
+A> ~~~~~~~~
 A>   a.map { (i: Int) => i}
 A> ~~~~~~~~
 A> 
-A> zamiast nieefektywnego podwójnego dopasowywania (_matching_) (w najlepszym przypadku) i potajemnego filtrowania
-A> wartości w czasie wykonania (w przypadku najgorszym). Używanie wysoce zalecane.
+A> zamiast nieefektywnego podwójnego dopasowywania (w najlepszym przypadku) i potajemnego filtrowania
+A> wartości w czasie wykonania (w przypadku najgorszym). Używanie wysoce zalecane!
 
 ### For Each
 
-W końcu, jeśli nie użyjemy słowa `yield`, kompilator użyje metody `foreach` zamiast `flatMap`, która użyteczna
-jest jedynie w przypadku użycia efektów ubocznych.
+Jeśli nie użyjemy słowa `yield`, kompilator użyje metody `foreach` zamiast `flatMap`, co ma sens
+jedynie w obecności efektów ubocznych.
 
 {lang="text"}
 ~~~~~~~~
@@ -206,8 +209,8 @@ jest jedynie w przypadku użycia efektów ubocznych.
 
 ### Podsumowanie
 
-Pełen zbiór metod używanych przez konstrukcję `for` nie ma jednego wspólnego interfejsu; każde użycie jest 
-niezależnie kompilowane. Gdyby taki interfejs istniał wyglądałby mniej więcej tak:
+Pełen zbiór metod używanych przez konstrukcję `for` nie ma jednego wspólnego interfejsu, a każde użycie jest 
+niezależnie kompilowane. Gdyby taki interfejs istniał, wyglądałby mniej więcej tak:
 
 {lang="text"}
 ~~~~~~~~
@@ -220,10 +223,10 @@ niezależnie kompilowane. Gdyby taki interfejs istniał wyglądałby mniej więc
 ~~~~~~~~
 
 Jeśli kontekst (`C[_]`) konstrukcji `for` nie dostarcza swoich własnych metod `map` i `flatMap` 
-to nie wszystko jeszcze stracone. Jeśli dostępna jest niejawna (_implicit_)  instancja typu `scalaz.Bind[T]` dla `T`
+to nie wszystko jeszcze stracone. Jeśli dostępna jest niejawna instancja typu `scalaz.Bind[C]`
 to dostarczy ona potrzebne metody `map` oraz `flatMap`.
 
-A> Developerzy często zaskakiwani są faktem, że operacje oparte o typ `Future` i zdefiniowane wewnątrz konstrukcji `for`
+A> Deweloperzy często zaskakiwani są faktem, że operacje oparte o typ `Future` i zdefiniowane wewnątrz konstrukcji `for`
 A> nie są wykonywane równolegle:
 A> 
 A> {lang="text"}
@@ -237,8 +240,8 @@ A>     j <- Future { anotherExpensiveCalc() }
 A>   } yield (i + j)
 A> ~~~~~~~~
 A> 
-A> Dzieję się tak ponieważ funkcja przekazana do metody `flatMap`, która wywołuje `anotherExpensiveCalc`, wykonuje się wyłącznie
-A> **po** zakończeniu `expensiveCalc`. Aby wymusić równoległe wykonanie tych dwóch operacji musimy utworzyć je poza
+A> Dzieje się tak, ponieważ funkcja przekazana do metody `flatMap`, która wywołuje `anotherExpensiveCalc`, wykonuje się wyłącznie
+A> **po** zakończeniu `expensiveCalc`. Aby wymusić równoległe wykonanie tych dwóch operacji, musimy utworzyć je poza
 A> konstrukcją `for`.
 A> 
 A> {lang="text"}
@@ -252,15 +255,13 @@ A> Konstrukcja `for` zaprojektowana jest wyłącznie do definiowania programów 
 A> rozdziałów pokażemy o wiele lepszą metodę definiowania obliczeń równoległych. Spoiler: nie używaj typu `Future`.
 
 
-## Nieszczęśliwa ścieżka[^unhappypath]
+## Obsługa błędów
 
-[^unhappypath]: Jest to kuriozalne tłumaczenie wyrażenia _unhappy path_. Ale wydało nam się całkiem zabawne.
+Jak dotąd patrzyliśmy jedynie na reguły przepisywania, nie natomiast na to, co dzieje się wewnątrz metod `map` i `flatMap`.
+Zastanówmy się co dzieje się, kiedy kontekst `for` zadecyduje, że nie może kontynuować działania.
 
-Jak dotąd patrzyliśmy jedynie na reguły przepisywania, nie natomiast no to co dzieje się wewnątrz metod `map` i `flatMap`.
-Zastanówmy się co dzieje się kiedy kontekst `for` zadecyduje że nie może kontynuować działania.
-
-W przykładzie bazującym na typie `Option`, blok `yield` jest wywoływany jest jedynie kiedy wartości wszystkich zmiennych 
-`i,j,k` są zdefiniowane.
+W przykładzie bazującym na typie `Option` blok `yield` wywoływany jest jedynie kiedy wartości wszystkich zmiennych 
+`i, j, k` są zdefiniowane.
 
 {lang="text"}
 ~~~~~~~~
@@ -271,12 +272,12 @@ W przykładzie bazującym na typie `Option`, blok `yield` jest wywoływany jest 
   } yield (i + j + k)
 ~~~~~~~~
 
-Jeśli którakolwiek ze zmiennych `a,b,c` przyjmie wartość `None`, konstrukcja `for` zrobi zwarcie[^zwarcie] i zwróci `None` nie mówiąc
+Jeśli którakolwiek ze zmiennych `a, b, c` przyjmie wartość `None`, konstrukcja `for` zrobi zwarcie[^zwarcie] i zwróci `None`, nie mówiąc
 nam co poszło nie tak.
 
-[^zwarcie]: Z angielskiego _short-circuits_. Chodzi tutaj o zakończenie przetwarzania bez wykonywania pozostałych instrukcji.
+[^zwarcie]: Z angielskiego _short-circuits_ - zakończenie przetwarzania bez wykonywania pozostałych instrukcji.
 
-A> W praktyce możemy zobaczyć wiele funkcji z parametrami typu `Option`, które w rzeczywistości muszą być zdefiniowane
+A> W praktyce możemy zobaczyć wiele funkcji z parametrami typu `Option`, które w rzeczywistości muszą być zdefiniowane,
 A> aby uzyskać sensowny rezultat. Alternatywą do rzucania wyjątku jest użycie konstrukcji `for`, która zapewni nam totalność
 A> naszej funkcji (zwrócenie wartości dla każdego możliwego argumentu):
 A> 
@@ -291,16 +292,16 @@ A>     number <- someNumber
 A>   } yield s"$number ${name}s"
 A> ~~~~~~~~
 A> 
-A> jest to jednak rozwiązanie rozwlekłe, niezdarne i w złym stylu. Jeśli funkcja wymaga wszystkich swoich argumentów
+A> jest to jednak rozwiązanie rozwlekłe, niezdarne i w złym stylu. Jeśli funkcja wymaga wszystkich swoich argumentów,
 A> to powinna zadeklarować takie wymaganie jawnie, spychając tym samym obowiązek obsłużenia brakujących wartości na 
-A> wywołującego tęże funkcję.
+A> wywołującego tę funkcję.
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
 A>   def namedThings(name: String, num: Int) = s"$num ${name}s"
 A> ~~~~~~~~
 
-Jeśli użyjemy typu `Either`, wtedy to `Left` powodować będzie zwarcie konstrukcji `for` z dodatkową informacją którą niesie w sobie.
+Jeśli użyjemy typu `Either`, wtedy `Left` powodować będzie zwarcie konstrukcji `for` z dodatkową informacją, którą niesie w sobie.
 Rozwiązanie to jest zdecydowanie lepsze w przypadku raportowania błędów niż użycie typu `Option`:
 
 {lang="text"}
@@ -327,12 +328,12 @@ Na koniec spójrzmy co stanie się z typem `Future`, który zawiedzie
   caught java.lang.Throwable
 ~~~~~~~~
 
-Wartość `Future`, która wypisuje wiadomość do terminala nie jest nigdy tworzona, ponieważ, 
+Wartość `Future`, która wypisuje wiadomość do terminala, nie jest nigdy tworzona, ponieważ, 
 tak jak w przypadku `Option` i `Either`, konstrukcja `for` zwiera obwód i zakańcza przetwarzanie.
 
 Zwieranie obwodu w przypadku odejścia od oczekiwanej ścieżki przetwarzania jest ważnym i często spotykanym rozwiązaniem.
-Konstrukcja `for` nie jest w stanie obsłużyć uprzątnięcia zasobów (_resource cleanup_): nie ma możliwości wyrażenia zachowania 
-podobnego do `try`/`finally`. Rozwiązanie to jest dobre, gdyż w programowaniu funkcyjnym jasno deklaruje że to kontekst 
+Pamiętajmy, że konstrukcja `for` nie jest w stanie obsłużyć uprzątnięcia zasobów (_resource cleanup_), a więc nie ma możliwości wyrażenia zachowania 
+podobnego do `try`/`finally`. Rozwiązanie to jest dobre, gdyż jasno deklaruje, że to kontekst 
 (który zazwyczaj jest `Monad`ą, jak zobaczymy później), a nie logika biznesowa, jest odpowiedzialny za obsługę błędów 
 i uprzątnięcie zasobów.
 
@@ -340,13 +341,13 @@ i uprzątnięcie zasobów.
 ## Gimnastyka
 
 Chociaż łatwo jest przepisać prosty kod sekwencyjny przy pomocy konstrukcji `for`,
-czasami chcielibyśmy zrobić coś co wymaga mentalnych fikołków. Ten rozdział zbiera
+czasami chcielibyśmy zrobić coś, co w praktyce wymaga mentalnych fikołków. Ten rozdział zbiera
 niektóre praktyczne przykłady i pokazuje jak sobie z nimi radzić.
 
 
 ### Wyjście awaryjne
 
-Powiedzmy że wywołujemy metodę, która zwraca typ `Option`. Jeśli wywołanie to się nie powiedzie,
+Powiedzmy, że wywołujemy metodę, która zwraca typ `Option`. Jeśli wywołanie to się nie powiedzie,
 chcielibyśmy użyć innej metody (i tak dalej i tak dalej), np. gdy używamy cache'a.
 
 {lang="text"}
@@ -365,7 +366,7 @@ Jeśli chcemy zrobić to samo poprzez asynchroniczną wersję tego samego API
   def getFromSql(s: String): Future[Option[String]]
 ~~~~~~~~
 
-musimy uważać aby nie spowodować zbędnych obliczeń, ponieważ
+musimy uważać, aby nie spowodować zbędnych obliczeń, ponieważ
 
 {lang="text"}
 ~~~~~~~~
@@ -388,7 +389,7 @@ uruchomi oba zapytania. Możemy użyć pattern matchingu na pierwszym rezultacie
   } yield res
 ~~~~~~~~
 
-Musimy stworzyć `Future` ze zmiennej `cache`
+Musimy stworzyć `Future` ze zmiennej `cache`.
 
 {lang="text"}
 ~~~~~~~~
@@ -437,7 +438,7 @@ co można zapisać asynchronicznie jako
   } yield b * 10
 ~~~~~~~~
 
-Lecz jeśli chcemy zakończyć obliczenia z poprawna wartością, prosty kod synchroniczny:
+Lecz jeśli chcemy zakończyć obliczenia z poprawną wartością, prosty kod synchroniczny:
 
 {lang="text"}
 ~~~~~~~~
@@ -448,7 +449,7 @@ Lecz jeśli chcemy zakończyć obliczenia z poprawna wartością, prosty kod syn
   else a * getB
 ~~~~~~~~
 
-przekłada się na zagnieżdżone konstrukcje `for` gdy tylko nasze zależności stają się asynchroniczne:
+przekłada się na zagnieżdżone konstrukcje `for`, gdy tylko nasze zależności staną się asynchroniczne:
 
 {lang="text"}
 ~~~~~~~~
@@ -465,7 +466,7 @@ A> Jeśli dostępna jest domyślna instancja `Monad[T]` dla `T[_]` (co oznacza, 
 A> Scalaz pozwala nam tworzyć instancje `T[A]` używając wartości `a: A` poprzez wywołanie `a.pure[T]`.
 A> 
 A> Scalaz dostarcza instancję `Monad[Future]` a `.pure[Future]` wywołuje `Future.successful`.
-A> Poza tym że `pure` jest nieco bardziej zwięzłe, jest to koncept ogólny, który aplikuje się do typów innych niż `Future`
+A> Poza tym, że `pure` jest nieco bardziej zwięzłe, jest to pojęcie ogólne, które aplikuje się do typów innych niż `Future`,
 A> a przez to jest to rozwiązanie rekomendowane.
 A> 
 A> {lang="text"}
@@ -480,7 +481,7 @@ A> ~~~~~~~~
 
 ## Niepojmowalny
 
-Kontekst którego używamy wewnątrz konstrukcji `for` musi być niezmienny: nie możemy mieszać wielu równych typów jak 
+Kontekst, którego używamy wewnątrz konstrukcji `for`, musi być niezmienny: nie możemy mieszać wielu różnych typów jak 
 na przykład `Future` i `Option`.
 
 {lang="text"}
@@ -498,10 +499,9 @@ na przykład `Future` i `Option`.
                 ^
 ~~~~~~~~
 
-Nie ma nic, co pozwoliło by nam mieszać dowolne dwa konteksty wewnątrz konstrukcji `for`. Wynika 
-to za faktu, że nie da się zdefiniować znaczenia takiej operacji.
+Nie ma nic, co pozwoliłoby nam mieszać dowolne dwa konteksty wewnątrz konstrukcji `for`, ponieważ nie da się zdefiniować znaczenia takiej operacji.
 
-Jednak gdy mamy do czynienia z zagnieżdżonymi kontekstami intencja jest zazwyczaj oczywista, tymczasem 
+Jednak gdy mamy do czynienia z konkretnymi kontekstami intencja jest zazwyczaj oczywista, tymczasem 
 kompilator nadal nie przyjmuje naszego kodu.
 
 {lang="text"}
@@ -516,13 +516,13 @@ kompilator nadal nie przyjmuje naszego kodu.
   <console>:30: error: value * is not a member of Option[Int]
 ~~~~~~~~
 
-Chcielibyśmy aby konstrukcja `for` zajęła się zewnętrznym kontekstem i pozwoliła nam
-skupić się modyfikacji zagnieżdżonej wartości typu `Option`. 
+Chcielibyśmy, aby konstrukcja `for` zajęła się zewnętrznym kontekstem i pozwoliła nam
+skupić się modyfikacji wartości wewnątrz instancji typu `Option`. 
 Ukrywaniem zewnętrznego kontekstu zajmują się tzw. transformatory monad (_monad transformers_), 
-a Scalaz dostarcza nam implementacje tychże dla typów `Option` i `Either` nazywające się 
+a Scalaz dostarcza nam implementacje tychże dla typów `Option` i `Either`, nazywające się 
 odpowiednio `OptionT` oraz `EitherT`.
 
-Kontekst zewnętrzny może być dowolnym kontekstem który sam w sobie kompatybilny jest z konstrukcją `for`,
+Kontekst zewnętrzny może być dowolnym kontekstem, który sam w sobie kompatybilny jest z konstrukcją `for`,
 musi jedynie pozostać niezmienny.
 
 Tworzymy instancję `OptionT` z każdego wywołania metody, zmieniając tym samym kontekst z `Future[Option[_]]` 
@@ -546,7 +546,7 @@ na `OptionT[Future, _]`.
 ~~~~~~~~
 
 Transformatory monad pozwalają nam mieszać wywołania funkcji zwracających `Future[Option[_]]` z
-funkcjami zwracającymi po prostu `Future` poprzez `.liftM[OptionT]` (pochodzące ze scalaz):
+funkcjami zwracającymi po prostu `Future` poprzez metodę `.liftM[OptionT]` (pochodzącą ze scalaz):
 
 {lang="text"}
 ~~~~~~~~
@@ -560,7 +560,7 @@ funkcjami zwracającymi po prostu `Future` poprzez `.liftM[OptionT]` (pochodząc
 ~~~~~~~~
 
 Dodatkowo możemy mieszać wartości typu `Option` poprzez wywołanie
-`Future.successful` (`.pure[Future]`) a następnie `OptionT`.
+`Future.successful` (lub `.pure[Future]`), a następnie `OptionT`.
 
 {lang="text"}
 ~~~~~~~~
@@ -574,7 +574,7 @@ Dodatkowo możemy mieszać wartości typu `Option` poprzez wywołanie
   result: OptionT[Future, Int] = OptionT(Future(<not completed>))
 ~~~~~~~~
 
-Znów zrobił się bałagan, ale i tak jest lepiej niż gdybyśmy musieli ręcznie pisać zagnieżdżone 
+Znów zrobił się mały bałagan, ale i tak jest lepiej niż gdybyśmy ręcznie pisali zagnieżdżone 
 wywołania metod `flatMap` oraz `map`. Możemy nieco uprzątnąć za pomocą  DSLa który obsłuży
 wszystkie wymagane konwersje
 
@@ -602,12 +602,12 @@ podanym z lewej strony, możemy wizualnie oddzielić logikę od transformacji.
 ~~~~~~~~
 
 A> `|>` jest często nazywany *operatorem drozda* z powodu jego podobieństwa do tego słodkiego ptaka.
-A> Ci, który nie lubią operatorów symbolicznych mogą użyć aliasu `.into`. 
+A> Ci, który nie lubią operatorów symbolicznych, mogą użyć aliasu `.into`. 
 
-To podejście działa również dla `Either` (i innych) ale w ich przypadku metody pomocnicze są bardziej skomplikowane
+To podejście działa również dla `Either` i innych typów danych, ale w ich przypadku metody pomocnicze są bardziej skomplikowane
 i wymagają dodatkowy parametrów. Scalaz dostarcza wiele transformatorów
-monad dla typów które definiuje, więc zawsze 
-warto sprawdzić czy ten którego potrzebujemy jest dostępny.
+monad dla typów, które definiuje, więc zawsze 
+warto sprawdzić, czy ten, którego potrzebujemy jest dostępny.
 
 
 # Projektowanie Aplikacji
@@ -7041,7 +7041,7 @@ taki program przeżyje dłużej niż kilka sekund. Możemy użyć metody `.forev
 ~~~~~~~~
 
 Scalaz definiuje typeklasę `BindRec`, którą mogą implementować `Monad`y niezagrażające przeładowywaniem stosu (_stack safe_):. 
-Wymaga ona zachowywania stałego rozmiaru stosu przy rekurencyjnych wywołaniach `bind`:
+Wymaga ona zachowywania stałegoe rozmiaru stosu przy rekurencyjnych wywołaniach `bind`:
 
 {lang="text"}
 ~~~~~~~~
