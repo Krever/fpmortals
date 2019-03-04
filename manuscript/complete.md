@@ -3603,7 +3603,7 @@ ale sprawia to, że nie mamy żadnych instancji typeklas dla tych nowych typów.
 wartości w JSONie, musielibyśmy dostarczyć `JsEncoder` i `JsDecoder`.
 
 Jednakże, `JsEncoder` ma instancję typeklasy `Contravariant` a `JsDecoder` typeklasy `Functor`, a więc możemy
-wyderywować potrzebne nam instancje spełniając kontrakt:
+wyderywować potrzebne nam instancje, spełniając kontrakt:
 
 -   "jeśli dasz mi `JsDecoder` dla `Double` i sposób na zamianę `Double` w `Alpha`, wtedy dam ci `JsDecoder` dla `Alpha`".
 -   "jeśli dasz mi `JsEncoder` dla `Double` i sposób na zamianę `Alpha` w `Double`, wtedy dam ci `JsEncoder` dla `Alpha`".
@@ -3618,11 +3618,11 @@ wyderywować potrzebne nam instancje spełniając kontrakt:
 
 Metody w klasie mogą ustawić swoje parametry typu w *pozycji kontrawariantnej* (parametry metody) lub
 w *pozycji kowariantnej* (typ zwracany). Jeśli typeklasa łączy pozycje kowariantne i kontrawariantne może oznaczać to, że
-ma instancję typeklasy `InvariantFunctor` ale nie `Functor` ani `Contrawariant`.
+ma instancję typeklasy `InvariantFunctor`, ale nie `Functor` ani `Contrawariant`.
 
 ## Apply i Bind
 
-Potraktuj to jako rozgrzewkę przez typami `Applicative` i `Monad`
+Potraktuj tę część jako rozgrzewkę przed typami `Applicative` i `Monad`
 
 {width=100%}
 ![](images/scalaz-apply.png)
@@ -3630,8 +3630,8 @@ Potraktuj to jako rozgrzewkę przez typami `Applicative` i `Monad`
 
 ### Apply
 
-`Apply` rozszerza typeklasę `Functor` poprzez dodanie metody `ap` która jest podobna do `map` w tym, że aplikuje funkcje na wartościach.
-Jednak w przypadku `ap` funkcja jest opakowana w ten sam kontekst co wartości które są do niej przekazywane.
+`Apply` rozszerza typeklasę `Functor` poprzez dodanie metody `ap`, która jest podobna do `map` w tym, że aplikuje otrzymaną funkcje na wartościach.
+Jednak w przypadku `ap` funkcja jest opakowana w ten sam kontekst co wartości, które są do niej przekazywane.
 
 {lang="text"}
 ~~~~~~~~
@@ -3640,7 +3640,7 @@ Jednak w przypadku `ap` funkcja jest opakowana w ten sam kontekst co wartości k
     ...
 ~~~~~~~~
 
-A> `<*>` to Zaawansowany TIE Fighter, taki sam jak ten którym latał Darth Vader. Odpowiedni bo wygląda jak
+A> `<*>` to Zaawansowany TIE Fighter, taki sam jak ten którym latał Darth Vader. Odpowiedni, bo wygląda jak
 A> rozgniewany rodzic. Albo smutny Pikachu.
 
 Warto poświęcić chwilę na zastanowienie się co to znaczy, że prosta struktura danych, taka jak `Option[A]`, posiada
@@ -3657,11 +3657,11 @@ następującą implementację `.ap`
   }
 ~~~~~~~~
 
-Aby zaimplementować `.ap` musimy najpierw wydostać funkcję `ff: A => B` z `f: Option[A => B]`, a następnie
+Aby zaimplementować `.ap`, musimy najpierw wydostać funkcję `ff: A => B` z `f: Option[A => B]`, a następnie
 możemy przemapować `fa` z jej użyciem. Ekstrakcja funkcji z kontekstu to ważna funkcjonalność, którą przynosi `Apply`. 
 Pozwala tym samym na łączenie wielu funkcji wewnątrz jednego kontekstu.
 
-Wracając do `Apply`, znajdziemy tam rodzinę funkcji `applyX`, która pozwala nam łączyć równoległe obliczenia a następnie
+Wracając do `Apply`, znajdziemy tam rodzinę funkcji `applyX`, która pozwala nam łączyć równoległe obliczenia, a następnie
 mapować ich połączone wyniki:
 
 {lang="text"}
@@ -3717,9 +3717,9 @@ A> Wszystko.
 Operatory `<*` i `*>` (prawy i lewy ptak) oferują wygodny sposób na zignorowanie wyniku jednego z dwóch równoległych 
 efektów.
 
-Niestety, mimo wygody którą daje operator `|@\`, jest z nim jeden problem: dla każdego kolejnego efektu alokowany jest
+Niestety, mimo wygody, którą daje operator `|@\`, jest z nim jeden problem: dla każdego kolejnego efektu alokowany jest
 nowy obiekt typu `ApplicativeBuilder`. Gdy prędkość obliczeń ograniczona jest przez operacje I/O nie ma to znaczenia.
-Jednak gdy wykonujesz obliczenia w całości na CPU lepiej jest użyć *krotnego wynoszenia* (_lifting with arity_), które nie
+Jednak gdy wykonujesz obliczenia w całości na CPU, lepiej jest użyć *krotnego wynoszenia* (_lifting with arity_), które nie
 produkuje żadnych obiektów pośrednich:
 
 {lang="text"}
@@ -3761,7 +3761,7 @@ jako
   (data.foo |@| data.bar)(_ + _.shows)
 ~~~~~~~~
 
-Gdy chcemy jedynie połączyć wyniki w tuple, istnieją metody które robią dokładnie to
+Gdy chcemy jedynie połączyć wyniki w tuple, istnieją metody, które służą dokładnie do tego:
 
 {lang="text"}
 ~~~~~~~~
@@ -3776,7 +3776,7 @@ Gdy chcemy jedynie połączyć wyniki w tuple, istnieją metody które robią do
   (data.foo tuple data.bar) : Option[(String, Int)]
 ~~~~~~~~
 
-Są też uogólnione wersje `ap` dla więcej niż dwóch parametrów:
+Dostępne są też uogólnione wersje `ap` dla więcej niż dwóch parametrów:
 
 {lang="text"}
 ~~~~~~~~
@@ -3810,8 +3810,8 @@ A na koniec `.forever`
   def forever[A, B](fa: F[A]): F[B] = ...
 ~~~~~~~~
 
-który powtarza efekt w nieskończoność bez zatrzymywania się. Przy jej użyciu instancja `Apply` musi być stack-safe, w przeciwnym wypadku
-wywołanie spowoduje `StackOverflowError`. 
+który powtarza efekt w nieskończoność bez zatrzymywania się. Przy jej użyciu instancja `Apply` musi być zabezpieczona prze
+przepełnieniem stosu (_stack-safe_), w przeciwnym wypadku wywołanie spowoduje `StackOverflowError`. 
 
 
 ### Bind
@@ -3843,7 +3843,7 @@ Metoda `.join` może wydawać się znajoma tym, którzy używali `.flatten` z bi
 zagnieżdżone konteksty i łączy je w jeden.
 
 Wprowadzone zostały kombinatory pochodne dla `.ap` i `.apply2`, aby zapewnić spójność z `.bind`. Zobaczymy później, że 
-to wymaganie niesie ze sobą konsekwencje dla strategii zrównoleglania.
+to wymaganie niesie ze sobą konsekwencje dla potencjalnego zrównoleglania obliczeń.
 
 `mproduct` przypomina `Functor.fproduct` i paruje wejście i wyjście funkcji wewnątrz `F`.
 
@@ -3886,13 +3886,13 @@ A> Dogłędbniej zbadamy koncepcje determinizmu i cachowania wartości w następ
   }
 ~~~~~~~~
 
-Używając `>>`odrzucamy wejście do `bind`, a używając `>>!` odrzucamy wyjście` 
+Używając `>>` odrzucamy wejście do `bind`, a używając `>>!` odrzucamy wyjście` 
 
 
-## Aplikatywy i Monady
+## Aplikatywy i monady
 
 Z punkty widzenia oferowanych funkcjonalności, `Applicative` to `Apply` z dodaną metodą `pure`, a `Monad`
-rozszerza `Applicative` dodając `Bind`.
+rozszerza `Applicative`, dodając `Bind`.
 
 {width=100%}
 ![](images/scalaz-applicative.png)
@@ -3907,7 +3907,7 @@ rozszerza `Applicative` dodając `Bind`.
   @typeclass trait Monad[F[_]] extends Applicative[F] with Bind[F]
 ~~~~~~~~
 
-Pod wieloma względami `Applicative` i `Monad` są zwieńczeniem wszystkiego co do tej pory widzieliśmy w tym rozdziale.
+Pod wieloma względami `Applicative` i `Monad` są zwieńczeniem wszystkiego, co do tej pory widzieliśmy w tym rozdziale.
 `.pure` (lub `.point` - alias powszechnie używany przy strukturach danych) pozwala nam na tworzenie efektów lub 
 struktur danych z pojedynczych wartości.
 
@@ -3928,7 +3928,7 @@ Instancje `Applicative` muszę spełniać prawa gwarantujące spójność metod:
     `fa` to `F[A]`, `f` to `A => F[B]`, a `g` to `B => F[C]`.
     
 Łączność mówi nam, że połączone wywołania `bind` muszą być zgodne z wywołaniami zagnieżdżonymi. Jednakże, 
-nie oznacza to, że możemy zamieniać kolejność wywołań - to gwarantowała by *przemienność* (_commutativity_).
+nie oznacza to, że możemy zamieniać kolejność wywołań - to gwarantowałaby *przemienność* (_commutativity_).
 Dla przykładu, pamiętając, że `flatMap` to alias na `bind`, nie możemy zamienić
 
 {lang="text"}
@@ -3949,10 +3949,10 @@ na
   } yield true
 ~~~~~~~~
 
-`start` i `stop` są **nie**-*przemienne*, ponieważ uruchomienie a następnie zatrzymanie węzła jest czymś innym
+`start` i `stop` są _**nie**przemienne_, ponieważ uruchomienie, a następnie zatrzymanie węzła jest czymś innym
 niż zatrzymanie i uruchomienie.
 
-Nie mniej, zarówno `start`, jak i `stop` są przemienne same ze sobą, a więc możemy zamienić
+Nie mniej, zarówno `start`, jak i `stop` są przemienne same ze sobą samym, a więc możemy zamienić
 
 {lang="text"}
 ~~~~~~~~
@@ -3972,7 +3972,7 @@ na
   } yield true
 ~~~~~~~~
 
-Obie formy są równoznaczne w tym konkretnym przypadku ale nie w ogólności. Robimy tutaj dużo założeń
+Obie formy są równoznaczne w tym konkretnym przypadku, ale nie w ogólności. Robimy tutaj dużo założeń
 co do Google Container API, ale wydaje się to być rozsądnych wyjściem.
 
 Okazuje się, że w konsekwencji powyższych praw `Monad`a musi być przemienna, jeśli chcemy pozwolić na równoległe
@@ -3986,11 +3986,11 @@ działanie metod `applyX`. W Rozdziale 3 oszukaliśmy uruchamiając efekty w ten
 ponieważ wiedzieliśmy, że są one ze sobą przemienne. Kiedy w dalszych rozdziałach zajmiemy się interpretacją 
 naszej aplikacji, dostarczymy dowód na przemienność operacji lub pozwolimy na uruchomienie ich sekwencyjnie.
 
-Subtelności sposobów radzenia sobie z porządkowanie efektów, i tym czym te efekty tak naprawdę są, zasługują
-na osobny rozdział. Porozmawiamy o nich przy Zaawansowanych Monadach.
+Subtelności sposobów radzenia sobie z porządkowaniem efektów, i tym, czym te efekty tak naprawdę są, zasługują
+na osobny rozdział. Porozmawiamy o nich przy Zaawansowanych monadach.
 
 
-## Dziel i Rządź
+## Dziel i rządź
 
 {width=100%}
 ![](images/scalaz-divide.png)
@@ -4013,7 +4013,7 @@ to możemy stworzyć `F[C]`. Stąd też *dziel i rządź*.
 
 Jest to świetny sposób na generowanie instancji kowariantnych typeklas dla typów będących produktami poprzez 
 podzielenie tychże produktów na części. Scalaz oferuje instancje `Divide[Equal]`, spróbujmy więc stworzyć `Equal`
-dla nowego typu `Foo`
+dla nowego typu `Foo`.
 
 {lang="text"}
 ~~~~~~~~
@@ -4039,7 +4039,7 @@ Podążając za `Apply`, `Divide` również dostarcza zwięzłą składnię dla 
 
 Ogólnie rzecz biorąc, jeśli typeklasa, oprócz instancji `Contravariant`, jest w stanie dostarczyć również `Divide`,
 to znaczy, że jesteśmy w stanie wyderywować jej instancje dla dowolnej case klasy. Sprawa wygląda analogicznie dla
-typeklas kowariantnych z instancją `Apply`. Zgłębimy ten temat w rozdziale poświęconym Derywacji Typeklas.
+typeklas kowariantnych z instancją `Apply`. Zgłębimy ten temat w rozdziale poświęconym Derywacji typeklas.
 
 `Divisible` to odpowiednik `Applicative` dla rodziny `Contravariant`. Wprowadzana ona metodę `.conquer`, odpowiednik `.pure`:
 
@@ -4061,7 +4061,7 @@ instancję `Equal`, która zawsze zwraca `true`.
 ![](images/scalaz-plus.png)
 
 `Plus` to `Semigroup`a dla konstruktorów typu a `PlusEmpty` to odpowiednik `Monoid`u (obowiązują ich nawet te same prawa).
-Nowością jest `IsEmpty`, które pozwala na sprawdzenie czy `F[A]` jest puste:
+Nowością jest typeklasa `IsEmpty`, która pozwala na sprawdzenie czy `F[A]` jest puste:
 
 {lang="text"}
 ~~~~~~~~
@@ -4078,7 +4078,7 @@ Nowością jest `IsEmpty`, które pozwala na sprawdzenie czy `F[A]` jest puste:
 
 A> `<+>` to TIE Interceptor, co sprawia, że prawie wyczerpaliśmy gamę myśliwców TIE
 
-Pozornie może się wydawać, że `<+>` zachowuje się tak samo jak `|+|`
+Pozornie może się wydawać, że `<+>` zachowuje się tak samo, jak `|+|`:
 
 {lang="text"}
 ~~~~~~~~
@@ -4115,7 +4115,7 @@ zwycięzcę (`Some`), możemy użyć `<+>` w połączeniu z `Foldable1.foldRight
   res: Option[Int] = Some(1)
 ~~~~~~~~
 
-Teraz, gdy znamy już `Plus`, okazuje się, że wcale nie musieliśmy zaburzać koherencji typeklas w sekcji o Rzeczach Złączalnych
+Teraz, gdy znamy już `Plus`, okazuje się, że wcale nie musieliśmy zaburzać koherencji typeklas w sekcji o Rzeczach złączalnych
 (definiując lokalną instancję `Monoid[Option[A]]`). Naszym celem było "wybranie ostatniego zwycięzcy",
 co jest tożsame z wybranie pierwszego po odwróceniu kolejności elementów. Zwróć uwagę na użycie Interceptora TIE z
 `ccy` i `otc` w odwróconej kolejności.
@@ -4143,7 +4143,7 @@ co jest tożsame z wybranie pierwszego po odwróceniu kolejności elementów. Zw
   }
 ~~~~~~~~
 
-`.unite` pozwala nam zwinąć strukturę danych używając `PlusEmpty[F].monoid` zamiast `Monoidu` zdefiniowanego dla
+`.unite` pozwala nam zwinąć strukturę danych, używając `PlusEmpty[F].monoid` zamiast `Monoidu` zdefiniowanego dla
 typu wewnętrznego. Dla `List[Either[String, Int]]` oznacza to, że instancje `Left[String]` zamieniane są na `.empty`,
 a następnie wszytko jest złączane. Jest to wygodny sposób na pozbycie się błędów:
 
@@ -4161,8 +4161,8 @@ a następnie wszytko jest złączane. Jest to wygodny sposób na pozbycie się b
   res: List[Int] = List(1)
 ~~~~~~~~
 
-`withFilter` pozwala nam na użycie konstrukcji `for`, którą opisywaliśmy z Rozdziale 2. Można nawet powiedzieć, że
-Scala ma wbudowane wsparcie nie tylko dla `Monad` ale i `MonadPlus`!
+`withFilter` pozwala nam na użycie konstrukcji `for`, którą opisywaliśmy w Rozdziale 2. Można nawet powiedzieć, że
+Scala ma wbudowane wsparcie nie tylko dla `Monad`, ale i `MonadPlus`!
 
 Wracając na moment do `Foldable`, możemy odkryć kilka metod, których wcześniej nie omawialiśmy:
 
@@ -4176,7 +4176,7 @@ Wracając na moment do `Foldable`, możemy odkryć kilka metod, których wcześn
   }
 ~~~~~~~~
 
-`msuml` wykonuje `fold` używając `Monoidu` z `PlusEmpty[G]`, a `collapse` używa `foldRight` w kombinacji
+`msuml` wykonuje `fold`, używając `Monoidu` z `PlusEmpty[G]`, a `collapse` używa `foldRight` w kombinacji
 z instancją `PlusEmpty` typu docelowego:
 
 {lang="text"}
@@ -4192,7 +4192,7 @@ z instancją `PlusEmpty` typu docelowego:
 ~~~~~~~~
 
 
-## Samotne Wilki
+## Samotne wilki
 
 Niektóre z typeklas w Scalaz są w pełni samodzielne i nie należą do ogólnej hierarchii.
 
@@ -4218,12 +4218,12 @@ Niektóre z typeklas w Scalaz są w pełni samodzielne i nie należą do ogólne
 ~~~~~~~~
 
 Metoda kluczowa tutaj to `zip`. Jest to słabsza wersja `Divide.tuple2`. Jeśli dostępny jest `Functor[F]` to 
-`.zipWith` może zachowywać się jak `Apply.apply2`. Używając `ap` możemy nawet stworzyć pełnoprawne `Apply[F]` z
+`.zipWith` może zachowywać się jak `Apply.apply2`. Używając `ap`, możemy nawet stworzyć pełnoprawne `Apply[F]` z
 instancji `Zip[F]` i `Functor[F]`.
 
 `.apzip` przyjmuje `F[A]` i wyniesioną funkcję `F[A] => F[B]` produkując `F[(A, B)]`, podobnie do `Functor.fproduct`.
 
-A> `<*|*>` to operator przerażających Jawów z sagi Star Wars
+A> `<*|*>` to operator przerażających Jawów z sagi Star Wars.
 
 {lang="text"}
 ~~~~~~~~
@@ -4313,7 +4313,7 @@ Przykład:
 
 ## Ko-rzeczy
 
-*Ko-rzecz* zazwyczaj ma sygnaturę przeciwną do tego co robi *rzecz*, ale nie musi koniecznie być jej odwrotnością.
+*Ko-rzecz* zazwyczaj ma sygnaturę przeciwną do tego, co robi *rzecz*, ale nie musi koniecznie być jej odwrotnością.
 Aby podkreślić relacje między *rzeczą* i *ko-rzeczą*, wszędzie gdzie to możliwe zawrzemy obie sygnatury.
 
 {width=100%}
@@ -4336,12 +4336,12 @@ Aby podkreślić relacje między *rzeczą* i *ko-rzeczą*, wszędzie gdzie to mo
   }
 ~~~~~~~~
 
-`cobind` (znany również jako `coflatmap`) przyjmuje funkcję `F[A] => B`, która operuje na `F[A]` a nie jego elementach.
-Ale nie zawsze będzie to pełne `fa`, często jest to substruktura stworzona przez metodę`cojoin` (znaną również jako 
+`cobind` (znany również jako `coflatmap`) przyjmuje funkcję `F[A] => B`, która operuje na `F[A]`, a nie jego elementach.
+Ale nie zawsze będzie to pełne `fa`, często jest to substruktura stworzona przez metodę `cojoin` (znaną również jako 
 `coflatten`), która rozwija strukturę danych.
 
-Przekonywające przykłady użycia `Cobind` są rzadkie, jednak kiedy spojrzymy na tabele permutacji metod typeklasy `Functor`
-ciężko jest uzasadnić czemu niektóre metody miałyby być ważniejsze od innych.
+Przekonywające przykłady użycia `Cobind` są rzadkie, jednak kiedy spojrzymy na tabele permutacji metod typeklasy `Functor`,
+ciężko jest uzasadnić, czemu niektóre metody miałyby być ważniejsze od innych.
 
 | method      | parameter          |
 |------------ |------------------- |
@@ -4367,7 +4367,7 @@ ciężko jest uzasadnić czemu niektóre metody miałyby być ważniejsze od inn
 tej typeklasy, gdyż na przykład interpretacja `IO[A]` do `A` zaburza transparentność referencyjną. 
 Dla struktur danych jednakże może to być na przykład wygodny sposób na pokazanie wszystkich elementów wraz z ich sąsiadami.
 
-Rozważmy strukturę *sąsiedztwo* (`Hood`), która zawiera pewien element (`focus`) oraz elementy na 
+Rozważmy strukturę *sąsiedztwa* (`Hood`), która zawiera pewien element (`focus`) oraz elementy na 
 lewo i prawo od niego (`lefts` i `rights`).
 
 {lang="text"}
@@ -4402,7 +4402,7 @@ Możemy zaimplementować metody do poruszania się w lewo (`previous`) i w prawo
       }
 ~~~~~~~~
 
-Wprowadzając metodę `more` jesteśmy w stanie obliczyć *wszystkie* możliwe do osiągnięcia pozycje (`positions`) w danym `Hood`. 
+Wprowadzając metodę `more`, jesteśmy w stanie obliczyć *wszystkie* możliwe do osiągnięcia pozycje (`positions`) w danym `Hood`. 
 
 {lang="text"}
 ~~~~~~~~
@@ -4453,7 +4453,7 @@ Możemy teraz stworzyć `Comonad[Hood]`
            Hood([8,7,6,5,4,3,2,1],9,[])])
 ~~~~~~~~
 
-Okazuje się, że `cojoin` to tak naprawdę `positions`! A więc możemy nadpisać ją używając bezpośredniej 
+Okazuje się, że `cojoin` to tak naprawdę `positions`! A więc możemy nadpisać ją, używając bezpośredniej 
 (a przez to wydajniejszej) implementacji
 
 {lang="text"}
@@ -4484,13 +4484,13 @@ w następnej generacji na podstawie aktualnych wartości sąsiadów tej komórki
 ~~~~~~~~
 
 Mimo że nazwa tej typeklasy brzmi `Cozip`, lepiej jest spojrzeć na jej symetrię względem metody `unzip`.
-Tam gdzie `unzip` zamienia `F[_]` zawierające produkt (tuple) na produkt zawierający `F[_]`, tam
-tam `cozip` zamienia `F[_]` zawierające koprodukty (dysjunkcje) na koprodukt zawierający `F[_]`.
+Tam, gdzie `unzip` zamienia `F[_]` zawierające produkt (tuple) na produkt zawierający `F[_]`, tam
+`cozip` zamienia `F[_]` zawierające koprodukty (dysjunkcje) na koprodukt zawierający `F[_]`.
 
 
 ## Bi-rzeczy
 
-Czasem mamy do czynienia z typami które przyjmują dwa parametry typu i chcielibyśmy prze`map`ować obie jego
+Czasem mamy do czynienia z typami, które przyjmują dwa parametry typu i chcielibyśmy prze`map`ować obie jego
 strony. Możemy na przykład śledzić błędy po lewej stronie `Either` i chcieć przetransformować
 wiadomości z tychże błędów.
 
@@ -4529,7 +4529,7 @@ Typeklasy `Functor` / `Foldable` / `Traverse` mają swoich krewnych, którzy poz
 
 A> `<-:` i `:->` to szczęśliwe operatory (_happy operators_)!
 
-Mimo że sygnatury metod są dość rozwlekłe, to są to niemal dokładnie te same metody które znamy 
+Mimo że sygnatury metod są dość rozwlekłe, to są to niemal dokładnie te same metody, które znamy 
 z typeklas `Functor`, `Foldable` i `Traverse`, z tą różnicą, że przyjmują dwie funkcje zamiast jednej. 
 Czasami funkcje te muszą zwracać ten sam typ, aby wyniki można było połączyć za pomocą `Monoid`u lub `Semigroup`y.
 
@@ -4572,7 +4572,7 @@ Dodatkowo możemy wrócić na chwile do `MonadPlus` (czyli `Monad`y z metodami `
   }
 ~~~~~~~~
 
-Jest to bardzo przydatny mechanizm kiedy mamy do czynienia z kolekcją bi-rzeczy i chcemy podzielić ją
+Jest to bardzo przydatny mechanizm, kiedy mamy do czynienia z kolekcją bi-rzeczy i chcemy podzielić ją
 na kolekcję `A` i kolekcję `B`.
 
 {lang="text"}
@@ -4595,7 +4595,7 @@ a większość funkcjonalności czerpie z typeklas i algebr domenowych. Nawet je
 tylko wyspecjalizowanymi odpowiednikami tych zdefiniowanych w Scalaz, to jest zupełnie ok, aby zrefaktorować je
 później.
 
-Aby pomóc, dołączyliśmy cheat-sheet wszystkich typeklas i ich głównych metod w załączniku. Jest on zainspirowany przez 
+Aby ułatwić nieco sprawę, dołączyliśmy cheat-sheet wszystkich typeklas i ich głównych metod w załączniku. Jest on zainspirowany przez 
 [Scalaz Cheatsheet](http://arosien.github.io/scalaz-cheatsheets/typeclasses.pdf) Adama Rosiena.
 
 Aby pomóc jeszcze bardziej, Valentin Kasas pokazuję jak  [połączyć `N` rzeczy](https://twitter.com/ValentinKasas/status/879414703340081156)
@@ -4604,7 +4604,7 @@ Aby pomóc jeszcze bardziej, Valentin Kasas pokazuję jak  [połączyć `N` rzec
 ![](images/shortest-fp-book.png)
 
 
-# Typy Danych ze Scalaz
+# Typy danych ze Scalaz
 
 Kto nie kocha porządnej struktury danych? Odpowiedź brzmi *nikt*, a struktury danych są super!
 
@@ -5581,7 +5581,7 @@ kilka ekstra:
   }
 ~~~~~~~~
 
-`.append` (z aliasem `+|+`) ma taką samą sygnaturę jak `+++` ale preferuje wariant `success`
+`.append` (z aliasem `+|+`) ma taką samą sygnaturę jak `+++`, ale preferuje wariant `success`
 
 -   `failure(v1) +|+ failure(v2)` zwraca `failure(v1 |+| v2)`
 -   `failure(v1) +|+ success(v2)` zwraca `success(v2)`
@@ -6341,7 +6341,7 @@ _rotated tree_) po prawej.
 -   diamenty wizualizują dowolny `ISet`
 
 Pierwszy scenariusz jest trywialny i zachodzi, gdy obie strony to `Tip`y. Nigdy nie napotkamy tego scenariusza wykonując
-`.insert` ale może on wystąpić przy `.delete`
+`.insert`, ale może on wystąpić przy `.delete`
 
 {lang="text"}
 ~~~~~~~~
@@ -7295,7 +7295,7 @@ A> drugi nie jest parametryzowany i zapisany jest jako `_`.
 `.liftM` pozwala nam stworzyć instancję transformatora na podstawie `F[A]`, na przykład, aby zbudować
 `OptionT[IO, String]`, wystarczy wywołać `.liftM[OptionT]` na `IO[String]`.
 
-`.hoist` wyraża tą samą koncepcję ale dla transformacji naturalnych.
+`.hoist` wyraża tą samą koncepcję, ale dla transformacji naturalnych.
 
 W ogólności istnieją trzy sposoby na uzyskanie transformatora monady:
 
@@ -8780,7 +8780,7 @@ I tak jak w drugim podejściu, możemy wybrać jedną z `Monad` jako niejawną w
 
 #### Komponowanie Transformatorów
 
-`EitherT[StateT[...], ...]` posiada instancję `MonadError` ale nie `MonadState`, natomiast `StateT[EitherT[...], ...]`
+`EitherT[StateT[...], ...]` posiada instancję `MonadError`, ale nie `MonadState`, natomiast `StateT[EitherT[...], ...]`
 daje nam obie.
 
 Rozwiązaniem jest przestudiowanie reguł niejawnej derywacji transformatorów zawartych w obiektach towarzyszących, 
@@ -9067,7 +9067,7 @@ Chcielibyśmy, aby nasze AST było kombinacją AST pochodzących z oby tych alge
 
 Możemy więc użyć kontekstu `Free[Coproduct[Machines.Ast, Drone.Ast, ?], ?]`.
 
-Moglibyśmy tworzyć instancję koproduktu ręcznie ale utonęlibyśmy w morzu boilerplate'u,
+Moglibyśmy tworzyć instancję koproduktu ręcznie, ale utonęlibyśmy w morzu boilerplate'u,
 a później musielibyśmy robić to raz jeszcze jeśli chcielibyśmy dodać trzecią algebrę.
 
 Z pomocą przychodzi typeklasa `scalaz.Inject`:
@@ -11255,7 +11255,7 @@ produktów. W tym celu użyjemy `InvariantApplicative` o dowolnej arności, czyl
 `scalaz-deriving` nie pozwala na dostęp do nazw pól, więc nie jest możliwe zdefiniowanie enkoderów
 i dekoderów z jej użyciem.
 
-A> Wcześniejsza wersja `scalaz-deriving` wspierała taką funkcjonalność ale okazało się,
+A> Wcześniejsza wersja `scalaz-deriving` wspierała taką funkcjonalność, ale okazało się,
 A> że nie daje to żadnej przewagi nad używaniem Magnolii, więc wsparcie to zostało usunięte
 A> w imię skupienia się na typeklasach posiadających poprawne instancje `Alt` i `Decidable`.
 
@@ -13164,7 +13164,7 @@ zawartości (`False`).
 
 Tak jak można było się spodziewać, instancje stworzone ręczenie są daleko z przodu. Z kolei
 Shapeless prawie zawsze wygrywa wśród automatycznych derywacji. Biblioteka `scalaz-deriving` miała dobry start
-z `GeoJSON` ale nie poradziła sobie w testach Google Maps i Twittera. Wyniki `False` są niemal identyczne
+z `GeoJSON`, ale nie poradziła sobie w testach Google Maps i Twittera. Wyniki `False` są niemal identyczne
 
 {lang="text"}
 ~~~~~~~~
