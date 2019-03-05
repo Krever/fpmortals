@@ -4611,24 +4611,24 @@ Kto nie kocha porządnej struktury danych? Odpowiedź brzmi *nikt*, a struktury 
 W tym rozdziale poznamy typy danych przypominające kolekcje oraz takie, które wzbogacają Scalę o dodatkowe 
 możliwości i zwiększają bezpieczeństwo typów.
 
-Podstawowym powodem, dla którego używamy wielu różnych typów kolekcji jest wydajność. Wektor i lista mogą
-zrobić to samo, ale ich charakterystyki wydajnościowe są inne: wektor oferuje dostęp do losowego elementu w czasie stałym
-gdy lista musi zostać w czasie tej operacji przetrawersowana.
+Podstawowym powodem, dla którego używamy wielu różnych typów kolekcji, jest wydajność. Wektor i lista mogą
+zrobić to samo, ale ich charakterystyki wydajnościowe są inne: wektor oferuje dostęp do losowego elementu w czasie stałym,
+podczas gdy lista musi zostać w czasie tej operacji przetrawersowana.
 
 W> Szacunki wydajnościowe, wliczając w to twierdzenia w tym rozdziale, powinny być zawsze brane z przymrużeniem oka. 
 W> Nowoczesne architektury procesorów, pipelining i garbage collector w JVMie mogą zaburzyć nasze intuicyjne wyliczenia
 W> bazujące na zliczaniu wykonywanych operacji.
 W> 
 W> Gorzka prawda o współczesnych komputerach jest taka, że empiryczne testy wydajnościowe mogą szokować i zaskakiwać.
-W> Przykładem może być to, że w praktyce `List`a jest często szybsza niż `Vector`. Jeśli badasz wydajność, używaj
+W> Za przykład niech posłuży fakt, że w praktyce `List`a jest często szybsza niż `Vector`. Jeśli badasz wydajność, używaj
 W> narzędzi takich jak [JMH](http://openjdk.java.net/projects/code-tools/jmh/).
 
-Wszystkie kolekcje, które tutaj zaprezentujemy są *trwałe* (_persistent_): jeśli dodamy lub usuniemy element, nadal możemy
+Wszystkie kolekcje, które tutaj zaprezentujemy, są *trwałe* (_persistent_): jeśli dodamy lub usuniemy element, nadal możemy
 używać poprzedniej, niezmienionej wersji. Współdzielenie strukturalne (_structural sharing_) jest kluczowe dla 
-wydajności trwałych struktur danych, bez tego musiałyby one być tworzone od nowa przy każdej operacji.
+wydajności trwałych struktur danych, gdyż bez tego musiałyby one być tworzone od nowa przy każdej operacji.
 
 W przeciwieństwie do kolekcji z bibliotek standardowych Javy i Scali, w Scalaz typy danych nie tworzą hierarchii, a przez to
-są dużo prostsze do zrozumienia. Polimorfizm jest zapewniany przez zoptymalizowane instancje typeklas które poznaliśmy
+są dużo prostsze do zrozumienia. Polimorfizm jest zapewniany przez zoptymalizowane instancje typeklas, które poznaliśmy
 w poprzednim rozdziale. Sprawia to, że zmiana implementacji podyktowana zwiększeniem wydajności, lub dostarczenie własnej, 
 jest dużo prostsze.
 
@@ -4668,7 +4668,7 @@ Zauważ, że druga lista jest typu `List[Char]` i kompilator niezbyt pomocnie wy
 Podobnie, gdy kompilator inferuje typ z dopiskiem `with Product with Serializable` to najprawdopodobniej 
 miało miejsce przypadkowe rozszerzenie typu spowodowane kowariancją.
 
-Niestety, musimy uważać nawet gdy konstruujemy typy inwariantne, ponieważ obliczenie LUB wykonywane jest również
+Niestety, musimy uważać, nawet gdy konstruujemy typy inwariantne, ponieważ obliczenie LUB wykonywane jest również
 dla parametrów typu:
 
 {lang="text"}
@@ -4677,20 +4677,20 @@ dla parametrów typu:
   res: IList[Any] = [hello, ,world]
 ~~~~~~~~
 
-Kolejny podobny problem powodowany jest przez typ `Nothing`, który jest podtypem wszystkich innych typów, wliczając w to
+Podobny problem powodowany jest przez typ `Nothing`, który jest podtypem wszystkich innych typów, wliczając w to
 ADT, klasy finalne, typy prymitywne oraz `null`.
 
-Nie istnieją wartości typu `Nothing`.  Funkcje które przyjmują `Nothing` jako parametr nie mogą zostać uruchomione, a
-funkcje które zwracają ten typ nigdy nie zwrócą rezultatu. Typ `Nothing` został wprowadzony, aby umożliwić używanie 
-kowariantnych parametrów typu, ale w konsekwencji umożliwił pisanie kodu który nie może być uruchomiony, często przez przypadek.
-Scalaz twierdzi, że wcale nie potrzebujemy kowariantnych parametrów typu, ograniczając się tym samym do praktycznego
+Nie istnieją jednak wartości typu `Nothing`.  Funkcje, które przyjmują `Nothing` jako parametr, nie mogą zostać uruchomione, a
+funkcje, które zwracają ten typ, nigdy nie zwrócą rezultatu. Typ `Nothing` został wprowadzony, aby umożliwić używanie 
+kowariantnych parametrów typu, ale w konsekwencji umożliwił pisanie kodu, który nie może być uruchomiony, często przez przypadek.
+W Scalaz uważamy, że kowariantne parametry typu wcale nie są potrzebne, ograniczając się tym samym do praktycznego
 kodu, który może zostać uruchomiony.
 
 
 ### Sprzeciwwariancja 
 
 Z drugiej strony, parametry *kontrawariantne* takie jak `A` w `trait Thing[-A]` mogą ujawnić niszczycielskie
-[błędy w kompilatorze](https://issues.scala-lang.org/browse/SI-2509). Spójrzmy na to co Paul Phillips (były
+[błędy w kompilatorze](https://issues.scala-lang.org/browse/SI-2509). Spójrzmy na to, co Paul Phillips (były
 członek zespołu pracującego nad `scalac`) nazywa *contrarivariance*:
 
 {lang="text"}
@@ -4725,16 +4725,16 @@ Sprawa komplikuje się jednak gdy użyjemy wartości niejawnych
   res = 1
 ~~~~~~~~
 
-Niejawne rozstrzyganie odwraca definicje "najbardziej dokładnego" dla typów kontrawariantnych, czyniąc je tym samym
+Niejawne rozstrzyganie odwraca definicje "najbardziej dokładnego dopasowania" dla typów kontrawariantnych, czyniąc je tym samym
 kompletnie bezużytecznymi do reprezentacji typeklas i czegokolwiek co wymaga polimorficznych funkcjonalności. 
-Zachowanie to zostało poprawione w Dotty.
+Zachowanie to zostało poprawione w Dottym.
 
 
 ### Ograniczenia podtypów
 
 `scala.Option` ma metodę `.flatten`, która konwertuje `Option[Option[B]]` na `Option[B]`.
 Niestety kompilator Scali nie pozwala nam na poprawne zapisanie sygnatury tej metody. 
-Rozważmy poniższą implementację która pozornie wydaje się poprawna:
+Rozważmy poniższą implementację, która pozornie wydaje się poprawna:
 
 {lang="text"}
 ~~~~~~~~
@@ -4752,7 +4752,7 @@ Rozważmy poniższą implementację która pozornie wydaje się poprawna:
   }
 ~~~~~~~~
 
-czyli nie do końca jest tym czego chcieliśmy.
+czyli nie do końca jest tym, czego chcieliśmy.
 
 Jako obejście tego problemu wprowadzono klasy `<:<` i `=:=` wraz z niejawnymi metodami, które zawsze tworzą
 instancje dla poprawnych typów.
@@ -4831,7 +4831,7 @@ z biblioteki standardowej.
 A> Liskov zawdzięcza swą nazwę Barbarze Liskov, autorce *Zasady podstawienia Liskov*,która stała się fundamentem 
 A> Programowania Zorientowanego Obiektowo.
 A>
-A> Gottfried Wilhelm Leibniz to człowiek który odkrył *wszystko* w 17 wieku. Wierzył w [Boga zwanego Monadą](https://en.wikipedia.org/wiki/Monad_(philosophy)).
+A> Gottfried Wilhelm Leibniz to człowiek który odkrył *wszystko* w 17 wieku. Wierzył w [Boga zwanego Monadą](https://en.wikipedia.org/wiki/Monad_%28philosophy%29).
 A> Eugenio Moggi później reużył tej nazwy dla abstrakcji, którą znamy jako `scalaz.Monad`. Już nie Bóg, ale jeszcze nie śmiertelnik.
 
 ## Ewaluacja
