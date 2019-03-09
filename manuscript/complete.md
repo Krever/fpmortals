@@ -4836,16 +4836,16 @@ A> Eugenio Moggi później reużył tej nazwy dla abstrakcji, którą znamy jako
 
 ## Ewaluacja
 
-Java to język o *ścisłej* (_strict_) ewaluacji: wszystkie parametry przekazane do metody muszę zostać wyewaluowane do 
-*wartości* zanim metoda zostanie uruchomiona. Scala wprowadza pojęcie parametrów przekazywanych *przez nazwę* (_by-name_)
+Java to język o *ścisłej* (_strict_) ewaluacji: wszystkie parametry przekazane do metody muszą zostać wyewaluowane do 
+*wartości*, zanim metoda zostanie uruchomiona. Scala wprowadza pojęcie parametrów przekazywanych *przez nazwę* (_by-name_)
 za pomocą składni `a: =>A`. Takie parametry opakowywane są w zero-argumentową funkcję, która jest wywoływana za każdym razem, gdy odnosimy
 się do `a`. Widzieliśmy tego typu parametry wielokrotnie, gdy omawialiśmy typeklasy.
 
 Scala pozwala również na ewaluacje wartości *na żądanie* za pomocą słowa kluczowego `lazy`: obliczenia są wykonywane najwyżej raz
-aby wyprodukować wartość przy pierwszym użyciu. Niestety Scala nie wspiera ewaluacji *na żądanie* dla parametrów metod.
+produkując wartość przy pierwszym użyciu. Niestety Scala nie wspiera ewaluacji *na żądanie* dla parametrów metod.
 
 A> Jeśli obliczenie wartości `lazy val` wyrzuci wyjątek, to jest ono powtarzane za każdym kolejnym użyciem tej zmiennej.
-A> Ponieważ wyjątki mogą zaburzać transparencje referencyjną, ograniczymy się do omawiania definicji `lazy val`, które
+A> Ponieważ wyjątki mogą zaburzać transparencję referencyjną, ograniczymy się do omawiania definicji `lazy val`, które
 A> zawsze produkują poprawną wartość.
 
 Scalaz formalizuje te trzy strategie ewaluacji za pomocą ADT
@@ -4880,18 +4880,18 @@ Gdybyśmy chcieli być pedantyczni, moglibyśmy wrócić do wszystkich typeklas,
 parametry w ich metodach na `Name`, `Need` i `Value`. Zamiast tego możemy też po prostu założyć, że normalne parametry
 mogą być zawsze opakowane w `Value`, a te przekazywane *przez nazwę* w `Name`.
 
-Gdy piszemy *czyste programy* możemy śmiało zamienić dowolne `Name` na `Need` lub `Value`, i vice versa, bez zmieniania
+Gdy piszemy *czyste programy*, możemy śmiało zamienić dowolne `Name` na `Need` lub `Value`, i vice versa, bez zmieniania
 poprawności programu. To jest właśnie esencja *transparencji referencyjnej*: zdolność do zamiany obliczeń na wartość wynikową
 lub wartości na obliczenia potrzebne do jej uzyskania.
 
 W programowaniu funkcyjnym prawie zawsze potrzebujemy `Value` lub `Need` (znane też jako parametry *ścisłe* i *leniwe*), ale nie mamy
 zbyt wiele pożytku z `Name`. Ponieważ na poziomie języka nie mamy bezpośredniego wsparcia dla leniwych parametrów, metody często
-przyjmują wartości *przez nazwę* a następnie konwertują je do `Need`, zwiększając tym samym wydajność.
+przyjmują wartości *przez nazwę*, a następnie konwertują je do `Need`, zwiększając tym samym wydajność.
 
-A> Typ `Lazy` (pisany z wielkiej litery) jest często używany w bibliotekach Scalowych do wyrażania semantyki przekazywania
+A> Typ `Lazy` (pisany wielką literą) jest często używany w bibliotekach Scalowych do wyrażania semantyki przekazywania
 A> *przez nazwę*. Jest to błąd w nazewnictwie, który już zdążył się zadomowić.
 A> 
-A> Ogólnie rzecz biorąc, dość leniwie podchodzimy do lenistwa. Czasem warto dociec jaki dokładnie rodzaj
+A> Ogólnie rzecz biorąc, dość leniwie podchodzimy do lenistwa. Czasem warto dociec, jaki dokładnie rodzaj
 A> leniwego zachowania omawiamy. Albo nie. Bo po co?
 
 `Name` dostarcza instancje poniższych typeklas:
@@ -4903,12 +4903,12 @@ A> leniwego zachowania omawiamy. Albo nie. Bo po co?
 -   `Zip` / `Unzip` / `Cozip`
 
 A> "Nie ma nic za darmo", mówi powiedzenie i tak samo jest z parametrami *leniwymi* i przekazywanymi *przez nazwę*.
-A> Kiedy Scala konwertuje te parametry do kodu bajtowego pojawia się narzut związany z dodatkową alokacją pamięci.
+A> Kiedy Scala konwertuje te parametry do kodu bajtowego, pojawia się narzut związany z dodatkową alokacją pamięci.
 A> 
 A> Zanim przepiszesz wszystko z użyciem parametrów przekazywanych *przez nazwę*, upewnij się, że koszt nie przyćmiewa zysków.
-A> Nie ma żadnej wartości dodanej, jeśli nie istnieje możliwość **nie** ewaluowania danej wartości. Kod wymagający 
+A> Nie ma żadnej wartości dodanej, jeśli nie istnieje możliwość **nie**ewaluowania danej wartości. Kod wymagający 
 A> wysokiej wydajności uruchomiony w ścisłej pętli i zawsze wymagający konkretnej wartości danego parametru znacząco ucierpi na takim 
-A> refactoringu.
+A> refaktoringu.
 
 ## Memoizacja
 
@@ -4933,11 +4933,11 @@ dużej gamy różniących się implementacji:
   }
 ~~~~~~~~
 
-`memo` pozwala nam na tworzenie własnych implementacji `Memo`. `nilMemo` nie memoizuje w ogóle, a więc funkcja wykonywana 
+Metoda `memo` pozwala nam na tworzenie własnych implementacji `Memo`. `nilMemo` nie memoizuje w ogóle, a więc funkcja wykonywana 
 jest za każdym wywołaniem. Pozostałe implementacje przechwytują wywołania funkcji i cache'ują wynik przy użyciu kolekcji z 
 biblioteki standardowej.
 
-Aby wykorzystać `Memo` wystarczy, że opakujemy naszą funkcje z użyciem wybranej implementacji, a następnie używać będziemy
+Aby wykorzystać `Memo`, wystarczy, że opakujemy naszą funkcję z użyciem wybranej implementacji, a następnie używać będziemy
 zwróconej nam funkcji zamiast tej oryginalnej:
 
 {lang="text"}
@@ -4958,7 +4958,7 @@ zwróconej nam funkcji zamiast tej oryginalnej:
   res: String = wobble // memoised
 ~~~~~~~~
 
-Jeśli funkcja przyjmuje więcej niż jeden argument musimy wywołać na niej `tupled` konwertując ją tym samym
+Jeśli funkcja przyjmuje więcej niż jeden argument, musimy wywołać na niej `tupled`, konwertując ją tym samym
 do jednoargumentowej funkcji przyjmującej tuple.
 
 {lang="text"}
@@ -4981,13 +4981,13 @@ uruchomieniowe, `Memo` to nasz sposób na dodanie podobnej funkcjonalności do J
 ## Tagowanie
 
 W podrozdziale wprowadzającym `Monoid` stworzyliśmy `Monoid[TradeTemplate]` jednocześnie uświadamiając sobie, że
-domyślna instancja `Monoid[Option[A]]` ze Scalaz nie robi tego czego byśmy od niej oczekiwali. Nie jest to jednak przeoczenie
-ze strony Scalaz: często będziemy napotykali sytuację w której dany typ danych może mieć wiele poprawnych implementacji
-danej typeklasy a ta domyślna nie robi tego czego byśmy chcieli lub w ogóle nie jest zdefiniowana.
+domyślna instancja `Monoid[Option[A]]` ze Scalaz nie robi tego, czego byśmy od niej oczekiwali. Nie jest to jednak przeoczenie
+ze strony Scalaz: często będziemy napotykali sytuację, w której dany typ danych może mieć wiele poprawnych implementacji
+danej typeklasy, a ta domyślna nie robi tego, czego byśmy chcieli lub w ogóle nie jest zdefiniowana.
 
 Najprostszym przykładem jest `Monoid[Boolean]` (koniunkcja `&&` vs alternatywa `||`) lub `Monoid[Int]` (mnożenie vs dodawanie).
 
-Aby zaimplementować `Monoid[TradeTemplate]` musieliśmy albo zaburzyć spójność typeklas albo użyć innej typeklasy niż `Monoid`.
+Aby zaimplementować `Monoid[TradeTemplate]` musieliśmy albo zaburzyć spójność typeklas, albo użyć innej typeklasy niż `Monoid`.
 
 `scalaz.Tag` został zaprojektowany jako rozwiązanie tego problemu, ale bez sprowadzania ograniczeń, które napotkaliśmy.
 
@@ -5018,9 +5018,9 @@ oszukać kompilator i zdefiniować typ `A @@ T`, który zostanie uproszczony do 
   }
 ~~~~~~~~
 
-A> A więc tagujemy rzeczy używając koków księżniczki Lei: `@@`.
+A> A więc tagujemy rzeczy, używając koków księżniczki Lei: `@@`.
 
-Kilka użytecznych tagów znajdziemy w obiekcie `Tags`
+Kilka użytecznych tagów znajdziemy w obiekcie `Tags`:
 
 {lang="text"}
 ~~~~~~~~
@@ -5049,14 +5049,14 @@ operand. Za pomocą `Multiplication` możemy zmienić zachowanie `Monoid`u dla t
 `Disjunction` i `Conjunction` pozwalają wybrać między `&&` i `||` dla typu `Boolean`.
 
 W naszym przykładzie definiującym `TradeTemplate`, zamiast `Option[Currency]` mogliśmy użyć `Option[Currency] @@ Tags.Last`.
-W rzeczywistości jest to przypadek tak częsty, że mogliśmy użyć wbudowanego aliasu `LastOption`.  
+W rzeczywistości jest to przypadek tak częsty, że mogliśmy użyć wbudowanego aliasu `LastOption`
 
 {lang="text"}
 ~~~~~~~~
   type LastOption[A] = Option[A] @@ Tags.Last
 ~~~~~~~~
 
-i tym samym sprawić, że implementacja `Monoid[TradeTemplate]` będzie znacznie czystsza
+i tym samym sprawić, że implementacja `Monoid[TradeTemplate]` będzie znacznie czystsza.
 
 {lang="text"}
 ~~~~~~~~
@@ -5084,16 +5084,16 @@ W rozdziale o derywacji typeklas pójdziemy o jeden krok dalej i stworzymy `mono
 Kuszącym może wydać się pomysł użycia `Tag`ów do oznaczania danych na potrzeby walidacji (np. `String @@ PersonName`),
 ale należy oprzeć się tym pokusom, gdyż za takim oznaczeniem nie stoją żadne weryfikacje wartości używanych w czasie wykonania.
 `Tag` powinien być używany tylko do selekcji typeklas, a do ograniczania możliwych wartości dużo lepiej jest użyć 
-biblioteki `Refined`, która poznaliśmy w Rozdziale 4.
+biblioteki `Refined`, którą poznaliśmy w Rozdziale 4.
 
 
-## Transformacja Naturalna
+## Transformacje naturalne
 
 Funkcja z jednego typu w drugi zapisywana jest w Scali jako `A => B`, ale jest to tylko syntax sugar dla 
-`Function1[A, B]`. Scalaz dostarcza podobny mechanizm w formie `F ~> G` dla funkcji z konstruktora typu
+typu `Function1[A, B]`. Scalaz dostarcza podobny mechanizm w formie `F ~> G` dla funkcji z konstruktora typu
 `F[_]` do `G[_]`.
 
-Te właśnie `F ~> G` nazywamy *transformacjami naturalnymi* (_natural transformation_) i są one 
+Intancje typu `F ~> G` nazywamy *transformacjami naturalnymi* (_natural transformation_) i mówimy, że są one 
 *uniwersalnie kwantyfikowane*, ponieważ nie ma dla nich znaczenia zawartość `F[_]`.
 
 {lang="text"}
@@ -5138,9 +5138,9 @@ Powrócimy do tego pomysłu w rozdziale o Zaawansowanych Monadach.
 ## `Isomorphism`
 
 Czasami mamy do czynienia z dwoma typami, które tak naprawdę są dokładnie tym samym.
-Powoduje to problemy z kompatybilnością, ponieważ kompilator najczęściej nie ma tej wiedzy.
+Powoduje to problemy z kompatybilnością, ponieważ kompilator tego nie wie.
 Najczęściej takie sytuacje mają miejsce, gdy chcemy użyć zewnętrznych bibliotek, które definiują
-coś co już mamy w naszym kodzie.
+coś, co już mamy w naszym kodzie.
 
 W takich właśnie okolicznościach z pomocą przychodzi `Isomorphism`, który definiuje relację równoznaczności
 między dwoma typami. Ma on 3 warianty dla typów o różnym kształcie:
@@ -5203,7 +5203,7 @@ Jeśli wprowadzimy izomorfizm, możemy wygenerować wiele standardowych typeklas
   }
 ~~~~~~~~
 
-pozwala nam wyderywować `Semigroup[F]` dla typu `F` jeśli mamy `F <=> G` oraz `Semigroup[G]`.
+pozwala nam wyderywować `Semigroup[F]` dla typu `F`, jeśli mamy `F <=> G` oraz `Semigroup[G]`.
 Niemal wszystkie typeklasy w hierarchii mają wariant dla typów izomorficznych. Jeśli złapiemy się na 
 kopiowaniu implementacji danej typeklasy, warto rozważyć zdefiniowanie `Isomorphism`u.
 
@@ -5235,7 +5235,7 @@ ani wyjaśnienia dla tej nieobecności.
   }
 ~~~~~~~~
 
-`.empty` i `.just` są lepsze niż tworzenie `Just` i `Maybe` bezpośrednio, ponieważ zwracają `Maybe` pomagając tym samym
+`.empty` i `.just` są lepsze niż tworzenie `Just` i `Maybe` bezpośrednio, ponieważ zwracają `Maybe`, pomagając tym samym
 w inferencji typów. Takie podejście często nazywane jest zwracaniem typu sumy (_sum type_), a więc mimo posiadania
 wielu implementacji zapieczętowanego traita (_sealed trait_) nigdy nie używamy konkretnych podtypów w sygnaturach metod.
 
@@ -5262,7 +5262,7 @@ oraz deleguje implementację poniższych do instancji dla typu `A`
 -   `Monoid` / `Band`
 -   `Equal` / `Order` / `Show`
 
-Dodatkowo, `Maybe` oferuje funkcjonalności nie dostępne w żadnej typeklasie
+Dodatkowo, `Maybe` oferuje funkcjonalności niedostępne w żadnej typeklasie
 
 {lang="text"}
 ~~~~~~~~
@@ -5285,11 +5285,11 @@ Dodatkowo, `Maybe` oferuje funkcjonalności nie dostępne w żadnej typeklasie
   }
 ~~~~~~~~
 
-`.cata` to zwięźlejsza alternatywa dla `.map(f).getOrElse(b)` dostępna również po postacią `|` jeśli `f` to `identity`
+`.cata` to zwięźlejsza alternatywa dla `.map(f).getOrElse(b)` dostępna również pod postacią `|` jeśli `f` to `identity`
 (co jest równoznaczne z `.getOrElse`).
 
-`.toLeft` i `.toRight` oraz ich aliasy symbolicznie tworzą dysjunkcje (opisane w następnym podrozdziale) przyjmując
-wartość używaną w przypadku napotkania `Empty`.
+`.toLeft` i `.toRight` oraz ich aliasy symbolicznie tworzą dysjunkcje (opisane w następnym podrozdziale), przyjmując
+jako parametr wartość używaną w przypadku napotkania `Empty`.
 
 `.orZero` używa instancji typeklasy `Monoid` do zdobycia wartości domyślnej.
 
@@ -5317,7 +5317,7 @@ dla kolekcji udostępnia nam `.to` pochodzące z `Foldable`.
 A> Metody definiowane są tutaj w stylu OOP, a nie używając `object` lub `implicit class` jak uczyliśmy się w Rozdziale 4.
 A> Jest to częste zjawisko w Scalaz i wynika w dużej mierze z zaszłości historycznych:
 A> 
-A> -   edytory tekstu miały tendencję do nie znajdywania metod rozszerzających, ale teraz działa to bez żadnego
+A> -   edytory tekstu miały tendencję do nieznajdywania metod rozszerzających, ale teraz działa to bez żadnego
 A>     problemu w IntelliJ, ENSIME i ScalaIDE.
 A> -   istnieją rzadkie przypadki, w których kompilator nie potrafi poprawie wyinferować typu, a więc i znaleźć
 A>     metod rozszerzających
@@ -5369,7 +5369,7 @@ z odpowiednią składnią
 ~~~~~~~~
 
 pozwalającą na łatwe tworzenie wartości. Zauważ, że te metody przyjmują typ *drugiej strony* jako parametr. A więc
-jeśli chcesz stworzyć `String \/ Int` mając `Int`, wołając `.right` musisz przekazać `String`.
+jeśli chcesz stworzyć `String \/ Int` mając `Int`, wołając `.right`, musisz przekazać `String`.
 
 {lang="text"}
 ~~~~~~~~
@@ -5383,7 +5383,7 @@ jeśli chcesz stworzyć `String \/ Int` mając `Int`, wołając `.right` musisz 
 Symboliczna natura `\/` sprawia, że dobrze się go czyta, gdy użyty jest jako infiks. Pamiętaj, że typy symboliczne w Scali
 wiążą argumenty od lewej, a więc zagnieżdżone `\/` muszą być ujęte w nawiasy.
 
-`\/` posiada prawostronne (czyli `flatMap` wykonywany jest na `\/-`) instancje typeklas:
+`\/` posiada prawostronne (co oznacza, że `flatMap` wykonywany jest na `\/-`) instancje typeklas:
 
 -   `Monad` / `MonadError`
 -   `Traverse` / `Bitraverse`
@@ -5432,7 +5432,7 @@ Dodatkowo dostajemy kilka niestandardowych metod
 
 Alias `|` na `getOrElse` jest podobny do tego w `Maybe`. Dostajemy też `|||` jako alias na `orElse`. 
 
-`+++` pozwala na łączenie dysjunkcji priorytetyzując te, które wypełnione są po lewej stronie.
+`+++` pozwala na łączenie dysjunkcji, priorytetyzując te, które wypełnione są po lewej stronie.
 
 -   `right(v1) +++ right(v2)` gives `right(v1 |+| v2)`
 -   `right(v1) +++ left (v2)` gives `left (v2)`
@@ -5456,7 +5456,7 @@ zależnie od jego typu.
 
 ### Validation
 
-Na pierwszy rzut oka `Validation` (zaliasowana jako `\?/` czyli *szczęśliwy Elvis*) wydaje się być klonem
+Na pierwszy rzut oka typ `Validation` (zaliasowany jako `\?/` czyli *szczęśliwy Elvis*) wydaje się być klonem
 `Disjunction`:
 
 {lang="text"}
@@ -5510,7 +5510,7 @@ oraz zależnych od zawartości:
 
 Dużą zaletą ograniczenia się do `Applicative` jest to, że `Validation` używany jest wyraźnie w sytuacjach,
 w których chcemy zebrać wszystkie napotkane problemy, natomiast `Disjunction` zatrzymuje się przy pierwszym i ignoruje
-pozostałe. Aby wesprzeć akumulacje błędów mamy do dyspozycji `ValidationNel`, czyli `Validation` z `NonEmptyList[E]` 
+pozostałe. Aby wesprzeć akumulacje błędów, mamy do dyspozycji `ValidationNel`, czyli `Validation` z `NonEmptyList[E]` 
 po stronie błędów.
 
 Rozważmy wykonanie walidacji danych pochodzących od użytkownika za pomocą `Disjunction` i `flatMap`:
@@ -5546,7 +5546,7 @@ Jeśli użyjemy `|@|`
   res = -\/(username contains spaces)
 ~~~~~~~~
 
-nadal dostaniemy tylko pierwszy błąd. Wynika to z faktu, że `Disjunction` jest `Monad`ą a jego metody
+nadal dostaniemy tylko pierwszy błąd. Wynika to z faktu, że `Disjunction` jest `Monad`ą, a jego metody
 `.applyX` muszą być spójne z `.flatMap` i nie mogą zakładać, że operacje mogą być wykonywane poza kolejnością.
 Porównajmy to z:
 
@@ -5591,7 +5591,7 @@ kilka ekstra:
 A> `+|+` to zdziwiony robot c3p0.
 
 `.disjunction` konwertuje `Validated[A, B]` do `A \/ B`. Dysjunkcja ma lustrzane metody `.validation` i `.validationNel`,
-pozwalając tym samym na łatwe przełączanie się miedzy sekwencyjnym i równoległym zbieraniem błędów.
+pozwalając tym samym na łatwe przełączanie się między sekwencyjnym i równoległym zbieraniem błędów.
 
 `\/` i `Validation` są bardziej wydajnymi alternatywami dla wyjątków typu checked do walidacji wejścia, unikającymi
 zbierania śladu stosu (_stacktrace_). Wymagają one też od użytkownika obsłużenia potencjalnych błędów, sprawiając tym samym,
@@ -5602,7 +5602,7 @@ A> śladu stosu. Tradycyjne podejście używające wyjątków do walidacji wejś
 A> wolniejsze od funkcji używających `\/` lub `Validation`.
 A>
 A> Niektórzy twierdzą, że przewidywalne wyjątki są referencyjnie transparentne, ponieważ zostaną rzucone za każdym razem.
-A> Jednak ślad stosu zależy od ciągu wywołań, dając inny rezultat zależnie od tego kto zawołał daną funkcje, zaburzając
+A> Jednak ślad stosu zależy od ciągu wywołań, dając inny rezultat, zależnie od tego, kto zawołał daną funkcję, zaburzając
 A> tym samym transparencję referencyjną.
 A> Nie mniej, rzucanie wyjątku nie jest czyste, ponieważ oznacza, że funkcja nie jest *totalna*.
 
@@ -5670,8 +5670,8 @@ oraz zależnie od zawartości
 zamienione w `Both`.
 
 `.flatMap` jest prawostronna (`Both` i `That`), przyjmując `Semigroup`y dla strony lewej (`This`), tak aby
-móc połączyć zawartości zamiast je porzucać. Metoda `&&&` jest pomocna, gdy chcemy połączyć dwie instancje 
-`\&/`, tworząc tuple z prawej strony i porzucając tę stronę zupełnie jeśli nie jest wypełniona w obu instancjach.
+móc połączyć zawartości, zamiast je porzucać. Metoda `&&&` jest pomocna, gdy chcemy połączyć dwie instancje 
+`\&/`, tworząc tuple z prawej strony i porzucając tę stronę zupełnie, jeśli nie jest wypełniona w obu instancjach.
 
 Mimo że zwracanie typu `\&/` z naszych funkcji jest kuszące, to jego nadużywanie to antywzorzec.
 Głównym powodem dla używania `\&/` jest łączenie i dzielenie potencjalnie nieskończonych *strumieni* danych w 
@@ -5698,7 +5698,7 @@ skończonej pamięci. Dlatego też dostajemy do dyspozycji kilka przydatnych fun
 ~~~~~~~~
 
 
-### Either Wyższego Rodzaju
+### Either wyższego rodzaju
 
 Typ danych `Coproduct` (nie mylić z bardziej ogólnym pojęciem *koproduktu* w ADT) opakowuje `Disjunction`
 dla konstruktorów typu:
@@ -5719,7 +5719,7 @@ Najpopularniejszym przypadkiem, w którym zastosowanie znajduje `Coproduct`, to 
 stworzyć anonimowy koprodukt wielu ADT.
 
 
-### Nie Tak Szybko
+### Nie tak szybko
 
 Wbudowane w Scalę tuple oraz podstawowe typy danych takie jak `Maybe` lub `Disjunction` są ewaluowane zachłannie 
 (_eagerly-evaluated_).
@@ -5755,7 +5755,7 @@ prawdopodobnie powinny brzmieć: `ByNameTupleX`, `ByNameOption` i `ByNameEither`
 
 ### Const
 
-`Const`, zawdzięczający nazwę angielskiemu *constant*, czyli *stała*, jest opakowaniem na wartość typu `A`, razem
+`Const`, zawdzięczający nazwę angielskiemu *constant*, jest opakowaniem na wartość typu `A`, razem
 z nieużywanym parametrem typu `B`.
 
 {lang="text"}
@@ -5779,7 +5779,7 @@ z nieużywanym parametrem typu `B`.
 Najważniejszą własnością tej instancji jest to, że ignoruje parametr `B`, łącząc wartości typu `A`, które napotka.
 
 Wracając do naszej aplikacji `drone-dynamic-agents`, powinniśmy najpierw zrefaktorować plik `logic.scala`, tak aby używał
-`Applicative` zamiast `Monad`. Poprzednią implementację stworzyliśmy zanim jeszcze dowiedzieliśmy się czym jest
+`Applicative` zamiast `Monad`. Poprzednią implementację stworzyliśmy, zanim jeszcze dowiedzieliśmy się, czym jest
 `Applicative`. Teraz wiemy jak zrobić to lepiej:
 
 
@@ -5807,7 +5807,7 @@ Wracając do naszej aplikacji `drone-dynamic-agents`, powinniśmy najpierw zrefa
 ~~~~~~~~
 
 Skoro nasza logika biznesowa wymaga teraz jedynie `Applicative`, możemy zaimplementować nasz mock `F[a]` jako 
-`Const[String, a]`. W każdym z przypadków zwracamy nazwę funkcji która została wywołana:
+`Const[String, a]`. W każdym z przypadków zwracamy nazwę funkcji, która została wywołana:
 
 {lang="text"}
 ~~~~~~~~
@@ -5848,9 +5848,9 @@ Z taką interpretacją naszego programu możemy zweryfikować metody, które są
 Alternatywnie, moglibyśmy zliczyć ilość wywołań za pomocą `Const[Int, ?]` lub `IMap[String, Int]`.
 
 W tym teście zrobiliśmy krok dalej poza tradycyjne testowanie z użyciem *Mocków*. `Const` pozwolił nam
-sprawdzić co zostało wywołane bez dostarczania faktycznej implementacji. Podejście takie jest użyteczne
+sprawdzić, co zostało wywołane bez dostarczania faktycznej implementacji. Podejście takie jest użyteczne,
 kiedy specyfikacja wymaga od nas, abyśmy wykonali konkretne wywołania w odpowiedzi na dane wejście. 
-Dodatkowo, osiągnęliśmy to zachowując bezpieczeństwo w czasie kompilacji.
+Dodatkowo, osiągnęliśmy to, zachowując pełną zgodność typów.
 
 Idąc dalej tym tokiem myślenia, powiedzmy, że chcielibyśmy monitorować (w środowisku produkcyjnym) węzły,
 które zatrzymywane są w metodzie `act`. Możemy stworzyć implementacje `Drone` i `Machines` używając `Const` i 
@@ -5883,7 +5883,7 @@ zawołać je z naszej opakowanej wersji `act`
 Możemy to zrobić, ponieważ `monitor` jest *czysty* i uruchomienie go nie produkuje żadnych efektów ubocznych.
 
 Poniższy fragment uruchamia program z `ConstImpl`, ekstrahując wszystkie wywołania do `Machines.stop` i zwracając
-wszystkie zatrzymane węzły razem `WoldView`
+wszystkie zatrzymane węzły razem `WoldView`.
 
 {lang="text"}
 ~~~~~~~~
@@ -5899,17 +5899,17 @@ wszystkie zatrzymane węzły razem `WoldView`
   }
 ~~~~~~~~
 
-Użyliśmy `Const`, aby zrobić coś co przypomina niegdyś popularne w Javie *Programowanie Aspektowe*. 
-Na bazie naszej logiki biznesowej zaimplementowaliśmy monitoring nie komplikując tej logiki w żaden sposób.
+Użyliśmy `Const`, aby zrobić coś, co przypomina niegdyś popularne w Javie *Programowanie Aspektowe*. 
+Na bazie naszej logiki biznesowej zaimplementowaliśmy monitoring, nie komplikując tej logiki w żaden sposób.
 
 A będzie jeszcze lepiej. Moglibyśmy uruchomić `ConstImpl` w środowisku produkcyjnym, aby zebrać informacje
-o tym co ma zostać zatrzymane, a następnie dostarczyć **zoptymalizowaną** implementację korzystającą
+o tym, co ma zostać zatrzymane, a następnie dostarczyć **zoptymalizowaną** implementację korzystającą
 ze specyficznych dla implementacji wywołań batchowych.
 
-Cichym bohaterem tej opowieści jest `Applicative`, a `Const` pozwala nam pokazać co jest dzięki niemu możliwe.
+Cichym bohaterem tej opowieści jest `Applicative`, a `Const` pozwala nam pokazać, co jest dzięki niemu możliwe.
 Jeśli musielibyśmy zmienić nasz program tak, aby wymagał `Monad`y, nie moglibyśmy wtedy użyć `Const`, a zamiast tego zmuszeni 
 bylibyśmy do napisania pełnoprawnych mocków, aby zweryfikować jakie funkcje zostały wywołane dla danych argumentów.
-*Reguła Najmniejszej Mocy* (_Rule of Least Power_) wymaga od nas, abyśmy używali `Applicative` zamiast `Monad` kiedy tylko możemy.
+*Reguła Najmniejszej Mocy* (_Rule of Least Power_) wymaga od nas, abyśmy używali `Applicative` zamiast `Monad`, kiedy tylko możemy.
 
 
 ## Kolekcje
@@ -5919,7 +5919,7 @@ za pomocą hierarchii typeklas, np. `Foldable`, `Traverse`, `Monoid`. Co pozosta
 konkretne struktury danych, ich charakterystyki wydajnościowe i wyspecjalizowane metody.
 
 Ten podrozdział wnika w szczegóły implementacyjne każdego typu danych. Nie musimy zapamiętać wszystkiego, celem 
-jest zrozumieć jak działa każda ze struktur jedynie w ogólności.
+jest zrozumieć, jak działa każda ze struktur jedynie w ogólności.
 
 Ponieważ wszystkie kolekcje dostarczają instancje mniej więcej tych samych typeklas, nie będziemy ich powtarzać.
 W większości przypadków jest to pewna wariacja poniższej listy.
@@ -5933,7 +5933,7 @@ W większości przypadków jest to pewna wariacja poniższej listy.
 -   `Equal` / `Order`
 -   `Show`
 
-Struktury danych, które nigdy nie są puste dostarczają 
+Struktury danych, które nigdy nie są puste dostarczają również
 
 -   `Traverse1` / `Foldable1`
 
@@ -5975,7 +5975,7 @@ A>     def apply[A](): IList[A] = value.asInstanceOf[IList[A]]
 A>   }
 A> ~~~~~~~~
 A> 
-A> wykorzystując detale implementacyjne JVMa, aby uniknąć alokacji tworząc `INil`.
+A> wykorzystując detale implementacyjne JVMa, aby uniknąć alokacji, tworząc `INil`.
 A> 
 A> Taka optymalizacja jest ręcznie aplikowana do wszystkich bezparametrowych klas.
 A> W praktyce Scalaz pełna jest podobnych optymalizacji, ale wszystkie są wcześniej
@@ -6005,7 +6005,7 @@ problemy wydajnościowe:
   ) extends List[B] { ... }
 ~~~~~~~~
 
-Tworzenie instancji `List` wymaga ostrożnej, i powolnej, synchronizacji wątków, aby zapewnić
+Tworzenie instancji `List` wymaga ostrożnej i powolnej, synchronizacji wątków, aby zapewnić
 bezpieczne publikowanie. `IList` nie ma żadnych tego typu wymagań, a więc może przegonić `List` pod względem wydajności.
 
 A> Czy `NonEmptyList` to nie po prostu `ICons`? Tak, ale tylko na poziomie struktur danych.
@@ -6017,7 +6017,7 @@ A> być zawsze definiowane na poziomie ADT, a nie pojedynczych wariantów, aby u
 
 `Stream` z biblioteki standardowej jest leniwą wersją `List`y, ale obarczoną wyciekami pamięci i niebezpiecznymi
 metodami. `EphemeralStream` nie przetrzymuje referencji do wyliczonych wartości, łagodząc problemy z przetrzymywaniem
-pamięci. Jednocześnie pozbawiony jest niebezpiecznych metod, tak jak `Ilist`.
+pamięci. Jednocześnie pozbawiony jest niebezpiecznych metod, tak, jak `Ilist`.
 
 {lang="text"}
 ~~~~~~~~
@@ -6061,13 +6061,13 @@ A> `##::` wygląda trochę jak Exogorth: gigantyczny kosmiczny robak żyjący na
 
 Mimo że `EStream` rozwiązuje problem przetrzymywania pamięci, nadal możemy ucierpieć z powodu 
 *powolnych wycieków pamięci*, jeśli żywa referencja wskazuje na czoło nieskończonego strumienia. 
-Problemy tej natury, oraz potrzeba komponowania strumieni wywołujących efekty uboczne są powodem, dla którego
+Problemy tej natury oraz potrzeba komponowania strumieni wywołujących efekty uboczne są powodem, dla którego
 istnieje biblioteka fs2.
 
 
 ### `CorecursiveList`
 
-*Korekursja* (_Corecursion_) ma miejsce, gdy zaczynamy ze stanu bazowego i deterministycznie produkujemy kolejne stany
+*Korekursja* (_corecursion_) ma miejsce, gdy zaczynamy ze stanu bazowego i deterministycznie produkujemy kolejne stany
 przejściowe, tak jak miało to miejsce w metodzie `EphemeralStream.unfold`, którą niedawno omawialiśmy:
 
 {lang="text"}
@@ -6130,7 +6130,7 @@ dla typów prymitywnych:
   }
 ~~~~~~~~
 
-Typ `Array` jest bezkonkurencyjny jeśli chodzi prędkość odczytu oraz wielkość stosu. Jednak
+Typ `Array` jest bezkonkurencyjny, jeśli chodzi prędkość odczytu oraz wielkość stosu. Jednak
 nie występuje tutaj w ogóle współdzielenie strukturalne, więc niemutowalne tablice używane są zwykle tylko, gdy
 ich zawartość nie ulega zmianie lub jako sposób na bezpieczne owinięcie danych pochodzących z zastanych
 części systemu.
@@ -6216,7 +6216,7 @@ Tworzonych jest 6 list pośrednich, przechodząc i przebudowując każdą z list
 na wszystkich etapach).
 
 `DList` (od *difference list*, listy różnic) jest bardziej wydajnym rozwiązaniem dla tego scenariusza. Zamiast 
-wykonywać obliczenia na każdym z etapów wynik reprezentowany jest jako `IList[A] => IList[A]`.
+wykonywać obliczenia na każdym z etapów, wynik reprezentowany jest jako `IList[A] => IList[A]`.
 
 {lang="text"}
 ~~~~~~~~
@@ -6265,8 +6265,8 @@ tylko nazywała się `ListBuilderFactory`.
 
 Struktury drzewiaste są doskonałe do przechowywania uporządkowanych danych, tak aby każdy *węzeł binarny*
 przechowywał elementy od niego *mniejsze* w jednej gałęzi, a *większe* w drugiej. Jednak naiwna implementacja
-takie struktury może w łatwy sposób stać się niesymetryczna, zależnie od kolejności dodawanie elementów. Możliwym jest
-utrzymywanie perfekcyjnie zbalansowanego drzewa, ale jest to niewiarygodnie nieefektywne, ponieważ każde wstawienie
+takiej struktury może w łatwy sposób stać się niesymetryczna, gdyż symetria zależeć będzie od kolejności dodawanie elementów.
+Utrzymywanie perfekcyjnie zbalansowanego drzewa jest możliwe, ale jednocześnie niewiarygodnie nieefektywne, ponieważ każde wstawienie
 elementu do drzewa powodowałoby jego pełne przebudowanie.
 
 `ISet` to implementacja drzewa z *ograniczoną równowagą* (_bounded balance_), co oznacza, że jest ono zrównoważone
@@ -6298,9 +6298,9 @@ gdyż inaczej zaburzone zostaną wewnętrzne założenia, prowadząc tym samym d
 zakładamy spójność typeklas, a więc dla dowolnego `A` istnieje tylko jedna instancja `Order[A]`.
 
 ADT `ISet`u niestety pozwala na wyrażenie niepoprawnych drzew. Staramy się pisać ADT tak, aby
-w pełni opisywały co jest i nie jest możliwe poprzez restrykcję typów, ale nie zawsze jest to możliwe.
+w pełni opisywały to, co jest i nie jest możliwe poprzez restrykcję typów, ale nie zawsze jest to możliwe.
 Zamiast tego `Tip` i `Bin`  są prywatne, powstrzymując użytkowników przed przypadkowym niepoprawnych drzew.
-`.insert` jest jedynym sposobem na konstrukcję drzew, definiując tym samym jak wygląda poprawna jego forma.
+`.insert` jest jedynym sposobem na konstrukcję drzew, definiując tym samym to, jak wygląda poprawna jego forma.
 
 {lang="text"}
 ~~~~~~~~
@@ -6340,7 +6340,7 @@ _rotated tree_) po prawej.
 -   trzy kolumny to `left | value | right` pochodzące z `Bin`
 -   diamenty wizualizują dowolny `ISet`
 
-Pierwszy scenariusz jest trywialny i zachodzi, gdy obie strony to `Tip`y. Nigdy nie napotkamy tego scenariusza wykonując
+Pierwszy scenariusz jest trywialny i zachodzi, gdy obie strony to `Tip`y. Nigdy nie napotkamy tego scenariusza, wykonując
 `.insert`, ale może on wystąpić przy `.delete`
 
 {lang="text"}
@@ -6351,7 +6351,7 @@ Pierwszy scenariusz jest trywialny i zachodzi, gdy obie strony to `Tip`y. Nigdy 
 {width=50%}
 ![](images/balanceL-1.png)
 
-Drugi przypadek ma miejsce kiedy lewa strona to `Bin` zawierający jedynie `Tip`. Nie musimy nic równoważyć, dodajemy 
+Drugi przypadek ma miejsce, kiedy lewa strona to `Bin` zawierający jedynie `Tip`. Nie musimy nic równoważyć, dodajemy 
 jedynie oczywiste połączenie:
 
 {lang="text"}
@@ -6409,8 +6409,8 @@ a dla drugiej, `2*ll.size <= lr.size`
 {width=75%}
 ![](images/balanceL-5b.png)
 
-Szósty przypadek wprowadza drzewo po prawej stronie. Gdy `left` jest puste tworzymy oczywiste połączenie. 
-Taka sytuacja nigdy nie pojawia się w wyniku `.insert` ponieważ `left` jest zawsze pełne:
+Szósty przypadek wprowadza drzewo po prawej stronie. Gdy `left` jest puste, tworzymy oczywiste połączenie. 
+Taka sytuacja nigdy nie pojawia się w wyniku `.insert`, ponieważ `left` jest zawsze pełne:
 
 {lang="text"}
 ~~~~~~~~
@@ -6448,11 +6448,11 @@ zrównoważyć drzewa jak w przypadku piątym.
 {width=75%}
 ![](images/balanceL-7c.png)
 
-Tym samym doszliśmy do końca analizy metody `.insert` i tego jak tworzony jest `ISet`. Nie powinno dziwić, że
-`Foldable` jest zaimplementowany w oparciu o przeszukiwanie-w-głąb. Metody takie jak `.minimum` i `.maximum`
+Tym samym doszliśmy do końca analizy metody `.insert` i tego, jak tworzony jest `ISet`. Nie powinno dziwić, że
+`Foldable` jest zaimplementowany w oparciu o przeszukiwanie w-głąb. Metody takie jak `.minimum` i `.maximum`
 są optymalne, gdyż struktura danych bazuje na uporządkowaniu elementów.
 
-Warto zaznaczyć, że niektóre metody *nie mogą* być zaimplementowane tak wydajnie jak byśmy chcieli. Rozważmy
+Warto zaznaczyć, że niektóre metody *nie mogą* być zaimplementowane tak wydajnie, jak byśmy chcieli. Rozważmy
 sygnaturę `Foldable.element`
 
 {lang="text"}
@@ -6521,7 +6521,7 @@ wpisów
 
 ### `StrictTree` i `Tree`
 
-Zarówno `StrictTree` jak i `Tree` to implementacje *Rose Tree*, drzewiastej struktury danych z nieograniczoną
+Zarówno `StrictTree`, jak i `Tree` to implementacje *Rose Tree*, drzewiastej struktury danych z nieograniczoną
 ilością gałęzi w każdym węźle. Niestety, z powodów historycznych, zbudowane na bazie kolekcji z biblioteki standardowej...
 
 {lang="text"}
@@ -6559,11 +6559,11 @@ Rose Tree może być użyte w [algorytmach klastrowania](https://arxiv.org/abs/1
 do organizacji danych w hierarchie coraz bardziej podobnych rzeczy. Możliwe jest również wyrażenie dokumentów XML
 jako Rose Tree.
 
-Pracując z danymi hierarchicznymi dobrze jest rozważyć tę strukturę danych zanim stworzymy swoją własną.
+Pracując z danymi hierarchicznymi, dobrze jest rozważyć tę strukturę danych, zanim stworzymy swoją własną.
 
 ### `FingerTree`
 
-Finger tree (drzewo-dłoń, drzewo palczaste?) to uogólniona sekwencja z zamortyzowanym stałym czasem dostępu do elementów i logarytmicznym
+Finger tree (drzewo palczaste) to uogólniona sekwencja z zamortyzowanym stałym czasem dostępu do elementów i logarytmicznym
 złączaniem. `A` to typ elementów, a `V` na razie zignorujemy:
 
 {lang="text"}
@@ -6610,12 +6610,12 @@ do swojego lewego (`left`) palca. Jeśli palec to `Four`, to przebudowujemy `spi
 elementów jako `Node3`. Dodawanie na koniec (`:+`) odbywa się tak samo, ale w odwrotnej kolejności.
 
 Złączanie za pomocą `|+|` lub `<++>` jest bardziej wydajne niż dodawanie po jednym elemencie, ponieważ instancje `Deep` 
-mogą zachować swoje zewnętrzne gałęzie przebudowując jedynie `spine`.
+mogą zachować swoje zewnętrzne gałęzie, przebudowując jedynie `spine`.
 
 Do tej pory ignorowaliśmy `V`. Ukryliśmy też niejawny parametr obecny we wszystkich wariantach tego ADT: `implicit measurer: Reducer[A, V]`.
 
 A> Przechowywanie instancji typeklas w ADT jest w kiepskim stylu, a dodatkowo zwiększa ilość wymaganej pamięci o 
-A> 64 bity na każdy element. Implementacja `FingerTree` ma niemal dekadę na karku i nadaje się do przepisania.
+A> 64 bity na każdy element. Implementacja `FingerTree` ma niemal dekadę na karku i nadaje się już do przepisania.
 
 `Reducer` to rozszerzenie typeklasy `Monoid` pozwalające na dodanie pojedynczych elementów do `M`
 
@@ -6696,7 +6696,7 @@ która tworzy nowy ciąg znaków dla każdej warstwy w ADT.
   }
 ~~~~~~~~
 
-Dla przykładu, instancja `Cord[String]` zwraca `Three` ze stringiem po środku i cudzysłowami po obu stronach
+Dla przykładu, instancja `Cord[String]` zwraca `Three` ze stringiem pośrodku i cudzysłowami po obu stronach
 
 {lang="text"}
 ~~~~~~~~
@@ -6715,7 +6715,7 @@ Sprawiając, że `String` wygląda tak jak w kodzie źródłowym
   res: Cord = "foo"
 ~~~~~~~~
 
-A> `Cord` w Scalaz 7.2 nie jest niestety tak szybki jak mógłby być. W Scalaz 7.3 zostało to poprawione
+A> `Cord` w Scalaz 7.2 nie jest niestety tak szybki, jak mógłby być. W Scalaz 7.3 zostało to poprawione
 A> za pomocą [specjalnej struktury danych zoptymalizowanej do złączania `String`ów](https://github.com/scalaz/scalaz/pull/1793).
 
 
@@ -6781,11 +6781,11 @@ wielkości (`size`), zdejmowanie (`pop`) i podglądanie (`minimum0`) najmniejsze
   }
 ~~~~~~~~
 
-A> wartość `size` jest memoizowana wewnątrz ADT, aby pozwolić na natychmiastowe wykonanie `Foldable.length`,
+A> Wartość `size` jest memoizowana wewnątrz ADT, aby pozwolić na natychmiastowe wykonanie `Foldable.length`
 A> w zamian za dodatkowe 64 bity pamięci za każdy element. Moglibyśmy zaimplementować wariant `Heap` z 
 A> mniejszym zużyciem pamięci i wolniejszym `Foldable.length`.
 
-`Heap` zaimplementowany jest za pomogą Rose `Tree` z wartościami typu `Ranked`, gdzie `rank` to głębokość
+`Heap` zaimplementowany jest za pomocą Rose `Tree` z wartościami typu `Ranked`, gdzie `rank` to głębokość
 subdrzewa, pozwalająca na balansowanie całej struktury. Samodzielnie zarządzamy drzewem, tak aby `minimum` 
 było zawsze na jego szczycie. Zaletą takiej reprezentacji jest to, że `minimum0` jest darmowe:
 
@@ -6797,7 +6797,7 @@ było zawsze na jego szczycie. Zaletą takiej reprezentacji jest to, że `minimu
   }
 ~~~~~~~~
 
-Dodając nowy element porównujemy ją z aktualnym minimum i podmieniamy je jeśli nowa wartość jest mniejsza:
+Dodając nowy element, porównujemy go z aktualnym minimum i podmieniamy je jeśli nowa wartość jest mniejsza:
 
 {lang="text"}
 ~~~~~~~~
@@ -6809,7 +6809,7 @@ Dodając nowy element porównujemy ją z aktualnym minimum i podmieniamy je jeś
   ...
 ~~~~~~~~
 
-Dodawanie wartości, które nie są minimum skutkuje *nieuporządkowanymi* gałęziami drzewa. Kiedy napotkamy
+Dodawanie wartości, które nie są minimum, skutkuje *nieuporządkowanymi* gałęziami drzewa. Kiedy napotkamy
 dwa, lub więcej, poddrzewa tej samej rangi, optymistycznie dodajemy minimum na początek:
 
 {lang="text"}
@@ -6836,19 +6836,19 @@ dwa, lub więcej, poddrzewa tej samej rangi, optymistycznie dodajemy minimum na 
 ~~~~~~~~
 
 Uniknięcie pełnego uporządkowania drzewa sprawia, że `insert` jest bardzo szybki (`O(1)`), a więc
-producencie wartości nie są karani. Jednak konsumenci muszą ponieść koszt tej decyzji, gdyż
+producenci wartości nie są karani. Jednak konsumenci muszą ponieść koszt tej decyzji, gdyż
 złożoność `uncons` to `O(log n)`, z racji tego, że musimy odszukać nowe minimum i przebudować drzewo.
 Nadal jednak jest to implementacja szybsza od naiwnej.
 
-`union` również odracza porządkowanie pozwalając na wykonanie ze złożonością `O(1)`.
+`union` również odracza porządkowanie, pozwalając na wykonanie ze złożonością `O(1)`.
 
 Jeśli domyślna instancja `Order[Foo]` nie wyraża w poprawny sposób priorytetów, których potrzebujemy, możemy
 użyć `Tag`u i dostarczyć własną instancję `Order[Foo @@ Custom]` dla `Heap[Foo @@ Custom]`.
 
 
-### `Diev` (Interwały Dyskretne)
+### `Diev` - interwały dyskretne
 
-Możemy wydajnie wyrazić (nieuporządkowany) ciąg liczb całkowitych 6, 9, 2, 13, 8, 14, 10, 7, 5 jako serię domkniętych przedziałów:
+Możemy wydajnie wyrazić zbiór liczb całkowitych 6, 9, 2, 13, 8, 14, 10, 7, 5 jako serię domkniętych przedziałów:
 `[2, 2], [5, 10], [13, 14]`. `Diev` to wydajna implementacja tej metody dla dowolnego `A`, dla którego istnieje 
 `Enum[A]`. Tym wydajniejsza im gęstsza jego zawartość.
 
@@ -6879,7 +6879,7 @@ Możemy wydajnie wyrazić (nieuporządkowany) ciąg liczb całkowitych 6, 9, 2, 
   }
 ~~~~~~~~
 
-Kiedy aktualizujemy `Diev` sąsiednie przedziały są łączone i porządkowane, tak, że dla każdego zbioru wartości
+Kiedy aktualizujemy `Diev`, sąsiednie przedziały są łączone i porządkowane, tak, że dla każdego zbioru wartości
 istnieje unikalna reprezentacja.
 
 {lang="text"}
@@ -6904,8 +6904,7 @@ istnieje unikalna reprezentacja.
 
 Jeśli okaże się, że lista `payments` jest bardzo gęsta, możemy zamienić ją na `Diev` dla zwiększenia wydajności, 
 nie wpływając jednocześnie na logikę biznesową, gdyż polega ona na typeklasie `Monoid`, a nie metodach specyficznych
-dla `List`y. Musimy jednak dostarczyć instancję `Enum[LocalDate]`, co jest rzeczą całkiem przydatną.
-
+dla `List`y. Musimy tylko dostarczyć instancję `Enum[LocalDate]`.
 
 ### `OneAnd`
 
@@ -6928,7 +6927,7 @@ również znajdować się w tym zbiorze.
 
 W tym rozdziale przejrzeliśmy typy danych, jakie Scalaz ma do zaoferowania.
 
-Nie musimy zapamiętać wszystkiego. Niech każda z sekcji zasadzi ziarno pewnej koncepcji, które może o sobie przypomnieć
+Nie musimy zapamiętać wszystkiego. Niech każda z sekcji zasadzi ziarno pewnej koncepcji, które może o sobie przypomnieć,
 gdy będziemy szukać rozwiązania dla konkretnego problemu.
 
 Świat funkcyjnych struktur danych jest aktywnie badany i rozwijany. Publikacje naukowe na ten temat ukazują się
@@ -6938,7 +6937,7 @@ to dobry sposób na swój własny wkład do ekosystemu Scalaz.
 
 # Zaawansowane Monady
 
-Znajomość Zaawansowanych Monad to element obowiązkowy, aby móc nazwać się zaawansowanym programistą funkcyjnym.
+Znajomość Zaawansowanych Monad to element obowiązkowy, aby móc nazwać się doświadczonym programistą funkcyjnym.
 
 Jednocześnie jesteśmy deweloperami, którzy nieustannie pragną prostego życia, a więc i nasza definicja "zaawansowania"
 jest raczej skromna. Dla porównania: `scala.concurrent.Future` jest strukturą dużo bardziej skomplikowaną niż jakakolwiek
@@ -6946,17 +6945,17 @@ z prezentowanych w tym rozdziale `Monad`.
 
 ## Always in motion is the `Future`[^yoda]
 
-[^yoda]: Cytat z Mistrza Yody.
+[^yoda]: Mistrz Yoda do Luke'a Skywalkera.
 
 Największym problemem z `Future` jest to, że rozpoczyna obliczenia w momencie stworzenia, tym samym łącząc definiowanie
 programu z jego interpretacją (czyli np. uruchomieniem).
 
-`Future` jest też nie najlepszym wyborem ze względów wydajnościowych: za każdym razem, gdy wywołujemy `.flatMap`
+`Future` jest też nie najlepszym wyborem ze względów wydajnościowych: za każdym razem, gdy wywołujemy `.flatMap`,
 domknięcie jest przekazywane do `Executor`a, wywołując planowanie wątków i zmiany kontekstu. Nie jest niczym
 nadzwyczajnym, aby 50% mocy obliczeniowej CPU wykorzystywane było na te właśnie operacje zamiast rzeczywistej pracy.
 W efekcie program zrównoleglony za pomocą `Future` może okazać się *wolniejszy* od swojego sekwencyjnego odpowiednika.
 
-Zachłanna ewaluacja w połączeniu ze odwołaniami do executora sprawia, że niemożliwym jest określenie kiedy
+Zachłanna ewaluacja w połączeniu z odwołaniami do executora sprawia, że niemożliwe jest określenie kiedy
 zadanie się rozpoczęło, kiedy się zakończyło ani jakie pod-zadania zostały rozpoczęte. Zatem nie powinno nas dziwić,
 że "rozwiązania" do monitorowania wydajności frameworków opartych o `Future` są solidnym źródłem utrzymania
 dla nowoczesnych odpowiedników sprzedawców "cudownych remediów".
@@ -6970,8 +6969,8 @@ A> wybraniec, który wbiega i niszczy wszystko bez zastanowienia.
 
 ## Efekty i efekty uboczne
 
-Jeśli nie możemy wywołać metod z efektami ubocznymi w naszej logice biznesowej, ani w `Future` (ani `Id`, `Either`, 
-`Const`, itd.), to **kiedy możemy** je wywołać? Odpowiedź brzmi: wewnątrz `Monad`y, która opóźnia wykonanie 
+Jeśli nie możemy wywołać metod z efektami ubocznymi w naszej logice biznesowej ani w `Future` (ani w `Id`, `Either`, 
+`Const` itd.), to **kiedy możemy** je wywołać? Odpowiedź brzmi: wewnątrz `Monad`y, która opóźnia wykonanie 
 do czasu interpretacji w punkcie wejścia do aplikacji. W takiej sytuacji możemy odnosić się do operacji I/O i mutacji
 jako *efektów*, które widoczne są wprost w systemie typów, odwrotnie niż ukryte i nieoczywiste *efekty uboczne*.
 
@@ -7002,9 +7001,9 @@ Niemniej, taka prosta implementacja niesie ze sobą dwa duże problemy:
 1. może spowodować przepełnienie stosu
 1. nie umożliwia równoległego wykonywania obliczeń
 
-Oba te problemy zostaną przezwyciężone w tym rozdziale. Jednocześnie musimy pamiętać, 
+Oba te problemy zostaną przez nas przezwyciężone w tym rozdziale. Jednocześnie musimy pamiętać, 
 że niezależnie jak skomplikowana jest wewnętrzna implementacja `Monad`y, zasady tutaj opisane zachowują moc:
-modularyzujemy definicję programu i jego wykonanie, tak aby móc wyrazić efekty w sygnaturach typów, sprawiając tym samym
+modularyzujemy definicję programu i jego wykonanie, tak aby móc wyrazić efekty w sygnaturach typów, sprawiając tym samym,
 że rozumowanie o nich staje się możliwe, a reużycie kodu łatwiejsze.
 
 A> Kompilator Scali z radością pozwoli nam wywołać metody ze skutkami ubocznymi poza bezpiecznym kontekstem. 
@@ -7012,16 +7011,16 @@ A> Linter [Scalafix](https://scalacenter.github.io/scalafix/) może sprawić, ż
 A> z wewnątrz `Monad`y odraczającej wykonanie, jak np. `IO`.
 
 
-## Bezpieczeństwo Stosu
+## Bezpieczeństwo stosu
 
 Na JVMie każde wywołanie metody dodaje wpis do stosu wywołań aktualnego wątku (`Thread`), tak jakbyśmy
 dopisywali element na początek `List`y. Kiedy metoda kończy działanie, wierzchni wpis jest usuwany. Maksymalna długość
 stosu wywołań determinowana jest przez flagę `-Xss` ustawianą przy uruchomieniu polecenia `java`. Wywołania
 ogonowo-rekursywne są wykrywane przez kompilator Scali i nie dodają wpisów do stosu. Kiedy przekroczymy dozwolony
-limit poprzez zawołanie zbyt wielu metod napotkamy `StackOverflowError`.
+limit poprzez zawołanie zbyt wielu metod, napotkamy `StackOverflowError`.
 
 Niestety, każde zagnieżdżone wywołanie na naszym `IO`, jak np. `.flatMap`, dodaje kolejne wywołania do stosu.
-Najprostszym sposobem, aby zaobserwować to zjawisko, jest powtórzenie akcji w nieskończoność i sprawdzenie czy 
+Najprostszym sposobem, aby zaobserwować to zjawisko, jest powtórzenie akcji w nieskończoność i sprawdzenie, czy 
 taki program przeżyje dłużej niż kilka sekund. Możemy użyć metody `.forever` pochodzącej z `Apply` (rodzica `Monad`y):
 
 {lang="text"}
@@ -7042,8 +7041,8 @@ taki program przeżyje dłużej niż kilka sekund. Możemy użyć metody `.forev
       at ...
 ~~~~~~~~
 
-Scalaz definiuje typeklasę `BindRec`, którą mogą implementować `Monad`y niezagrażające przeładowywaniem stosu (_stack safe_):. 
-Wymaga ona zachowywania stałegoe rozmiaru stosu przy rekurencyjnych wywołaniach `bind`:
+Scalaz definiuje typeklasę `BindRec`, którą mogą implementować `Monad`y niezagrażające przeładowywaniem stosu (_stack safe_). 
+Wymaga ona zachowywania stałego rozmiaru stosu przy rekurencyjnych wywołaniach `bind`:
 
 {lang="text"}
 ~~~~~~~~
@@ -7080,16 +7079,16 @@ ADT `Free` to naturalna reprezentacja metod z interfejsu `Monad`:
 1. `Return` reprezentuje `.point`
 2. `Gosub` reprezentuje `.bind` / `.flatMap`
 
-Kiedy ADT odwzorowuje argumenty powiązanej funkcji, nazywamy to *kodowaniem Church'a* (_Church encodnig_).
+Kiedy ADT odwzorowuje argumenty powiązanej funkcji, nazywamy to *kodowaniem Churcha* (_Church encodnig_).
 
-Typ `Free` to skrót od `FreeMonad` i nazywa się tak ponieważ pozwala *wygenerować za darmo* monadę dla dowolnego `S[_]`. Moglibyśmy
-na przykład wskazać algebrę `Drone` lub `Machines` z rozdziału 3 jako `S` i wygenerować struktury danych reprezentujące nasz program.
+Typ `Free` to skrót od `FreeMonad` i nazywa się tak, ponieważ pozwala *uzyskać za darmo* monadę dla dowolnego `S[_]`. Moglibyśmy
+na przykład wskazać algebrę `Drone` lub `Machines` z rozdziału 3 i wygenerować struktury danych reprezentujące nasz program, które stałyby się naszym `S[_]`.
 Zastanowimy się jak może nam się to przydać pod koniec tego rozdziału.
 
 
-### `Trampoline
+### `Trampoline`
 
-`Free` jest typem bardziej ogólnym niż w tym momencie potrzebujemy. Ustawiając algebrę `S[_]` na `() => ?`, czyli odroczone wykonanie
+`Free` jest typem bardziej ogólnym, niż tego w tym momencie potrzebujemy. Ustawiając algebrę `S[_]` na `() => ?`, czyli odroczone wykonanie
 znane jako *thunk*, otrzymamy typ `Trampoline`, który pozwoli nam zaimplementować bezpieczną instancję `Monad`y
 
 {lang="text"}
@@ -7112,17 +7111,17 @@ znane jako *thunk*, otrzymamy typ `Trampoline`, który pozwoli nam zaimplementow
   }
 ~~~~~~~~
 
-`.tailrecM` pochodząca z `BindRec` uruchamia `.bind` tak długo aż otrzymamy `B`. Mimo że technicznie rzecz biorąc
+`.tailrecM` pochodząca z `BindRec` uruchamia `.bind` tak długo, aż otrzymamy `B`. Mimo że technicznie rzecz biorąc,
 nie jest to implementacja, którą spełnia wymagania anotacji `@tailrec`, to zachowuje stałą wielkość stosu, ponieważ
 każde wywołanie zwraca obiekt ze sterty (_heap_), a rekurencja zostaje odroczona.
 
-A> Nazwa `Trampoline` wynika z faktu, że za każdym razem, gdy odkładamy `.bind` na stosie *odbijamy się* z powrotem
+A> Nazwa `Trampoline` wynika z faktu, że za każdym razem, gdy odkładamy `.bind` na stosie, to *odbijamy się* z powrotem
 A> na stertę.
 A>
 A> Jedynym odwołaniem do odbijania się w sadze Star Wars jest pojedynek Yody z Dooku. Nie rozmawiajmy o tym.
 
-Dostępne są funkcje ułatwiające tworzenie `Trampoline` zarówno zachłannie (`.done`) jak i przez nazwę (`.delay`). 
-Możemy też stworzyć instancję `Trampoline` przekazując inną jej instancję poprzez nazwę (`.suspend`):
+Dostępne są funkcje ułatwiające tworzenie `Trampoline` zarówno zachłannie (`.done`), jak i przez nazwę (`.delay`). 
+Możemy też stworzyć instancję `Trampoline`, przekazując inną jej instancję poprzez nazwę (`.suspend`):
 
 {lang="text"}
 ~~~~~~~~
@@ -7136,9 +7135,9 @@ Możemy też stworzyć instancję `Trampoline` przekazując inną jej instancję
 ~~~~~~~~
 
 Kiedy widzimy w naszym kodzie `Trampoline[A]` możemy w głowie podstawić w jej miejsce `A`, ponieważ
-jej jedyną funkcją jest sprawienie, że nie przeładujemy stosu. Możemy uzyskać `A` interpretując `Free` za pomocą `.run`.
+jej jedyną funkcją jest sprawienie, że nie przeładujemy stosu. Możemy uzyskać `A`, interpretując `Free` za pomocą `.run`.
 
-A> Pouczające, acz nie niezbędne, jest zrozumienie jak jest zaimplementowane jest `Free.run`: `.resume` wykonuje pojedynczą
+A> Pouczające, acz nie niezbędne, jest zrozumienie, jak jest zaimplementowane jest `Free.run`: `.resume` wykonuje pojedynczą
 A> warstwę `Free`, a `.go` prowadzi je do zakończenia.
 A> 
 A> W poniższym przykładzie `Trampoline[A]` jest użyte jako synonim `Free[() => ?, A]` dla zwiększenia czytelności.
@@ -7171,7 +7170,7 @@ A> Najbardziej zagmatwany jest przypadek zagnieżdżonych `Gosub`. W rzeczywisto
 A> wykonaj funkcję `g` i przekaż wynik do zewnętrznej funkcji `f`.
 
 
-### Przykład: Bezpieczne `DList`
+### Przykład: bezpieczna `DList`a
 
 W poprzednim rozdziale przedstawiliśmy typ danych `DList` jako
 
@@ -7195,14 +7194,14 @@ Jednak w rzeczywistości jego implementacja przypomina bardziej:
   }
 ~~~~~~~~
 
-Zamiast aplikować zagnieżdżone wywołanie `f` używamy wstrzymanej `Trampoline`, którą interpretujemy za pomocą `.run`
+Zamiast aplikować zagnieżdżone wywołanie `f`, używamy odraczającej `Trampoline`, którą interpretujemy za pomocą `.run`,
 kiedy zajdzie taka potrzeba, np. w `toIList`. Zmiany są minimalne, ale w efekcie otrzymaliśmy bezpieczną wersję `DList`,
-która nie przepełni stosu niezależnie do tego jak duże będą przetwarzane listy.
+która nie przepełni stosu niezależnie od tego, jak duże będą przetwarzane listy.
 
 
 ### Bezpieczne `IO`
 
-Używając `Trampoline` możemy w podobny sposób zabezpieczyć nasze `IO`:
+Używając `Trampoline`, możemy w podobny sposób zabezpieczyć nasze `IO`:
 
 {lang="text"}
 ~~~~~~~~
@@ -7225,7 +7224,7 @@ Używając `Trampoline` możemy w podobny sposób zabezpieczyć nasze `IO`:
 A> Słyszeliśmy, że lubisz `Monad`y, więc zrobiliśmy dla ciebie `Monad`ę z `Monad`y, żebyś mógł
 A> bindować monadycznie, gdy bindujesz monadycznie.
 
-Interpreter, `unsafePerformIO()`, specjalnie został nazwany w tak odstraszający sposób, aby zniechęcić
+Interpreter `unsafePerformIO()` specjalnie został nazwany w tak odstraszający sposób, aby zniechęcić
 do używania go poza punktem wejścia naszej aplikacji.
 
 Tym razem nie zobaczymy `StackOverflowError`:
@@ -7250,7 +7249,7 @@ A> że garbage collector będzie działał szybciej, gdy użyjemy `Free` z powod
 A> przechowywanych na stosie.
 
 
-## Biblioteka Transformatorów Monad
+## Biblioteka transformatorów monad
 
 Transformatory monad to struktury danych, które opakowują wewnętrzną wartość i dostarczają monadyczny *efekt*.
 
