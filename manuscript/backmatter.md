@@ -60,7 +60,7 @@ Haskell ma bardzo schludną składnię dla ADT. Oto tradycyjna lista:
 ~~~~~~~~
 
 `List` jest *konstruktorem typu*, `a` to *parametr typu*, a `|` rozdziela *konstruktory danych*, które w tym wypadku to:
-`Nil` czyli pusta lista oraz `Cons` czyli komórka listy. `Cons` przyjmuje dwa parametry, które są rozdzielone białym znakiem. Nie ma
+`Nil`, czyli pusta lista oraz `Cons`, czyli komórka listy. `Cons` przyjmuje dwa parametry, które są rozdzielone białym znakiem. Nie ma
 tu przecinków ani nawiasów. 
 
 W Haskellu nie ma też podtypowania, więc nie ma czegoś takiego jak typ `Nil`
@@ -81,9 +81,9 @@ Przybliżone tłumaczenie na Scalę:
   }
 ~~~~~~~~
 
-A więc, konstruktor typu to odpowiednik `sealed abstract class` a każdy z konstruktorów danych
-to para `.apply`/`.unapply`. Warto zauważyć, że przy takim kodowaniu Scala nie jest w stanie sprawdzić
-czy pattern matching jest wyczerpujący, i dlatego też nie jest ono używane w Scalaz.
+A więc, konstruktor typu to odpowiednik `sealed abstract class`, a każdy z konstruktorów danych
+to para `.apply`/`.unapply`. Warto zauważyć, że przy takim kodowaniu Scala nie jest w stanie sprawdzić,
+czy pattern matching jest wyczerpujący i dlatego też nie jest ono używane w Scalaz.
 
 Możemy też użyć infiksu, tworząc ładniejszą definicję z `:.` zamiast `Cons`
 
@@ -134,9 +134,9 @@ z honorowym miejscem dla
   data Ordering   = LT | EQ | GT
 ~~~~~~~~
 
-Haskell, podobnie jak Scala, pozwala na definiowanie aliasów typów. Alias i jego rozwiniętą
+Haskell, podobnie jak Scala, pozwala na definiowanie aliasów typów. Alias i jego rozwinięta
 forma mogą być używane zamiennie. Z powodów historycznych `String` zdefiniowany jest alias na listę
-`Char`ów
+`Char`ów:
 
 {lang="text"}
 ~~~~~~~~
@@ -145,8 +145,8 @@ forma mogą być używane zamiennie. Z powodów historycznych `String` zdefiniow
 
 co jest reprezentacją bardzo niewydajną i dlatego właśnie powinniśmy używać typu `Text`.
 
-Możemy też definiować nazwy pól w ADT używając *składni rekordów*, co oznacza umieszczenie konstruktorów danych
-w klamrach i dodanie do pól *anotacji typów* za podwójnym dwukropkiem aby określić ich typ.
+Możemy też definiować nazwy pól w ADT, używając *składni rekordów*, co oznacza umieszczenie konstruktorów danych
+w klamrach i dodanie do pól *anotacji typów* za podwójnym dwukropkiem, aby określić ich typ.
 
 {lang="text"}
 ~~~~~~~~
@@ -189,8 +189,8 @@ Bardziej wydajną alternatywą dla pojedynczych definicji danych jest użycie s�
 Jest to odpowiednik `extends AnyVal`, tyle że bez żadnych haczyków.
 
 A> Ograniczeniem Haskellowych rekordów jest to, że nazwy pól nie mogą się powtarzać.
-A> Możemy to jednak obejść stosując rozszerzenie języka, które pozwoli nam użyć `name`
-A> zarówno w `Human` jak i `Company`:
+A> Możemy to jednak obejść, stosując rozszerzenie języka, które pozwoli nam użyć `name`
+A> zarówno w `Human`, jak i `Company`:
 A>
 A> {lang="text"}
 A> ~~~~~~~~
@@ -206,16 +206,16 @@ A>                   , employees :: [Resource]
 A>                   }
 A> ~~~~~~~~
 A> 
-A> Istnieje wiele takich rozszerzeń i nie jest niczym nadzwyczajnym aby mały projekt korzystał
+A> Istnieje wiele takich rozszerzeń i nie jest niczym nadzwyczajnym, aby mały projekt korzystał
 A> z 20 albo i więcej z nich. Haskell jest bardzo konserwatywnym językiem i nowe funkcjonalności
-A> są domyślnie wyłączone przez długi czas zanim zostaną zaakceptowane do standardu języka.
+A> są domyślnie wyłączone przez długi czas, zanim zostaną zaakceptowane do standardu języka.
 
 
 ## Funkcje
 
 Mimo że nie jest to konieczne, to dobrą praktyką jest opatrywanie funkcji sygnaturami typu,
-co wyrażane jest jako nazwa funkcji za którą podąża jej typ. Dla przykładu, oto `foldl` wyspecjalizowany
-dla listy
+co wyrażane jest jako nazwa funkcji, za którą podąża jej typ. Dla przykładu, oto `foldl` wyspecjalizowany
+dla listy:
 
 {lang="text"}
 ~~~~~~~~
@@ -230,10 +230,10 @@ Wszystkie funkcje w Haskellu są domyślnie *rozwinięte* (_curried_), parametry
   def foldLeft[A, B](f: (B, A) => B)(b: B)(as: List[A]): B
 ~~~~~~~~
 
-Tyle, że:
+Tyle że:
 
 - bez słów kluczowych
-- bez deklaracji typów które wyprowadzamy
+- bez deklaracji typów, które wyprowadzamy
 - bez nazywania parametrów
 
 Wszystko to sprawia, że kod jest bardziej zwięzły.
@@ -247,8 +247,8 @@ Funkcje infiksowe definiowane są w nawiasach i wymagają określenia fixity:
 ~~~~~~~~
 
 Zwykłe funkcje mogą być wołane w pozycji infiksowej poprzez otoczenie nazwy apostrofami,
-a infiksowe możemy wywoływać tak jak normalne jeśli pozostawimy nawiasy wokół nazwy. Poniższe wywołania są 
-równoznaczne:
+a infiksowe możemy wywoływać tak jak normalne, jeśli pozostawimy nawiasy wokół nazwy. Poniższe wywołania są 
+więc równoznaczne:
 
 {lang="text"}
 ~~~~~~~~
@@ -256,7 +256,7 @@ równoznaczne:
   foo a b
 ~~~~~~~~
 
-Funkcja infiksowa może być rozwinięta z lewej bądź prawej strony, często dając różną
+Funkcja infiksowa może być rozwinięta z lewej bądź prawej strony, często zmieniając tym samym swoją
 semantykę:
 
 {lang="text"}
@@ -269,7 +269,7 @@ Funkcje zazwyczaj pisane są tak, aby najbardziej ogólny parametr był na pocz�
 reużywalność domyślnej rozwiniętej formy.
 
 Definicje funkcji mogą używać dopasowywania wzorców z jedną linią na wariant. W tym miejscu możemy
-nazwać nasze parametry używając konstruktorów danych do ich wyekstrahowania, podobnie jak w Scalowej 
+nazwać nasze parametry, używając konstruktorów danych do ich wyekstrahowania, podobnie jak w Scalowej 
 klauzuli `case`:
 
 {lang="text"}
@@ -365,7 +365,7 @@ Alternatywnie możemy użyć *ograniczeń wariantów* (_case guards_)
                          | otherwise = filter f tail
 ~~~~~~~~
 
-Dopasowania dla dowolnego wyrażenia definiujemy używają `case ... of`
+Dopasowania dla dowolnego wyrażenia definiujemy używając `case ... of`
 
 {lang="text"}
 ~~~~~~~~
@@ -387,7 +387,7 @@ potraktować zera w specjalny sposób:
                      Nothing                  -> []
 ~~~~~~~~
 
-Na koniec dwie funkcje warte wspomnienia: `($)` i `(.)`
+Na koniec dwie funkcje warte wspomnienia: `($)` i `(.)`.
 
 {lang="text"}
 ~~~~~~~~
@@ -400,9 +400,7 @@ Na koniec dwie funkcje warte wspomnienia: `($)` i `(.)`
   infixr 9
 ~~~~~~~~
 
-Obie są stylistycznymi alternatywami dla zagnieżdżonych nawiasów.
-
-Poniższe wywołania są równoznaczne
+Obie są stylistycznymi alternatywami dla zagnieżdżonych nawiasów, a poniższe wywołania są równoznaczne:
 
 {lang="text"}
 ~~~~~~~~
@@ -428,9 +426,9 @@ Składanie funkcji za pomocą `.` jest przez wielu preferowane ponad wielokrotne
 
 ## Typeklasy
 
-Aby zdefiniować typeklasę używamy słowa kluczowego `class`, za którym podąża jej nazwa oraz parametry typu, a wymagane
+Aby zdefiniować typeklasę, używamy słowa kluczowego `class`, za którym podąża jej nazwa oraz parametry typu, a wymagane
 metody trafiają do klauzuli `where`. Jeśli między typeklasami istnieje zależność, jak np. w przypadku `Applicative` i
-`Functor`, to może być ona wyrażona za pomocą notacji `=>`
+`Functor`, to może być ona wyrażona za pomocą notacji `=>`.
 
 {lang="text"}
 ~~~~~~~~
@@ -478,7 +476,7 @@ powtórzyć sygnatury metod, co dodaje nieco czytelności, musimy włączyć roz
 ~~~~~~~~
 
 Gdy chcemy skorzystać z typeklasy w funkcji, deklarujemy to za pomocą `=>`. Możemy na przykład
-zdefiniować odpowiednik `Apply.apply2` ze Scalaz
+zdefiniować odpowiednik `Apply.apply2` ze Scalaz.
 
 {lang="text"}
 ~~~~~~~~
@@ -486,7 +484,7 @@ zdefiniować odpowiednik `Apply.apply2` ze Scalaz
   apply2 f fa fb = f <$> fa <*> fb
 ~~~~~~~~
 
-Skoro wprowadziliśmy już typeklasę `Monad` to jest to dobry moment na omówienie notacji `do`,
+Skoro wprowadziliśmy już typeklasę `Monad`, to jest to dobry moment na omówienie notacji `do`,
 która była inspiracją dla Scalowej konstrukcji `for`:
 
 {lang="text"}
@@ -522,7 +520,7 @@ gdzie `>>=` to `=<<` z parametrami zamienionymi miejscami
 
 a `return` to synonim do `pure`.
 
-W przeciwieństwie do Scali, nie musimy przypisywać pustych wartości ani używać `yield` gdy zwracamy `()`.
+W przeciwieństwie do Scali, nie musimy przypisywać pustych wartości ani używać `yield`, gdy zwracamy `()`.
 
 {lang="text"}
 ~~~~~~~~
@@ -565,15 +563,13 @@ temat, ale sama derywacja dla ADT jest bardzo prosta:
 ~~~~~~~~
 
 
-## Algebras
+## Algebry
 
-In Scala, typeclasses and algebras are both defined as a `trait` interface.
-Typeclasses are injected by the `implicit` feature and algebras are passed as
-explicit parameters. There is no language-level support in Haskell for algebras:
-they are just data!
+W Scali zarówno typeklasy, jak i algebry definiowane są za pomocą `trait`ów. Typeklasy wstrzykiwane są
+jako parametry niejawne a algebry przekazywane explicite. W Haskellu nie ma wsparcia dla algebr na poziomie języka
+i wyrażane są jako zwyczajne dane!
 
-Consider the simple `Console` algebra from the introduction. We can rewrite it
-into Haskell as a *record of functions*:
+Rozważmy prostą algebrę `Console` ze wstępu. Możemy wyrazić ją jako *rekord funkcji*:
 
 {lang="text"}
 ~~~~~~~~
@@ -583,7 +579,7 @@ into Haskell as a *record of functions*:
                     }
 ~~~~~~~~
 
-with business logic using a `Monad` constraint
+z logiką biznesową używającą `Monad`y:
 
 {lang="text"}
 ~~~~~~~~
@@ -592,13 +588,13 @@ with business logic using a `Monad` constraint
               println c line
 ~~~~~~~~
 
-A production implementation of `Console` would likely have type `Console IO`.
-The Scalaz `liftIO` function is inspired by a Haskell function of the same name
-and can lift `Console IO` into any Advanced Monad stack.
+Produkcyjna implementacja `Console` prawdopodobnie miałaby typ `Console IO`. Funkcja
+`liftIO` ze Scalaz jest inspirowana haskellową funkcją o tej samej nazwie, która potrafi
+wynieść `Console IO` do stosu Zaawansowanych Monad.
 
-Two additional language extensions make the business logic even cleaner. For
-example, `RecordWildCards` allows us to import all the fields of a data type by
-using `{..}`:
+Dwa dodatkowe rozszerzenia języka sprawiają że logika biznesowania stanie się jeszcze prostsza.
+
+Pierwsze z nich, `RecordWildCards`, pozwala na zaimportowanie wszystkich pól z rekordu za pomocą `{..}`:
 
 {lang="text"}
 ~~~~~~~~
@@ -607,8 +603,8 @@ using `{..}`:
                         println line
 ~~~~~~~~
 
-`NamedFieldPuns` requires each imported field to be listed explicitly, which is
-more boilerplate but makes the code easier to read:
+Drugie, `NamedFieldPuns`, wymaga wskazania wszystkich pól explicite, co zwiększa ilość boilerplate'u, ale
+sprawia, że kod jest łatwiejszy do przeczytania:
 
 {lang="text"}
 ~~~~~~~~
@@ -617,19 +613,16 @@ more boilerplate but makes the code easier to read:
                                      println line
 ~~~~~~~~
 
-Whereas in Scala this encoding may be called *Finally Tagless*, in Haskell it is
-known as MTL style. Without going into details, some Scala developers didn't
-understand a research paper about the performance benefits of [Generalised ADTs
-in Haskell](http://okmij.org/ftp/tagless-final/index.html#tagless-final).
+W Scali takie wyrażenie mogłoby zostać nazwane *Finally Tagless*, ale w Haskellu znane jest jako
+*styl MTL*. Bez wchodzenia w detale, przyjmijmy, że niektórzy deweloperzy Scali nie zrozumieli artykułu
+opisującego zalety wydajnościowe [Uogólnionych ADT w Haskellu](http://okmij.org/ftp/tagless-final/index.html#tagless-final).
 
-An alternative to MTL style are *Extensible Effects*, also known as [Free Monad
-style](http://okmij.org/ftp/Haskell/extensible/more.pdf).
-
+Alternatywą do stylu MTL są *Rozszerzalne Efekty*, znane również jako [styl Monady Free](http://okmij.org/ftp/Haskell/extensible/more.pdf).
 
 ## Moduły
 
-Kod źródłowy napisany w Haskellu układa się w hierarchiczne moduły, a kod każdego z nich musi być zawarty z jednym pliku.
-Pierwsza linia w pliku określa jego nazwę
+Kod źródłowy napisany w Haskellu układa się w hierarchiczne moduły, kod każdego z nich musi być zawarty z jednym pliku,
+a jego pierwsza linia określa jego nazwę:
 
 {lang="text"}
 ~~~~~~~~
@@ -657,7 +650,7 @@ funkcję `sapling`:
 ~~~~~~~~
 
 Co ciekawe, możemy eksportować symbole, które są zaimportowane z zewnątrz. Pozwala to autorom bibliotek
-spakować całe API do jednego modułu niezależnie od tego jak zostało zaimplementowane.
+spakować całe API do jednego modułu, niezależnie od tego, jak zostało zaimplementowane.
 
 W innym pliku możemy zaimportować wcześniej zdefiniowane `Silly.Tree`.
 
@@ -666,8 +659,8 @@ W innym pliku możemy zaimportować wcześniej zdefiniowane `Silly.Tree`.
   import Silly.Tree
 ~~~~~~~~
 
-co jest równoznaczne ze Scalowym `import silly.tree._`. Jeśli chcielibyśmy ograniczyć symbole,
-które są importowane to wystarczy wymienić je w nawiasach zaraz za nazwą importowanego modułu:
+Co jest równoznaczne ze Scalowym `import silly.tree._`. Jeśli chcielibyśmy ograniczyć symbole,
+które są importowane, to wystarczy wymienić je w nawiasach zaraz za nazwą importowanego modułu:
 
 {lang="text"}
 ~~~~~~~~
@@ -675,38 +668,33 @@ które są importowane to wystarczy wymienić je w nawiasach zaraz za nazwą imp
 ~~~~~~~~
 
 Tutaj importujemy jedynie kontruktor typu `Tree` (bez konstruktorów danych)
-i funkcję `fringe`. Jeśli chcielibyśmy zaimportować wszystkie konstruktory danych możemy
-użyć `Tree(..)`. Jeśli potrzebujemy jedynie `Branch` to wystarczy to zadeklarować:
-
-Here we only import the `Tree` type constructor (not the data constructors) and
-the `fringe` function. If we want to import all the data constructors (and
-pattern matchers) we can use `Tree(..)`. If we only want to import the `Branch`
-constructor we can list it explicitly:
+i funkcję `fringe`. Jeśli chcielibyśmy zaimportować wszystkie konstruktory danych, możemy
+użyć `Tree(..)`. Jeśli potrzebujemy jedynie `Branch`, to wystarczy to zadeklarować:
 
 {lang="text"}
 ~~~~~~~~
   import Silly.Tree (Tree(Branch), fringe)
 ~~~~~~~~
 
-Jeśli okaże się że nazwy importowanych symboli kolidują ze sobą możemy rozwiązać ten problem używając importu kwalifikowanego
-(`qualified`) z opcjonalną listą importowanych symboli
+Jeśli okaże się, że nazwy importowanych symboli kolidują ze sobą, to możemy rozwiązać ten problem używając importu kwalifikowanego
+(`qualified`) z opcjonalną listą importowanych symboli.
 
 {lang="text"}
 ~~~~~~~~
   import qualified Silly.Tree (fringe)
 ~~~~~~~~
 
-Teraz by wywołać `fringe` musimy posłużyć się identyfikatorem `Silly.Tree.fringe` zamiast zwykłego `fringe`. Podczas importowania
-możemy też zmienić nazwę modułu
+Teraz by wywołać `fringe`, musimy posłużyć się identyfikatorem `Silly.Tree.fringe` zamiast zwykłego `fringe`. Podczas importowania
+możemy też zmienić nazwę modułu:
 
 {lang="text"}
 ~~~~~~~~
   import qualified Silly.Tree as T
 ~~~~~~~~
 
-tym samym `fringe` jest teraz dostępne jako`T.fringe`.
+Tym samym `fringe` jest teraz dostępne jako`T.fringe`.
 
-Alternatywnie, zamiast deklarować importowane symbole możemy wybrać to czego **nie** chcemy importować
+Alternatywnie, zamiast deklarować importowane symbole, możemy wybrać to, czego **nie** chcemy importować.
 
 {lang="text"}
 ~~~~~~~~
@@ -714,7 +702,7 @@ Alternatywnie, zamiast deklarować importowane symbole możemy wybrać to czego 
 ~~~~~~~~
 
 Domyślnie moduł `Prelude` jest niejawnie importowany, ale jeśli zaimportujemy go wprost, to tylko
-nasza wersja będzie użyta. Możemy użyć tego triku aby ukryć niebezpieczne funkcje
+nasza wersja będzie użyta. Możemy użyć tego triku, aby ukryć niebezpieczne funkcje:
 
 {lang="text"}
 ~~~~~~~~
@@ -728,15 +716,15 @@ Możemy też całkowicie się go pozbyć za pomocą rozszerzenia języka `NoImpl
 
 Haskell kompiluje się do kodu natywnego, nie ma więc maszyny wirtualnej, ale nadal jest garbage collector.
 Podstawową właściwością Haskellowego środowiska uruchomieniowego, jest to, że wszystkie parametry są domyślnie
-**leniwie ewaluowane**. Wyrażenia traktowane są jako "thunki", czyli obietnice dostarczenia wartości gdy będzie ona potrzebna.
-Thunki są redukowane tylko gdy jest to absolutnie niezbędne do kontynuowania obliczeń.
+**leniwie ewaluowane**. Wyrażenia traktowane są jako "thunki", czyli obietnice dostarczenia wartości, gdy będzie ona potrzebna.
+Thunki są redukowane tylko, gdy jest to absolutnie niezbędne do kontynuowania obliczeń.
 
 Dużą zaletą leniwej ewaluacji jest to, że zdecydowanie trudniej jest przepełnić stos! Wadą jest nieuchronny
 narzut wydajnościowy, dlatego też Haskell pozwala nam przełączyć się na ścisłą ewaluację dla wybranych przez
 nas parametrów.
 
-Nie jest też takie oczywiste co tak na prawdę oznacza ścisła ewaluacja. Określa się, że wyrażenie jest w *słabej czołowej postaci normalnej* (WHNF, _weak head normal form_)
-jeśli najbardziej zewnętrzne bloki nie mogą być bardziej zredukowane, oraz w *postaci normalnej* jeśli wyrażenie jest w pełni wyewaluowane.
+Nie jest też takie oczywiste, co tak naprawdę oznacza ścisła ewaluacja. Określa się, że wyrażenie jest w *słabej czołowej postaci normalnej* (WHNF, _weak head normal form_),
+jeśli najbardziej zewnętrzne bloki nie mogą być bardziej zredukowane, oraz w *postaci normalnej*, jeśli wyrażenie jest w pełni wyewaluowane.
 Domyślna strategia ewaluacji w Scali odpowiada właśnie postaci normalnej.
 
 Dla przykładu, te wyrażenia są w postaci normalnej:
@@ -748,7 +736,7 @@ Dla przykładu, te wyrażenia są w postaci normalnej:
   \x -> x + 1
 ~~~~~~~~
 
-natomiast poniższe nie są (mogą być dalej redukowane):
+Natomiast poniższe nie są (mogą być dalej redukowane):
 
 {lang="text"}
 ~~~~~~~~
@@ -758,7 +746,7 @@ natomiast poniższe nie są (mogą być dalej redukowane):
   (1 + 1, "foo")   -- reduces to (2, "foo")
 ~~~~~~~~
 
-Następujące wyrażenia są w WHNF ponieważ zewnętrzny kod nie może być zredukowany (mimo że
+Następujące wyrażenia są w WHNF, ponieważ zewnętrzny kod nie może być zredukowany (mimo że
 części wewnętrzne mogą):
 
 {lang="text"}
@@ -768,7 +756,7 @@ części wewnętrzne mogą):
   'f' : ("oo" ++ "bar")
 ~~~~~~~~
 
-a te wyrażenia już w WHNF nie są
+A te wyrażenia już w WHNF nie są:
 
 {lang="text"}
 ~~~~~~~~
@@ -777,7 +765,7 @@ a te wyrażenia już w WHNF nie są
   "foo" ++ "bar"     -- reduces to "foobar"
 ~~~~~~~~
 
-Domyślną strategią ewaluacji jest niewykonywanie żadnych redukcji gdy wyrażenie przekazywane jest jako parametr.
+Domyślną strategią ewaluacji jest niewykonywanie żadnych redukcji, gdy wyrażenie przekazywane jest jako parametr.
 Wsparcie na poziomie języka pozwala nam wymusić WHNF dla dowolnego wyrażenia za pomocą `($!)`
 
 {lang="text"}
@@ -804,7 +792,7 @@ Rozszerzenie języka `StrictData` sprawia, że wszystkie parametry danych w dany
 Kolejne rozszerzenie, `BangPattern`, pozwala na używanie `!` na argumentach funkcji. Z kolei rozszerzenie
 `Strict` zamienia wszystkie argumenty funkcji na ściśle ewaluowane.
 
-W ekstremalnym przypadku możemy użyć `($!!)` i typeklasy `NFData` do wymuszenia ewaluacji do postaci normalnej
+W ekstremalnym przypadku możemy użyć `($!!)` i typeklasy `NFData` do wymuszenia ewaluacji do postaci normalnej:
 
 {lang="text"}
 ~~~~~~~~
@@ -818,13 +806,13 @@ jeśli tylko istnieje instancja tej typeklasy.
 
 Kosztem ścisłej ewaluacji jest to, że Haskell zaczyna zachowywać się podobnie jak inne ścisłe języki
 i może wykonywać niepotrzebną pracę. Tym samym przełączanie się w ten tryb musi być wykonane
-z wielką uwagą i tylko gdy mamy do czynienia z mierzalnym wzrostem wydajności. Jeśli masz wątpliwości
+z wielką uwagą i tylko gdy mamy do czynienia z mierzalnym wzrostem wydajności. Jeśli masz wątpliwości,
 to lepiej zostać przy domyślnej leniwej ewaluacji.
 
 A> Istnieje groźna pułapka dotycząca leniwej ewaluacji: jeśli akcja typu I/O populuje leniwą strukturę danych,
-A> to będzie ona wykonana gdy dana struktura jest ewaluowana, grożąc tym samym błędami pochodzącymi
+A> to będzie ona wykonana, gdy dana struktura jest ewaluowana, grożąc tym samym błędami pochodzącymi
 A> z zupełnie nieoczekiwanych miejsc oraz tym, że wymknie się ona z logiki obsługi zasobów. Aby uniknąć
-A> takich problemów powinniśmy zawsze wczytywać dane z I/O do ścisłych struktur danych.
+A> takich problemów, powinniśmy zawsze wczytywać dane z I/O do ścisłych struktur danych.
 A>
 A> Na szczęście dotyczy to jedynie deweloperów piszących niskopoziomowy kod oparty o I/O. Zewnętrzne biblioteki,
 A> takie jak `pipes-safe` lub `conduits` dostarczają bezpieczne abstrakcje dla zwykłego Haskellera.
@@ -844,8 +832,8 @@ O to parę dodatkowych materiałów, które mogą być pomocne w nauce:
 -   [Glasgow Haskell Compiler User Guide](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/) i [HaskellWiki](https://wiki.haskell.org) to z kolei same twarde fakty.
 -   [Eta](https://eta-lang.org/), czyli Haskell na JVMie.
 
-Jeśli podoba Ci się Haskell i doceniasz wartość jaką może przynieść twojej firmie, to powiedz to swoim przełożonym! W ten sposób
-ci nieliczni managerowie, którzy zdecydują się na ten krok mogą przyciągnąć utalentowanych programistów funkcyjnych
+Jeśli podoba Ci się Haskell i doceniasz wartość, jaką może przynieść twojej firmie, to powiedz to swoim przełożonym! W ten sposób
+ci nieliczni managerowie, którzy zdecydują się na ten krok, mogą przyciągnąć utalentowanych programistów funkcyjnych
 z miejsc, które nie były dość odważne, a wszyscy będą szczęśliwi.
 
 # Licencje
