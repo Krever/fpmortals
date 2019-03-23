@@ -10212,34 +10212,34 @@ wraz z drobną różnicą w boilerplacie kompaniującym naszej algebrze, uwzglę
 7. `IO` może wykonywać efekty równolegle i jest wysoce wydajnym fundamentem dla dowolnej aplikacji.
 
 
-# Derywacja Typeklas
+# Derywacja typeklas
 
 Typeklasy pozwalają na polimorfizm w naszym kodzie, ale aby z nich skorzystać potrzebujemy ich instancji
-dla naszych obiektow domenowych.
+dla naszych obiektów domenowych.
 
 *Derywacja typeklas* to proces tworzenia nowych instancji na podstawie instancji już istniejących, i to właśnie nim
-zajemiemy się w tym rozdziale.
+zajmiemy się w tym rozdziale.
 
 Istnieją cztery główne podejścia do tego zagadnienia:
 
-1. Ręcznie tworzone instancje dla każdego obiektu domenowego. Wykorzystanie tego podejścia na codzień jest
+1. Ręcznie tworzone instancje dla każdego obiektu domenowego. Wykorzystanie tego podejścia na co dzień jest
    niewykonalne, gdyż skończylibyśmy z setkami linii czystego boilerplate'u dla każdej case klasy. Jego użyteczność
    ogranicza się więc jedynie do zastosowań edukacyjnych i doraźnych optymalizacji wydajnościowych.
 2. Abstrahowanie ponad typeklasami z użyciem isntiejących typeklas ze Scalaz. To podejście wykorzystywane jest przez
    bibliotekę `scalaz-deriving`, która potrafi wygenerować zautomatyzowane testy oraz derywacje dla produktów i 
    koproduktów.
-3. Makra, z tym, że napisanie makra dla każdej typeklasy wymaga doświadczonego dewelopera. Na szczęście [Magnolia](https://github.com/propensive/magnolia) 
+3. Makra, z tym że napisanie makra dla każdej typeklasy wymaga doświadczonego dewelopera. Na szczęście [Magnolia](https://github.com/propensive/magnolia) 
    Jona Prettiego pozwala zastąpić ręcznie pisane makra prostym API, centralizując skomplikowane interakcje z kompilatorem.
-4. Pisanie generycznych programów używając biblioteki [Shapeless](https://github.com/milessabin/shapeless/). Różne elementy opatrzone słowem
+4. Pisanie generycznych programów, używając biblioteki [Shapeless](https://github.com/milessabin/shapeless/). Różne elementy opatrzone słowem
    kluczowym `implicit` tworzą osobny język wewnątrz Scali, który może być wykorzystany do implementowania skomplikowanej logiki
    na poziomie typów.
 
 W tym rozdziale przeanalizujemy typeklasy o rosnącym stopniu skomplikowania i ich derywacje. Zaczniemy od `scalaz-deriving` jako
-machanizmu najbardziej pryncypialnego, powtarzając niektóre lekcje z Rozdziału 5 "Typeklasy ze Scalaz". Następnie przejdziemy do
+mechanizmu najbardziej pryncypialnego, powtarzając niektóre lekcje z Rozdziału 5 "Typeklasy ze Scalaz". Następnie przejdziemy do
 Magnolii, która jest najprostsza do użycia, a skończymy na Shapelessie, który jest najpotężniejszy i pozwala na derywacje
 o skomplikowanej logice.
 
-## Uruchamianie Przykładów
+## Uruchamianie przykładów
 
 W tym rozdziale pokażemy jak zdefiniować derywacje pięciu konkretnych typeklas. Każda z nich pokazuje
 funkcjonalność, która może być uogólniona:
@@ -10279,9 +10279,9 @@ A> enkoderów i dekoderów w formie typeklas, ponieważ może to prowadzić do d
 A> (może zaistnieć więcej niż jeden enkoder lub dekoder dla tego samego typu). Alternatywą jest używanie
 A> algebr i zupełne porzucenie `implicit`ów.
 A> 
-A> Mimo że w teorii możliwe jest zastosowanie technik opisanych w tym rozdziale zarówno do derywacji algebr jak i typeklas
+A> Mimo że w teorii możliwe jest zastosowanie technik opisanych w tym rozdziale zarówno do derywacji algebr, jak i typeklas,
 A> to te pierwsze wymagają **zdecydowanie** więcej boilerplate'u. Dlatego też świadomie ograniczymy się
-A> do enkoderów i dekoderów które są koherentne. Jak zobaczymy później, automatyczna derywacja po stronie użycia osiągnięta z użyciem
+A> do enkoderów i dekoderów, które są koherentne. Jak zobaczymy później, automatyczna derywacja po stronie użycia osiągnięta z użyciem
 A> Magnolii lub Shapelessa, w połączeniu z ograniczeniami niejawnego rozstrzygania kompilatora, często prowadzi
 A> do dekoherencji typeklas.
 
@@ -10345,7 +10345,7 @@ Zanim przejdziemy dalej, szybka powtórka z kluczowych typeklas w Scalaz:
 ~~~~~~~~
 
 
-### Nie Powtarzaj Się
+### Nie powtarzaj się
 
 Najprostszym sposobem za derywacje typeklasy jest użycie typeklas już istniejących.
 
@@ -10377,7 +10377,7 @@ Pamiętajmy, że instancje typeklas powinny trafić do obiektu towarzyszącego, 
 ~~~~~~~~
 
 Jednak nie wszystkie typeklasy mogą posiadać instancję typu `Contravariant`. W szczególności typeklasy, których
-parametry występują w pozycji kowariantnej mogą w zamian dostarczać `Functor`:
+parametry występują w pozycji kowariantnej, mogą w zamian dostarczać `Functor`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10402,7 +10402,7 @@ Możemy teraz wyderywować `Default[Foo]` za pomocą
   }
 ~~~~~~~~
 
-Jeśli parametry typeklasy występują zarówno w pozycji kowariantnej jak i kontrawariantej, jak ma to miejsce
+Jeśli parametry typeklasy występują zarówno w pozycji kowariantnej, jak i kontrawariantej, jak ma to miejsce
 w przypadku `Semigroup`, to typeklasa taka może dostarczać `InvariantFunctor`
 
 {lang="text"}
@@ -10417,7 +10417,7 @@ w przypadku `Semigroup`, to typeklasa taka może dostarczać `InvariantFunctor`
   }
 ~~~~~~~~
 
-i do jej derywacji użyjemy `.xmap`
+i do jej derywacji użyjemy `.xmap`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10439,7 +10439,7 @@ W ogólności łatwiej jest użyć `.xmap` zamiast `.map` lub `.contramap`:
   }
 ~~~~~~~~
 
-A> Anotacja `@xderiving` automatycznie wstawia `.xmap`. Aby jej użyć dodaj do `build.sbt`
+A> Anotacja `@xderiving` automatycznie wstawia `.xmap`. Aby z niej skorzystać, dodaj do `build.sbt`
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -10458,8 +10458,8 @@ A> ~~~~~~~~
 
 ### `MonadError`
 
-Zazwyczaj rzeczy, które wyciągają informacje z polimorficznej wartości posiadają instancję `Contravariant`,
-a te które zapisują do takiej wartości definiują `Functor`. Jednak bardzo często taki odczyt
+Zazwyczaj rzeczy, które wyciągają informacje z polimorficznej wartości, posiadają instancję `Contravariant`,
+a te, które zapisują do takiej wartości, definiują `Functor`. Jednak bardzo często taki odczyt
 może się nie powieść. Przykładowo, to, że mamy domyślny `String` nie oznacza wcale, że możemy
 bez problemu wyderywować z niego domyślny `String Refined NonEmpty`.
 
@@ -10502,7 +10502,7 @@ Jako autorzy typeklasy `Default` możemy postarać się troch bardziej niż `Fun
   }
 ~~~~~~~~
 
-Mamy teraz dostęp do `.emap` i możemy wyderywować instancję dla naszego rafinowanego typu
+Mamy teraz dostęp do `.emap` i możemy wyderywować instancję dla naszego rafinowanego typu:
 
 {lang="text"}
 ~~~~~~~~
@@ -10510,7 +10510,7 @@ Mamy teraz dostęp do `.emap` i możemy wyderywować instancję dla naszego rafi
     Default[String].emap(refineV[NonEmpty](_).disjunction)
 ~~~~~~~~
 
-W praktyce, możemy dostarczyć regułę dla wszystkich rafinowanych typów
+W praktyce możemy dostarczyć regułę dla wszystkich rafinowanych typów:
 
 {lang="text"}
 ~~~~~~~~
@@ -10583,7 +10583,7 @@ podobnej do:
 Oznacza to, że jeśli mamy typ `F` oraz sposób na jego konwersję do typu `G`, który posiada instancję danej typeklasy,
 to wystarczy zawołać `.fromIso`, aby otrzymać instancję dla `F`.
 
-Dla przykładu, mając typ danych `Bar` możemy bez problemu zdefiniować izomorfizm do `(String, Int)`
+Dla przykładu, mając typ danych `Bar`, możemy bez problemu zdefiniować izomorfizm do `(String, Int)`
 
 {lang="text"}
 ~~~~~~~~
@@ -10647,7 +10647,7 @@ Bardziej specyficzną typeklasą niż `Contravariant` jest `Divisible`, a `Equal
   }
 ~~~~~~~~
 
-A> Implementując `Divisble` kompilator będzie od nas wymagał dostarczenia implementacji `.contramap`, 
+A> Implementując `Divisble`, kompilator będzie od nas wymagał dostarczenia implementacji `.contramap`, 
 A> którą możemy stworzyć bezpośrednio lub posłużyć się kombinatorem pochodnym:
 A> 
 A> {lang="text"}
@@ -10690,7 +10690,7 @@ wywołania muszą wyprodukować ten sam wynik
 
 dla dowolnego `dupe: A => (A, A)`. Dla `Applicative` sprawa wygląda podobnie.
 
-Rozważmy `JsEncoder` i propozycję jej instancji `Divisible`
+Rozważmy `JsEncoder` i propozycję jej instancji `Divisible`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10725,7 +10725,7 @@ Moglibyśmy eksperymentować z różnymi wariacjami `divide`, ale nigdy nie zasp
 praw dla wszystkich możliwych wejść.
 
 Dlatego też nie możemy dostarczyć `Divisible[JsEncoder]`, gdyż złamalibyśmy matematyczne prawa rządzące tą typeklasą,
-tym samym zaburzając wszystkie założenia na bazie których użytkownicy `Divisible` budują swój kod.
+tym samym zaburzając wszystkie założenia, na bazie których użytkownicy `Divisible` budują swój kod.
 
 Aby pomóc z testowaniem tych praw, typeklasy ze Scalaz zawierają ich skodyfikowaną wersję.
 Możemy napisać zautomatyzowany test, przypominający nam, że złamaliśmy daną regułę:
@@ -10770,9 +10770,9 @@ dla danych testowych
 
 Jesteśmy teraz w stanie zaufać, przynajmniej do pewnego stopnia, że nasza wyderywowana instancja `MonadError` przestrzega zasad.
 
-Jednak udowodnienie, że taki test przechodzi dla konkretnego zbioru danych nie udowadnia, że prawa są zachowane.
-Musimy jeszcze przeanalizować implementację i przekonać siebie samych, że prawa są **raczej** zachowane, a ponad to
-powinniśmy spróbować wskazać przypadki w których mogłoby się to okazać nieprawdą.
+Jednak udowodnienie, że taki test przechodzi dla konkretnego zbioru danych, nie udowadnia, że prawa są zachowane.
+Musimy jeszcze przeanalizować implementację i przekonać siebie samych, że prawa są **raczej** zachowane, a ponadto
+powinniśmy spróbować wskazać przypadki, w których mogłoby się to okazać nieprawdą.
 
 Jednym ze sposobów generowania różnorodnych danych testowych jest użycie biblioteki [scalacheck](https://github.com/rickynils/scalacheck).
 Dostarcza ona typeklasę `Arbitrary`, która integruje się z większością frameworków testowych, pozwalając powtarzać
@@ -10797,7 +10797,7 @@ A> naprawdę gigantyczne dokumenty.
 
 ### `Decidable` i `Alt`
 
-Tam gdzie `Divisble` i `Applicative` pozwalają nam na derywacje typeklas dla produktów (w oparciu o tuple),
+Tam, gdzie `Divisble` i `Applicative` pozwalają nam na derywacje typeklas dla produktów (w oparciu o tuple),
 `Decidable` i `Alt` umożliwiają ją dla koproduktów (opartych o zagnieżdżone dysjunkcje):
 
 {lang="text"}
@@ -10873,7 +10873,7 @@ gdzie produkty (`Vader` i `JarJar`) mają swoje instancje `Equal`
   }
 ~~~~~~~~
 
-możemy wyderywować instancję dla całego ADT
+możemy wyderywować instancję dla całego ADT:
 
 {lang="text"}
 ~~~~~~~~
@@ -10891,8 +10891,8 @@ możemy wyderywować instancję dla całego ADT
 
 A> Scalaz 7.2 nie dostarcza instancji `Decidable[Equal]`, ponieważ ta typeklasa była dodana później.
 
-Typeklasy, która mają `Applicative` kwalifikują się również do `Alt`. Jeśli chcemy użyć triku z `Kleisli.iso`,
-musimy rozszerzyć `IsomorphismMonadError` i domiksować `Alt`. Rozszerzmy więc naszą instancję `MonadError[Default, String`:
+Typeklasy, która mają `Applicative`, kwalifikują się również do `Alt`. Jeśli chcemy użyć triku z `Kleisli.iso`,
+musimy rozszerzyć `IsomorphismMonadError` i domiksować `Alt`. Rozszerzmy więc naszą instancję `MonadError[Default, String]`:
 
 {lang="text"}
 ~~~~~~~~
@@ -10971,9 +10971,9 @@ Wróćmy do typeklas z `scalaz-deriving`, gdzie inwariantnymi odpowiednikami `Al
 wspierając typeklasy z `InvariantFunctor`em, jak np. `Monoid` czy `Semigroup`.
 
 
-### Arbitralna Arność[^arnosc] i `@deriving`
+### Arbitralna arność[^arnosc] i `@deriving`
 
-[^arnosc]: Liczba argumentów, eng. _arity_
+[^arnosc]: Liczba argumentów, _arity_
 
 `InvariantApplicative` i `InvariantAlt` niosą ze sobą dwa problemy:
 
@@ -10985,8 +10985,8 @@ W tym rozdziale rozwiążemy oba te problemy z użyciem dodatkowych typeklas ze 
 {width=75%}
 ![](images/scalaz-deriving.png)
 
-W praktyce, cztery główne typeklasy `Applicative`, `Divisble`, `Alt` i `Decidable` zostały rozszerzone do
-arbitralnej arności używając biblioteki [iotaz](https://github.com/frees-io/iota), stąd też sufiks `z`.
+W praktyce cztery główne typeklasy `Applicative`, `Divisble`, `Alt` i `Decidable` zostały rozszerzone do
+arbitralnej arności, używając biblioteki [iotaz](https://github.com/frees-io/iota), stąd też sufiks `z`.
 
 Biblioteka ta definiuje trzy główne typy:
 
@@ -10994,7 +10994,7 @@ Biblioteka ta definiuje trzy główne typy:
 -   `Prod[A <: TList]` dla produktów
 -   `Cop[A <: TList]` dla koproduktów
 
-Dla przykładu, oto reprezentacje oparte o `TList` dla ADT `Darath` z poprzedniego podrozdziału:
+Oto przykładowe reprezentacje oparte o `TList` dla ADT `Darath` z poprzedniego podrozdziału:
 
 {lang="text"}
 ~~~~~~~~
@@ -11171,8 +11171,8 @@ korzyści wydajnościowych. Dokonamy dwóch dodatkowych optymalizacji:
 
 1. wykonanie porównania referencji `.eq` przed zaaplikowaniem `Equal.equal`, pozwalając na
    szybsze określenie równości dla tych samych wartości.
-2. szybkie wyjście z `Foldable.all` kiedy którekolwiek z porównań zwróci `false`, tzn. jeśli
-   pierwsze pola się nie zgadzają to nie będziemy nawet wymagać instancji `Equal` dla pozostałych
+2. szybkie wyjście z `Foldable.all`, kiedy którekolwiek z porównań zwróci `false`, tzn. jeśli
+   pierwsze pola się nie zgadzają, to nie będziemy nawet wymagać instancji `Equal` dla pozostałych
    wartości
 
 {lang="text"}
@@ -11341,7 +11341,7 @@ nie ma `scalaz-deriving`: dostęp do nazw pól, nazw typów, anotacji i domyśln
 
 ### Przykład: JSON
 
-Musimy zadać sobie kilka pytań odnośnie tego jak chcemy serializować dane: 
+Musimy zadać sobie kilka pytań odnośnie tego, jak chcemy serializować dane: 
 
 1. Czy powinniśmy załączać pola o wartości `null`?
 1. Czy dekodując powinniśmy traktować brakujące pola i pola o wartości `null` inaczej?
@@ -11351,7 +11351,7 @@ Musimy zadać sobie kilka pytań odnośnie tego jak chcemy serializować dane:
 Oto nasze odpowiedzi:
 
 - nie załączamy pól o wartości `JsNull`
-- brakujące pola traktujemy tak samo jak wartości `null`
+- brakujące pola traktujemy tak samo, jak wartości `null`
 - użyjemy specjalnego pola `type`, aby rozróżnić koprodukty na podstawie ich nazw
 - wartości prymitywne umieścimy w specjalnym polu `xvalue`
 
@@ -11371,7 +11371,7 @@ dostosować te zachowania:
 A> Magnolia nie ogranicza nas do jednej rodziny anotacji. Taka implementacja ma pozwolić nam
 A> na dokonanie dokładnego porównania z Shapelessem w następnym podrozdziale.
 
-Na przykład 
+Na przykład:
 
 {lang="text"}
 ~~~~~~~~
@@ -11412,7 +11412,7 @@ Zacznijmy od enkodera, który obsługuje jedynie ustawienia domyślne:
   }
 ~~~~~~~~
 
-Widzimy w jak prosty sposób możemy posługiwać się nazwami pól oraz
+Widzimy, w jak prosty sposób możemy posługiwać się nazwami pól oraz
 instancjami typeklas dla każdego z nich.
 
 Teraz dodajmy wsparcie dla anotacji, aby obsłużyć preferencje użytkownika. Aby
@@ -11628,7 +11628,7 @@ naszych typów danych. Na przykład dla API Map Google:
 ~~~~~~~~
 
 Na szczęście anotacja `@deriving` wspiera derywację z użyciem Magnolii! Jeśli autor typeklasy 
-dostarcza w swoim jarze plik `deriving.conf` zawierający poniższe linie
+dostarcza w swoim jarze plik `deriving.conf` zawierający poniższe linie:
 
 {lang="text"}
 ~~~~~~~~
@@ -11656,11 +11656,11 @@ to `deriving-macro` wywoła odpowiednie metody:
 ~~~~~~~~
 
 
-### W Pełni Automatyczna Derywacja
+### Derywacja w pełni automatyczna
 
-Generowanie niejawnych instancji w obiektach towarzyszących typom danych jest techniką znaną
+Generowanie niejawnych instancji w obiektach towarzyszących jest techniką znaną
 jako generacja *semi-automatyczna* (_semi-auto_), w porównaniu do generacji *w pełni automatycznej* (_full-auto_),
-która ma miejsce, gdy metoda `.gen` jest również niejawna
+która ma miejsce, gdy metoda `.gen` jest również niejawna.
 
 {lang="text"}
 ~~~~~~~~
@@ -11675,7 +11675,7 @@ która ma miejsce, gdy metoda `.gen` jest również niejawna
 ~~~~~~~~
 
 W takim wypadku użytkownicy mogą zaimportować takie metody i zyskać magiczną derywację
-w punkcie użycia
+w punkcie użycia:
 
 {lang="text"}
 ~~~~~~~~
@@ -11701,7 +11701,7 @@ błędów. Pomyślmy co się wydarzy dla
   final case class Foo(s: Option[String])
 ~~~~~~~~
 
-jeśli zapomnimy dostarczyć niejawna instancję dla `Option`. Moglibyśmy oczekiwać, że
+jeśli zapomnimy dostarczyć niejawną instancję dla `Option`. Moglibyśmy oczekiwać, że
 `Foo(Some("hello"))` przyjmie formę
 
 {lang="text"}
@@ -11711,7 +11711,7 @@ jeśli zapomnimy dostarczyć niejawna instancję dla `Option`. Moglibyśmy oczek
   }
 ~~~~~~~~
 
-Ale zamiast tego otrzymamy
+ale zamiast tego otrzymamy
 
 {lang="text"}
 ~~~~~~~~
@@ -11725,24 +11725,24 @@ Ale zamiast tego otrzymamy
 
 ponieważ Magnolia wyderywowała dla na nas enkoder dla typu `Option`.
 
-Chcielibyśmy, żeby kompilator informował nas o brakujących elementach, tak więc odradzamy
-używanie w pełni automatycznej derywacji.
+Chcielibyśmy, żeby kompilator informował nas o brakujących elementach, tak więc stanowczo odradzamy
+używanie derywacji w pełni automatycznej.
 
 ## Shapeless
 
 Biblioteka [Shapeless](https://github.com/milessabin/shapeless/) jest niezmiennie najbardziej skomplikowaną biblioteką
 w ekosystemie Scali. Taka reputacja wynika z faktu, że implementuje ona niemal osoby język do *programowania generycznego*
-na poziomie typów i robi to za pomocą maksymalnego wykorzystania wartości niejawnych.
+na poziomie typów i robi to za pomocą maksymalnego wykorzystania implicitów.
 
-Nie jest to pomysł zupełnie obcy. W Scalaz staramy się ograniczyć używanie takich wartości jedynie
+Nie jest to pomysł zupełnie obcy. W Scalaz staramy się ograniczyć używanie wartości niejawnych jedynie
 do typeklas, ale czasem prosimy kompilator o dostarczenie różnego rodzaju *dowodów* co do wskazanych typów.
 Przykładem mogą być relacje Liskov i Leibniz (`<~<` i `===`) lub zdolność do wstrzyknięcia algebry free do koproduktu
-algebry (`Inject`).
+algebr (`Inject`).
 
 A> Nie trzeba rozumieć Shapelessa, żeby być Programistą Funkcyjnym. Jeśli ten rozdział
 A> okaże się zbyt ciężki, to po prostu przejdź do następnego.
 
-Aby zainstalować Shapeless musimy dodać poniższy fragment do `build.sbt`
+Instalacja polega na dodaniu poniższego fragmentu do `build.sbt`:
 
 {lang="text"}
 ~~~~~~~~
@@ -11851,14 +11851,14 @@ Nie musimy używać typu `KeyTag` bezpośrednio, a zamiast tego możemy użyć a
 Jeśli chcemy uzyskać dostęp do nazwy pola z `FieldType[K, A]`, musimy poprosić o
 niejawny dowód typu `Witness.Aux[K]`, który dostarczy nam wartość `K` w czasie wykonania.
 
-Na pierwszy rzut oka jest to wszystko co musimy wiedzieć, aby móc wyderywować instancję typeklasy
-z użyciem Shapelessa. Jednak z czasem wszystko się komplikuje, więc my również przejdziemy przez przykłady
+Na pierwszy rzut oka to jest wszystko, co musimy wiedzieć, aby móc wyderywować instancję typeklasy
+z użyciem Shapelessa. Jednak z czasem wszystko się komplikuje, co zobaczymy przechodząc przez przykłady
 o rosnącym poziomie skomplikowania.
 
  
 ### Przykład: `Equal`
 
-Standardowym podejściem jest rozszerzenie typeklasy i umieszczenie jej derywacji z obiekcie towarzyszącym.
+Standardowym podejściem jest rozszerzenie typeklasy i umieszczenie jej derywacji w obiekcie towarzyszącym.
 W taki sposób znajduje się ona w niejawnym zakresie przeszukiwanym przez kompilator bez dopisywania dodatkowych importów.
 
 {lang="text"}
@@ -11870,7 +11870,7 @@ W taki sposób znajduje się ona w niejawnym zakresie przeszukiwanym przez kompi
 ~~~~~~~~
 
 Punktem wejścia do derywacji jest metoda `.gen`, wymagająca dwóch parametrów typu: `A`, dla którego derywujemy instancję
-oraz `R` czyli jego generycznej reprezentacji. Następnie żądamy wartości `Generic.Aux[A, R]`, która łączy `A` z `R`, oraz
+oraz `R`, czyli jego generycznej reprezentacji. Następnie żądamy wartości `Generic.Aux[A, R]`, która łączy `A` z `R`, oraz
 instancji `DerivedEqual` dla `R`. Zacznijmy od takiej właśnie sygnatury i prostej implementacji:
 
 {lang="text"}
@@ -11892,15 +11892,15 @@ zaimplementować taką sygnaturę:
   implicit def hcons[H: Equal, T <: HList: DerivedEqual]: DerivedEqual[H :: T]
 ~~~~~~~~
 
-Jeśli ją zaimplementujemy to kompilator będzie w stanie rekursywnie ją wywoływać aż dotrze do końca listy.
-W tym momencie będzie potrzebował instancji dla pustego `HNil`
+Gdy zostanie zaimplementowana, to kompilator będzie w stanie rekursywnie ją wywoływać, aż dotrze do końca listy.
+W tym momencie będzie potrzebował instancji dla pustego `HNil`:
 
 {lang="text"}
 ~~~~~~~~
   implicit def hnil: DerivedEqual[HNil]
 ~~~~~~~~
 
-Zaimplementujmy je
+A o to implementacja:
 
 {lang="text"}
 ~~~~~~~~
@@ -11910,7 +11910,7 @@ Zaimplementujmy je
   implicit val hnil: DerivedEqual[HNil] = (_, _) => true
 ~~~~~~~~
 
-Dla koproduktów z kolei, chcielibyśmy zaimplementować podobne sygnatury
+Dla koproduktów chcielibyśmy zaimplementować podobne sygnatury:
 
 {lang="text"}
 ~~~~~~~~
@@ -11918,7 +11918,7 @@ Dla koproduktów z kolei, chcielibyśmy zaimplementować podobne sygnatury
   implicit def cnil: DerivedEqual[CNil]
 ~~~~~~~~
 
-A> Scalaz i Shapeless współdzielą wiele nazw typów. Gdy używamy ich jednocześnie często musimy wyłączyć niektóre elementy z importów, np.
+A> Scalaz i Shapeless współdzielą wiele nazw typów. Gdy używamy ich jednocześnie, często musimy wyłączyć niektóre elementy z importów, np.
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -11928,15 +11928,15 @@ A> ~~~~~~~~
 
 
 `.cnil` nie zostanie nigdy zawołany dla typeklas takich jak `Equal`, gdzie parametr typu występuje jedynie w 
-pozycji kontrawariantnej, ale kompilator tego nie wie, a więc musimy dostarczyć jakąkolwiek jego implementację:
+pozycji kontrawariantnej, ale kompilator tego nie wie, więc musimy dostarczyć jakąkolwiek jego implementację:
 
 {lang="text"}
 ~~~~~~~~
   implicit val cnil: DerivedEqual[CNil] = (_, _) => sys.error("impossible")
 ~~~~~~~~
 
-W przypadku koproduktów, możemy porównywać jedynie instancje tego samego typu, a więc wtedy, gdy
-mamy do czynienia z dwukrotnym `Inl` lub `Inr`
+W przypadku koproduktów możemy porównywać jedynie instancje tego samego typu, czyli wtedy, gdy
+mamy do czynienia z dwukrotnym `Inl` lub `Inr`.
 
 {lang="text"}
 ~~~~~~~~
@@ -11951,7 +11951,7 @@ Warto zaznaczyć, że nasze metody pokrywają się z konceptami `conquer` (`hnil
 `divide2` (`hlist`) i `alt2` (`coproduct`)! Jedak nic nie zyskamy definiując `Decidable`,
 gdyż musielibyśmy zaczynać od zera pisząc testy dla tego kodu.
 
-Przetestujmy więc go prostym ADT
+Przetestujmy więc go prostym ADT:
 
 {lang="text"}
 ~~~~~~~~
@@ -11994,7 +11994,7 @@ ale kod się nie kompiluje!
 Witaj w Shapelessowym świecie błędów kompilacji!
 
 Problem, który wcale nie jest jasno widoczny w komunikacie błędu, wynika z faktu, że kompilator
-nie umie domyślić się czym jest `R`. Musimy więc dostarczyć mu ten parametr wprost:
+nie umie domyślić się, czym jest `R`. Musimy więc dostarczyć mu ten parametr wprost:
 
 {lang="text"}
 ~~~~~~~~
@@ -12012,7 +12012,7 @@ lub użyć makra `Generic`, które dostarczy kompilatorowi generyczną reprezent
   ...
 ~~~~~~~~
 
-A> W tym momencie zacznij ignorować wszelkie podkreślenia i ufaj jedynie kompilatorowi. To jest punkt,
+A> W tym momencie zacznij ignorować wszelkie podkreślenia edytora i ufaj jedynie kompilatorowi. To jest punkt,
 A> w którym Shapeless i wsparcie IDE się rozchodzą.
 
 Powodem, dla którego to rozwiązanie działa, jest sygnatura metody `.gen`
@@ -12030,16 +12030,16 @@ która rozwijana jest do
 ~~~~~~~~
 
 Kompilator Scali rozwiązuje ograniczenia od lewej do prawej, a więc znajduje wiele różnych rozwiązań dla
-`DerivedEqual` zanim ograniczy je z użyciem `Generic.Aux[A, R]`. Innym rozwiązaniem jest nie używanie ograniczeń kontekstu.
+`DerivedEqual`, zanim ograniczy je z użyciem `Generic.Aux[A, R]`. Innym rozwiązaniem jest nieużywanie ograniczeń kontekstu.
 
 A> Zamiast prezentować w pełni działającą wersje, uważamy, że ważniejsze jest pokazać kiedy,
 A> wydawałoby się, oczywisty kod nie działa, gdyż tak właśnie wygląda rzeczywistość pracy z Shapelessem. 
-A> Innym rozwiązaniem, które moglibyśmy tu zastosować, jest użycie `sealed` na `DerivedEqual`
+A> Innym rozwiązaniem, które moglibyśmy tu zastosować, jest użycie `sealed` na `DerivedEqual`,
 A> sprawiając, że jedynie wyderywowane wersje są poprawne. Ale `sealed trait`y nie są kompatybilne z
-A> typami SAM! Żyjąc na krawędzi ostrza spodziewaj się zacięć.
+A> typami SAM! Żyjąc na krawędzi ostrza, spodziewaj się zacięć.
 
 Tym samym nie potrzebujemy już `implicit val generic` ani parametrów typu przekazywanych wprost i możemy
-podłączyć `@deriving` dodając wpis w `deriving.conf` (zakładając, że chcemy nadpisać implementację ze `scalaz-deriving`)
+podłączyć `@deriving`, dodając wpis w `deriving.conf` (zakładając, że chcemy nadpisać implementację ze `scalaz-deriving`).
 
 {lang="text"}
 ~~~~~~~~
@@ -12090,13 +12090,13 @@ Jednak taka implementacja nadal jest błędna: nie działa dla rekurencyjnych ty
 Dzieje się tak, ponieważ `Equal[Tree]` zależy od `Equal[Branch]`, które z kolei zależy od `Equal[Tree]`.
 Rekurencja i BUM! Rozwiązaniem jest załadować je leniwie, a nie zachłannie.
 
-Zarówno `scalaz-deriving` jak i Magnolia obsługują ten przypadek automatycznie, lecz tutaj
+Zarówno `scalaz-deriving`, jak i Magnolia obsługują ten przypadek automatycznie, lecz tutaj
 leży to w gestii programisty.
 
 Typy `Cached`, `Strict` i `Lazy`, oparte o makra, zmieniają zachowanie kompilatora, pozwalając nam na osiągnięcie
 potrzebnej leniwości. Generalną zasadą jest użycie `Cached[Strict[_]]` w punkcie wejścia i `Lazy[_]` w okolicach instancji dla typu `H`.
 
-W tym momencie najlepiej będzie jeśli zupełnie zapomnimy o ograniczeniach kontekstu i typach SAM:
+W tym momencie najlepiej będzie, jeśli zupełnie zapomnimy o ograniczeniach kontekstu i typach SAM:
 
 {lang="text"}
 ~~~~~~~~
@@ -12152,14 +12152,14 @@ Możemy teraz wywołać
   assert(tree1 /== tree2)
 ~~~~~~~~
 
-bez wyjątków rzucanych w czasie działania.
+bez wyjątków rzucanych w czasie wykonania.
 
 
 ### Przykład: `Default`
 
-Implementując derywację typeklasy z parametrem typu w pozycji kowariantnej nie natkniemy się na szczęście
+Implementując derywację typeklasy z parametrem typu w pozycji kowariantnej, nie natkniemy się na szczęście
 na żadne nowe pułapki. Tworzymy instancje dla `HList` i `Coproduct`, pamiętając, że musimy obsłużyć też
-przypadek `CNil`, gdyż odpowiada on sytuacji w której żaden z wariantów nie był w stanie dostarczyć wartości.
+przypadek `CNil`, gdyż odpowiada on sytuacji, w której żaden z wariantów nie był w stanie dostarczyć wartości.
 
 {lang="text"}
 ~~~~~~~~
@@ -12292,7 +12292,7 @@ ta w `JsEncoder`.
 
 
 A> Wiele bibliotek dokonujących derywacji w oparciu o Shapelessa używa wzorca, 
-A> wg którego derywacją bazuje na "podpowiedziach" dostarczanych za pomocą niejawnej wartości
+A> wg którego derywacja bazuje na "podpowiedziach" dostarczanych za pomocą niejawnej wartości:
 A> 
 A> {lang="text"}
 A> ~~~~~~~~
@@ -12314,9 +12314,9 @@ A> mechanizmie priorytetów wartości niejawnych, który bardzo łatwo jest zeps
 A> łatwo jest doprowadzić do dekoherencji typeklas, gdzie derywacja `JsEncoder[Foo]` zakończy się innym rezultatem
 A> zależnie od tego jaka instancja `ProductHint[Foo]` jest dostępna. Najlepiej unikać tego podejścia.
 
-Shapeless obiera ścieżkę wykonania na etapie kompilacji bazując na obecności anotacji, co może prowadzić
+Shapeless obiera ścieżkę wykonania na etapie kompilacji, bazując na obecności anotacji, co może prowadzić
 do bardziej wydajnego kodu kosztem jego powtarzania. Oznacza to, że liczba anotacji i ich podtypów, z którymi mamy do czynienia
-musi być rozsądnie mała, gdyż inaczej okaże się ze jesteśmy zmuszenie pisać 10x więcej kodu. Zamieńmy więc
+musi być rozsądnie mała, gdyż inaczej okaże się, że jesteśmy zmuszenie pisać 10x więcej kodu. Zamieńmy więc
 nasze trzy anotacje na jedną z trzema parametrami:
 
 {lang="text"}
@@ -12347,24 +12347,24 @@ w konstruktorach anotacji. Możemy napisać własne destruktory, aby nie musieć
 ~~~~~~~~
 
 Możemy zażądać `Annotation[json, A]` dla `case class` lub `sealed trait`ów, aby zyskać dostęp do anotacji, 
-ale musimy stworzyć warianty `hcons` i `ccons` obsługujące oba przypadki, gdyż wartość taka nie zostanie wygenerowana
+ale musimy stworzyć warianty `hcons` i `ccons` obsługujące oba przypadki, gdyż wartość taka nie zostanie wygenerowana,
 gdy anotacja nie jest obecna. Tym samym musimy wprowadzić wartości niejawne o niższym priorytecie i za ich
 pomocą obsłużyć brak anotacji.
 
 Możemy też zażądać `Annotations.Aux[json, A, J]`, aby otrzymać `HList`ę anotacji `json` dla typu `A`.
 Jednak tak samo musimy powtórzyć `hcons` i `ccons` dla przypadku, gdy anotacja nie jest obecna.
 
-Aby wesprzeć tą jedną anotację musimy napisać czterokrotnie więcej kodu!
+Aby wesprzeć tą jedną anotację, musimy napisać czterokrotnie więcej kodu!
 
 Zacznijmy od przepisania derywacji `JsEncoder` tak, aby obsługiwała kod bez jakichkolwiek anotacji.
-Teraz kod, który użyje `@json` się nie skompiluje, co jest dobrym zabezpieczeniem.
+Teraz kod, który użyje `@json`, się nie skompiluje, co jest dobrym zabezpieczeniem.
 
 Musimy dodać `A` i `J` do `DerivedJsEncoder` i przeciągnąć je poprzez metodę `.toJsObject`. Nasze
 `.hcons` i `ccons` produkują instancje `DerivedJsEncoder` z anotacja `None.type`. Przeniesiemy je
 do zakresu o niższym priorytecie, tak, abyśmy mogli obsłużyć `Annotation[json, A]` w pierwszej kolejności.
 
 Zauważ, że instancje dla `J` pojawiają się przed `R`. Jest to ważne, gdyż kompilator musi najpierw
-określić typ `J` zanim będzie w stanie ustalić `R`.
+określić typ `J`, zanim będzie w stanie ustalić `R`.
 
 {lang="text"}
 ~~~~~~~~
@@ -12433,7 +12433,7 @@ określić typ `J` zanim będzie w stanie ustalić `R`.
 ~~~~~~~~
 
 Teraz możemy dodać sygnatury dla sześciu nowych metod, które pokryją wszystkie możliwe warianty
-tego, gdzie może pojawić się anotacja. Zauważ, że wspieramy tylko jedną anotacje w każdej pozycji,
+tego, gdzie może pojawić się anotacja. Zauważ, że wspieramy tylko jedną anotację w każdej pozycji,
 każda następna będzie po cichu zignorowana.
 
 Powoli kończą nam się nazwy, więc arbitralnie dodamy `Annotated`, gdy anotacja jest na typie `A` i
@@ -12580,18 +12580,18 @@ oraz
 ~~~~~~~~
 
 Oczywiście, jest tutaj dużo boilerplate'u, ale jeśli przyjrzymy się bliżej, to zobaczymy, że
-każda z metod jest zaimplementowana tak wydajnie jak to możliwe biorąc pod uwagę dostępne informacje,
+każda z metod jest zaimplementowana tak wydajnie, jak to możliwe biorąc pod uwagę dostępne informacje,
 a ścieżki wykonania wybierane są w czasie kompilacji.
 
 Ci z obsesją na punkcie wydajności mogą przerefaktorować ten kod, tak, aby wszystkie anotacje były
 dostępne zawczasu, a nie wstrzykiwane przez metodę `.toJsFields`. Dla absolutnej wydajności moglibyśmy
 potraktować każdą customizację jako osobną anotację, ale tym samym po raz kolejny kilkukrotnie 
 zwiększylibyśmy ilość kodu, wydłużając jeszcze bardziej czas kompilacji dla naszych użytkowników.
-Tego typu optymalizacje są poza zakresem tej książki, ale jak najbardziej są one nie tylko możliwe
+Tego typu optymalizacje są poza zakresem tej książki, ale jak najbardziej są one nie tylko możliwe,
 ale i implementowane w praktyce. Zdolność do przeniesienia pracy z czasu wykonania do czasu kompilacji
 jest jedną z najbardziej pociągających rzeczy w programowaniu generycznym.
 
-Dodatkowy haczyk o którym musimy pamiętać, to to, że [`LabelledGeneric` nie jest kompatybilny ze
+Dodatkowy haczyk, o którym musimy pamiętać, to to, że [`LabelledGeneric` nie jest kompatybilny ze
 `scalaz.@@`](https://github.com/milessabin/shapeless/issues/309), ale na szczęście istnieje obejście tego problemu.
 Powiedzmy, że chcielibyśmy w wydajny sposób zignorować tagi. Musimy więc dodać dodatkowe reguły derywacji:
 
@@ -12621,7 +12621,7 @@ W tym momencie powinniśmy móc wyderywować instancję `JsDecoder` dla typów p
   }
 ~~~~~~~~
 
-Jednak zamiast tego otrzymujemy błąd kompilacji
+Jednak zamiast tego otrzymujemy błąd kompilacji:
 
 {lang="text"}
 ~~~~~~~~
@@ -12662,9 +12662,9 @@ Na szczęście musimy obsłużyć jedynie produkty, bo tylko one mogą być otag
 
 ### `JsDecoder`
 
-Dekodowanie wygląda dokładnie tak jak mogliśmy się tego spodziewać po poprzednich przykładach. 
+Dekodowanie wygląda dokładnie tak, jak mogliśmy się tego spodziewać po poprzednich przykładach. 
 Możemy tworzyć instancje `FieldType[K, H]` za pomocą funkcji pomocniczej `field[K](h: H)`.
-Chcąc obsłużyć jedynie zachowania domyślne musimy napisać:
+Chcąc obsłużyć jedynie zachowania domyślne, musimy napisać:
 
 {lang="text"}
 ~~~~~~~~
@@ -12821,7 +12821,7 @@ potrafi obsłużyć domyślne wartości
 Niestety nie możemy już używać `@deriving` dla produktów i koproduktów, gdyż w pliku `deriving.conf` może być tylko jeden wpis
 dla danej typeklasy.
 
-No i nie zapomnijmy o wsparciu dla `@@`
+No i nie zapomnijmy o wsparciu dla `@@`.
 
 {lang="text"}
 ~~~~~~~~
@@ -12864,7 +12864,7 @@ No i nie zapomnijmy o wsparciu dla `@@`
 
 ### Skomplikowane Derywacje
 
-Shapeless pozwala na dużo więcej rodzajów derywacji niż jest możliwe do osiągnięcia z użyciem
+Shapeless pozwala na dużo więcej rodzajów derywacji, niż jest możliwe do osiągnięcia z użyciem
 `scalaz-deriving` lub Magnolii. Jako przykład takiego nieosiągalnego enkodera/dekodera może posłużyć
 model XML z  [`xmlformat`](https://github.com/scalaz/scalaz-deriving/tree/master/examples/xmlformat).
 
@@ -12895,7 +12895,7 @@ model XML z  [`xmlformat`](https://github.com/scalaz/scalaz-deriving/tree/master
 
 Znając naturę XMLa, sensownym wydaje się mieć osobne pary dekoderów i enkoderów dla `XChildren` i `XString`.
 Z użyciem Shapelessa moglibyśmy je wyderywować implementując specjalną obsługę pól zależnie od typeklas jakie są dla nich dostępne oraz
-od tego czy jest to `Option` czy nie. Dodatkowo przy dekodowaniu moglibyśmy mieć różne strategie dekodowania
+od tego, czy jest to `Option`, czy nie. Dodatkowo przy dekodowaniu moglibyśmy mieć różne strategie dekodowania
 ciał elementów, które mogą być wieloczęściowe, zależnie czy nasz typ ma instancję `Semigroup`, `Monoid` czy też nie ma żadnej z nich.
 
 A> Wielu deweloperów wierzy, że XML to jedynie bardziej rozwlekła forma JSONa z ostrymi nawiasami zamiast klamer.
@@ -12962,17 +12962,17 @@ Dla kompletności, derywacja `UrlEncodedWriter` może być też zaimplementowana
 
 > "Strzeż się w pełni automatycznej derywacji. Złość, strach, agresja; ciemną stroną derywacji są one.
 > Łatwo wypływają, szybko dołączają do ciebie w walce. Gdy raz wstąpisz na ciemną ścieżkę, na zawsze
-> zawładną twoim kompilatorem, a ciebie pochłoną.
+> zawładną twoim kompilatorem, a ciebie pochłoną."
 >
-> - starożytny mistrz Shapelessa
+> ― starożytny mistrz Shapelessa
 
-W dodatku do wszystkich ostrzeżeń co do w pełni automatycznej derywacji, wspomnianych dla Magnolii,
+W dodatku do wszystkich ostrzeżeń względem w pełni automatycznej derywacji, wspomnianych dla Magnolii,
 Shapeless jest **zdecydowanie** gorszy. Taka derywacja z jego użyciem jest nie tylko
 [najczęstszym źródłem powolnej kompilacji](https://www.scala-lang.org/blog/2018/06/04/scalac-profiling.html),
-ale również źródłem bolesnych błędów w kwestii ich koherencji.
+ale również źródłem bolesnych błędów w kwestii koherencji typeklas.
 
 Derywacja w pełni automatyczna ma miejsce wtedy, gdy `def gen` jest opatrzona modyfikatorem `implicit`, sprawiając, 
-że wywołanie przejdzie rekurencyjnie przez całe ADT. Z racji tego jak działają niejawne zakresy,
+że wywołanie przejdzie rekurencyjnie przez całe ADT. Z racji tego, jak działają niejawne zakresy,
 zaimportowany `implicit def` ma wyższy priorytet niż konkretne instancje w obiektach towarzyszących, co
 powoduje dekoherencję typeklas. Rozważmy taką właśnie sytuację:
 
@@ -13009,7 +13009,7 @@ Sytuacja jest jeszcze gorsza, gdy taka niejawna derywacja jest dodana do obiektu
 gdyż oznacza to, że jej instancje będą **zawsze** derywowane w punkcie użycia a użytkownik nie może
 wpłynąć na ten mechanizm.
 
-Zasadniczo pisząc programy generyczne należy przyjąć, że wartości niejawne mogą być ignorowane przez kompilator
+Zasadniczo pisząc programy generyczne, należy przyjąć, że wartości niejawne mogą być ignorowane przez kompilator
 zależnie od zakresu, co oznacza, że tracimy bezpieczeństwo w czasie kompilacji, które było naszą główną motywacją
 do pisania tego typu programów!
 
@@ -13021,13 +13021,13 @@ ciemną stronę. Strach prowadzi do złości. Złość prowadzi do nienawiści. 
 ## Wydajność
 
 Nie ma złotego środka w kwestii derywacji typeklas. Aspektem do rozważenia jest wydajność,
-zarówno w czasie kompilacji jak i wykonania.
+zarówno w czasie kompilacji, jak i wykonania.
 
-#### Czasy Kompilacji
+#### Czasy kompilacji
 
-Kiedy mówimy o czasach kompilacji to Shapeless zdecydowanie wychodzi przed szereg. Nie jest
+Kiedy mówimy o czasach kompilacji, to Shapeless zdecydowanie wychodzi przed szereg. Nie jest
 niczym nadzwyczajnym, aby mały projekt przeszedł od jednej sekundy do jednej minuty czasu kompilacji.
-Aby prześledzić przyczyny takich zachowań możemy użyć pluginu `scalac-profiling`
+Aby prześledzić przyczyny takich zachowań, możemy użyć pluginu `scalac-profiling`
 
 {lang="text"}
 ~~~~~~~~
@@ -13037,7 +13037,7 @@ Aby prześledzić przyczyny takich zachowań możemy użyć pluginu `scalac-prof
 
 który wyprodukuje raport mogący posłużyć do wygenerowania *flame grafu*.
 
-Dla typowej derywacji opartej o Shapelessa, dostajemy żywy wykres:
+Dla typowej derywacji opartej o Shapelessa dostajemy "skoczny" wykres:
 
 {width=90%}
 ![](images/implicit-flamegraph-jsonformat-jmh.png)
@@ -13048,12 +13048,12 @@ instancji tworzonych z użyciem `scalaz-deriving` i Magnolii, ale to Shapeless d
 A wszystko to, gdy wszystko działa. Jeśli zdarzy się problem z Shapelssową derywacją, to kompilator może
 się zaciąć w nieskończonej pętli i musi być zabity.
 
-#### Wydajność Czasu Uruchomienia
+#### Wydajność w czasie wykonania
 
 Kiedy mówimy o wydajności wykonania, odpowiedzią zawsze jest *to zależy*.
 
-Zakładając ze logika derywacji została optymalnie zaimplementowana, to jedynym sposobem
-aby dowiedzieć, która jest szybsza jest eksperymentowanie.
+Zakładając, że logika derywacji została optymalnie zaimplementowana, to jedynym sposobem,
+aby dowiedzieć, która jest szybsza, jest eksperymentowanie.
 
 Biblioteka `jsonformat` używa [Java Microbenchmark Harness (JMH)](http://openjdk.java.net/projects/code-tools/jmh/)
 na modelach pochodzących z API GeoJSONa, Google Maps i Twittera, które zostały skontrybuowane przez Andrity'ego Plokhotnyuka.
@@ -13070,7 +13070,7 @@ zaaplikowane do trzech implementacji:
 -   napisanych ręcznie
 
 z odpowiadającymi optymalizacjami w każdej z nich. Wyniki prezentowane są w operacjach na sekundę
-(im więcej tym lepiej) i pochodzą z wykonania na mocnej maszynie i jednym wątku:
+(im więcej, tym lepiej) i pochodzą z wykonania na mocnej maszynie i jednym wątku:
 
 {lang="text"}
 ~~~~~~~~
@@ -13091,7 +13091,7 @@ z odpowiadającymi optymalizacjami w każdej z nich. Wyniki prezentowane są w o
 ~~~~~~~~
 
 Widzimy, że przodują implementacje ręczne, za którymi podąża Magnolia. Shapeless
-osiągnął od 30% do 70% wydajności ręcznie tworzonych instancji. Teraz spójrzmy na dekodowanie
+osiągnął od 30% do 70% wydajności ręcznie tworzonych instancji. Teraz spójrzmy na dekodowanie:
 
 {lang="text"}
 ~~~~~~~~
@@ -13112,7 +13112,7 @@ osiągnął od 30% do 70% wydajności ręcznie tworzonych instancji. Teraz spój
 ~~~~~~~~
 
 Tutaj walka o drugie miejsce między Magnolią i Shapelessem jest bardziej zażarta. W końcu
-test dekodujący niepoprawne dane
+test dekodujący niepoprawne dane:
 
 {lang="text"}
 ~~~~~~~~
@@ -13132,12 +13132,12 @@ test dekodujący niepoprawne dane
   TwitterAPIBenchmarks.decodeManualError        thrpt    5   148814.730 ±  1105.316  ops/s
 ~~~~~~~~
 
-Gdy już wydawało się, że widzimy wzór, okazało się, że zarówno Magnolia jak i Shapeless 
+Gdy już wydawało się, że widzimy wzór, okazało się, że zarówno Magnolia, jak i Shapeless 
 wygrały w przypadku danych dla API GeoJSONa, ale ręczne instancje osiągnęły lepszy wyniki
 dla Google Maps i Twittera.
 
 Chcielibyśmy dołączyć do porównania `scalaz-deriving`, więc porównamy odpowiadające sobie implementacje
-`Equal`, przetestowane na dwóch wartościach które mają tę samą zawartość (`True`) i dwóch o różnej
+`Equal`, przetestowane na dwóch wartościach, które mają tę samą zawartość (`True`) i dwóch o różnej
 zawartości (`False`).
 
 {lang="text"}
@@ -13161,9 +13161,9 @@ zawartości (`False`).
   TwitterAPIBenchmarks.equalManualTrue         thrpt    5   865845.158 ±  6339.379  ops/s
 ~~~~~~~~
 
-Tak jak można było się spodziewać, instancje stworzone ręczenie są daleko z przodu. Z kolei
+Tak jak można było się spodziewać, instancje stworzone ręcznie są daleko z przodu. Z kolei
 Shapeless prawie zawsze wygrywa wśród automatycznych derywacji. Biblioteka `scalaz-deriving` miała dobry start
-z `GeoJSON`, ale nie poradziła sobie w testach Google Maps i Twittera. Wyniki `False` są niemal identyczne
+z `GeoJSON`, ale nie poradziła sobie w testach Google Maps i Twittera. Wyniki `False` są niemal identyczne.
 
 {lang="text"}
 ~~~~~~~~
@@ -13188,11 +13188,11 @@ z `GeoJSON`, ale nie poradziła sobie w testach Google Maps i Twittera. Wyniki `
 
 Wydajność wykonania `scalaz-deriving`, Magnolii i Shapelessa jest zazwyczaj wystarczająca.
 Bądźmy realistami, rzadko kiedy piszemy aplikacje, które muszą kodować do JSONa więcej niż 130 000
-wartości na sekundę, na jednym wątku, na JVMie. Jeśli takie jest wymaganie to może warto spojrzeć w stronę C i C++?
+wartości na sekundę, na jednym wątku, na JVMie. Jeśli takie jest wymaganie, to może warto spojrzeć w stronę C i C++?
 
 Mało prawdopodobne jest, żeby wyderywowane instancje stały się wąskim gardłem aplikacji. Jeśli jednak tak się stanie,
 to zawsze istnieje opcja ręcznych instancji, które są bardziej potężne, ale też tym samym bardziej niebezpieczne. Łatwo
-jest przy ich tworzeniu popełnić błędy, literówki a nawet przypadkowo obniżyć wydajność.
+jest przy ich tworzeniu popełnić błędy, literówki, a nawet przypadkowo obniżyć wydajność.
 
 Podsumowując, derywacje i antyczne makra nie są żadną konkurencją dla dobrych, własnoręcznie napisanych instancji!
 
@@ -13220,14 +13220,14 @@ wykaz funkcjonalności:
 | Wydajność         |        |          |             | potrzymaj mi piwo |
 
 Polecamy używanie `scalaz-deriving`, gdy to tylko możliwe, Magnolii do enkoderów i dekoderów oraz gdy
-wydajność jest bardzo istotna, a Shapelessa tam, gdzie derywacje są bardzo skomplikowane a czasy kompilacji
+wydajność jest bardzo istotna, a Shapelessa tam, gdzie derywacje są bardzo skomplikowane, a czasy kompilacji
 nie mają dużego znaczenia.
 
 Instancje pisane ręcznie pozostają zawsze pod ręką na specjalne okazje oraz gdy trzeba osiągnąć
 maksymalną wydajność. Jeśli je piszesz, to staraj się unikać literówek i błędów używając narzędzi do generacji kodu.
 
 
-# Zmontowanie Aplikacji
+# Złożenie aplikacji
 
 Na zakończenie zaaplikujemy zdobytą wiedzę do naszej przykładowej aplikacji i zaimplementujemy klienta oraz serwer
 HTTP za pomocą czysto funkcyjnej biblioteki [http4s](https://http4s.org/).
@@ -13414,7 +13414,7 @@ Przeanalizujmy też, bez zaglądania do implementacji, jak kształtuje się graf
   ) extends Machines[F] { ... }
 ~~~~~~~~
 
-Dwa moduły implementują `OAuth2JsonClient`, jeden używa algebry `Refresh` dla usług Google'a, a drugi niewygasającego `BearerToken` dla `Drone'a.
+Dwa moduły implementują `OAuth2JsonClient`, jeden używa algebry `Refresh` dla usług Google'a, a drugi niewygasającego `BearerToken` dla `Drone`'a.
 
 {lang="text"}
 ~~~~~~~~
@@ -13439,7 +13439,7 @@ Do tej pory widzieliśmy wymagania względem `F` mówiące, że musimy dostarczy
 oraz `MonadState[F, BearerToken]`. Wszystkie te wymagania spełnia `StateT[Task, BearerToken, ?]` co pozwala
 nam uczynić ten typ kontekstem naszej aplikacji.
 
-Jednak niektóre algebry mają interpretery używające bezpośrednio typu `Task`
+Jednak niektóre algebry mają interpretery używające bezpośrednio typu `Task`:
 
 {lang="text"}
 ~~~~~~~~
@@ -13482,7 +13482,7 @@ A> ~~~~~~~~
 A>   StateT[EitherT[Task, JsonClient.Error, ?], BearerToken, ?]
 A> ~~~~~~~~
 A> 
-A> Stos monad. Stosy monad automatycznie dostarczają odpowiednie instancje `MonadState` i `MonadError` kiedy
+A> Stos monad. Stosy monad automatycznie dostarczają odpowiednie instancje `MonadState` i `MonadError`, kiedy
 A> są zagnieżdżane, więc nie musimy się tym martwić. Gdybyśmy zahardkodowali implementacje w interpreterze i 
 A> zwracali `EitherT[Task, Error, ?]` z `BlazeJsonClient` to wszystko stałoby się dużo trudniejsze.
 
@@ -13517,7 +13517,7 @@ zmian co do kontekstu `F[_]`.
 
 Interpreter algebry `UserInteraction` jest najbardziej skomplikowanym elementem naszego
 kodu. Startuje on serwer HTTP, prosi użytkownika o otworzenie strony w przeglądarce,
-odbiera wywołanie zwrotne w serwerze i zwraca wynik jednocześnie zakańczając pracę serwera
+odbiera wywołanie zwrotne w serwerze i zwraca wynik, jednocześnie zakańczając pracę serwera
 w bezpieczny sposób.
 
 Zamiast używać `StateT` do zarządzania tym stanem użyliśmy typu `Promise` (pochodzącego z `ioeffect`).
@@ -13530,10 +13530,10 @@ również dlatego, że potrzebujemy możliwości "czekania", którą daje nam je
 
 ## `Main`
 
-Najbrzydsza część FP pojawia się, gdy musimy sprawić by wszystkie monady się zgadzały. Najczęściej ma to miejsce
+Najbrzydsza część FP pojawia się, gdy musimy sprawić, by wszystkie monady się zgadzały. Najczęściej ma to miejsce
 w punkcie wejściowym naszej aplikacji, czyli klasie `Main`.
 
-Nasza główna pętla wyglądała tak
+Przypomnijmy, nasza główna pętla wyglądała tak:
 
 {lang="text"}
 ~~~~~~~~
@@ -13563,7 +13563,7 @@ W tym momencie mamy do wyboru dwa podejścia i oba omówimy. Pierwszym i jednocz
 jest skonstruowanie stosu monad kompatybilnego ze wszystkimi algebrami, a każda z nich musi definiować `liftM`, aby
 wynieść ją do większego stosu.
 
-Kod, który chcemy napisać dla trybu jednorazowego uwierzytelnienia to
+Kod, który chcemy napisać dla trybu jednorazowego uwierzytelnienia to:
 
 {lang="text"}
 ~~~~~~~~
@@ -13585,7 +13585,7 @@ Kod, który chcemy napisać dla trybu jednorazowego uwierzytelnienia to
 gdzie `.readConfig` i `.putStrLn` to wywołania funkcji z bibliotek. Możemy potraktować je jako interpretery
 oparte o `Task` dla algebr odczytujących konfigurację i wypisująca ciąg znaków.
 
-Ten kod jednak się nie kompiluje z dwóch powodów. Po pierwsze, musimy zdecydować jak będzie wyglądał nasz
+Ten kod jednak się nie kompiluje z dwóch powodów. Po pierwsze, musimy zdecydować, jak będzie wyglądał nasz
 stos monad. Konstruktor `BlazeJsonClient` zwraca `Task`, ale `JsonClient`wymaga `MonadError[..., JsonClient.Error]`,
 co można rozwiązać za pomocą `EitherT`. Możemy więc skonstruować nasz stos dla całej konstrukcji `for` jako
 
@@ -13594,8 +13594,8 @@ co można rozwiązać za pomocą `EitherT`. Możemy więc skonstruować nasz sto
   type H[a] = EitherT[Task, JsonClient.Error, a]
 ~~~~~~~~
 
-Niestety, oznacza to, że musimy wywołać `.liftM` dla wszystkiego co zwraca `Task`,
-co dodaje dość dużo boilerplate'u. Niestety metoda `liftM` nie przyjmuje typów o kształcie
+Niestety, oznacza to, że musimy wywołać `.liftM` dla wszystkiego, co zwraca `Task`,
+dodając dość dużo boilerplate'u. Niestety metoda `liftM` nie przyjmuje typów o kształcie
 `H[_]` tylko `H[_[_]. _]`, więc musimy stworzyć alias, który pomoże kompilatorowi:
 
 {lang="text"}
@@ -13604,7 +13604,7 @@ co dodaje dość dużo boilerplate'u. Niestety metoda `liftM` nie przyjmuje typ�
   type H[a]        = HT[Task, a]
 ~~~~~~~~
 
-możemy teraz wywołać `.liftM[HT]` kiedy dostajemy `Task`
+Możemy teraz wywołać `.liftM[HT]` kiedy dostajemy `Task`
 
 {lang="text"}
 ~~~~~~~~
@@ -13622,7 +13622,7 @@ możemy teraz wywołać `.liftM[HT]` kiedy dostajemy `Task`
 ~~~~~~~~
 
 Ale nasz kod nadal się nie kompiluje. Tym razem dlatego, że `clock` jest typu `LocalClock[Task]` a `AccessModule` wymaga `LocalClock[H]`. 
-Dodajmy więc potrzebny boilerplate `.liftM` do obiektu towarzyszącego `LocalClock` i wynieśmy całą algebrę
+Dodajmy więc potrzebny boilerplate `.liftM` do obiektu towarzyszącego `LocalClock` i wynieśmy całą algebrę.
 
 {lang="text"}
 ~~~~~~~~
@@ -13631,7 +13631,7 @@ Dodajmy więc potrzebny boilerplate `.liftM` do obiektu towarzyszącego `LocalCl
 
 Wreszcie wszystko się kompiluje!
 
-Drugie podejście do zmontowywania aplikacji jest bardziej złożone, ale niezbędne, gdy pojawiają się
+Drugie podejście do złożenia aplikacji jest bardziej złożone, ale niezbędne, gdy pojawiają się
 konflikty w stosie monad, tak jak w naszej głównej pętli. Jeśli przeanalizujemy wymagania,
 zobaczymy, że potrzebujemy poniższych instancji:
 
@@ -13641,9 +13641,9 @@ zobaczymy, że potrzebujemy poniższych instancji:
 
 Niestety, dwa wymagania na `MonadState` są ze sobą sprzeczne. Moglibyśmy
 skonstruować typ danych, który przechowuje cały stan aplikacji, ale byłaby to
-cieknąca abstrakcja. Zamiast tego zagnieździmy konstrukcję `for` i dostarczymy stan tam gdzie jest potrzebny
+cieknąca abstrakcja. Zamiast tego zagnieździmy konstrukcję `for` i dostarczymy stan tam, gdzie jest potrzebny.
 
-Musimy teraz przemyśleć trzy warstwy, które nazwiemy `F`, `G` i `H`
+Musimy teraz przemyśleć trzy warstwy, które nazwiemy `F`, `G` i `H`.
 
 {lang="text"}
 ~~~~~~~~
@@ -13656,7 +13656,7 @@ Musimy teraz przemyśleć trzy warstwy, które nazwiemy `F`, `G` i `H`
   type F[a]        = FT[G, a]
 ~~~~~~~~
 
-Teraz złe wieści: `liftM` obsługuje tylko jedną warstwę na raz. Jeśli mamy `Task[A]`, a chcemy
+Złe wieści: `liftM` obsługuje tylko jedną warstwę na raz. Jeśli mamy `Task[A]`, a chcemy
 uzyskać `F[A]` to musimy przejść przez wszystkie kroki i wywołać `ta.liftM[HT].liftM[GT].liftM[FT]`.
 Podobnie, gdy wynosimy algebry, musimy zawołać `liftM` wielokrotnie. Aby uzyskać `Sleep[F]`, musimy napisać
 
@@ -13754,7 +13754,7 @@ Server i klienta HTTP zaimplementujemy z użyciem zewnętrznej biblioteki `http4
 dla odpowiednich algebr dostaną w związku z tym prefiks *Blaze*, gdyż tak też nazywa się 
 właściwy komponent tej biblioteki.
 
-Dodajemy poniższe zależności
+Dodajmy więc poniższe zależności:
 
 {lang="text"}
 ~~~~~~~~
@@ -13769,7 +13769,7 @@ Dodajemy poniższe zależności
 
 ### `BlazeJsonClient`
 
-Będziemy potrzebować kilku dodatkowych importów
+Będziemy potrzebować też kilku dodatkowych importów.
 
 {lang="text"}
 ~~~~~~~~
@@ -13780,7 +13780,7 @@ Będziemy potrzebować kilku dodatkowych importów
   import org.http4s.client.blaze.{ BlazeClientConfig, Http1Client }
 ~~~~~~~~
 
-Moduł `Client` może być podsumowany jako
+Moduł `Client` może być podsumowany jako:
 
 {lang="text"}
 ~~~~~~~~
@@ -13891,7 +13891,7 @@ Możemy wydzielić tę logikę do pojedynczej funkcji `.handler`
 
 Następnie parsujemy string do JSONa, a `JsDecoder[A]`dostarcza potrzebny rezultat.
 
-Oto nasza implementacja `.get`
+Oto nasza implementacja `.get`:
 
 {lang="text"}
 ~~~~~~~~
@@ -13913,7 +13913,7 @@ Oto nasza implementacja `.get`
 Trzeba przyznać, że jest to w 100% łączenie istniejących kawałków. Konwertujemy nasze typy wejściowe
 do `http4s.Request`, wołamy `.fetch` na kliencie przekazując nasz `handler`, w odpowiedzi dostajemy
 `Task[Error \/ A]`. Musimy jednak zwrócić `F[A]`, więc używamy `MonadIO.liftIO` do stworzenia
-`F[Error \/ ]`, na którym z kolei wywołujemy `emap` umieszczając błąd wewnątrz `F`.
+`F[Error \/ ]`, na którym z kolei wywołujemy `emap`, umieszczając błąd wewnątrz `F`.
 
 Niestety, próba skompilowania tego kodu zakończy się porażką, a błąd będzie wyglądał mniej więcej tak:
 
@@ -13965,7 +13965,7 @@ enkodera dla typu `String`
       )
 ~~~~~~~~
 
-Jedyną różnicą między `.get` i `.post` jest sposób w jaki konstruujemy `http4s.Request`
+Jedyną różnicą między `.get` i `.post` jest sposób, w jaki konstruujemy `http4s.Request`
 
 {lang="text"}
 ~~~~~~~~
@@ -13994,7 +13994,7 @@ Ostatnim fragmentem układanki jest konstruktor, w którym wywołujemy `Http1Cli
 
 ### `BlazeUserInteraction`
 
-Musimy uruchomić serwer HTTP, co jest dużo łatwiejsze niż może się wydawać. Po pierwsze, importy
+Musimy jeszcze uruchomić serwer HTTP, co jest dużo łatwiejsze, niż może się wydawać. Po pierwsze, importy
 
 {lang="text"}
 ~~~~~~~~
@@ -14004,7 +14004,7 @@ Musimy uruchomić serwer HTTP, co jest dużo łatwiejsze niż może się wydawa�
   import org.http4s.server.blaze._
 ~~~~~~~~
 
-Następnie musimy utworzyć `dsl` dla naszego typu efektów, z którego zaimportujemy zawartość
+Następnie utwórzmy `dsl` dla naszego typu efektów i zaimportujmy zawartość:
 
 {lang="text"}
 ~~~~~~~~
@@ -14013,8 +14013,8 @@ Następnie musimy utworzyć `dsl` dla naszego typu efektów, z którego zaimport
 ~~~~~~~~
 
 Teraz możemy używać [dsla http4s](https://http4s.org/v0.18/dsl/) do obsługi żądań HTTP. Zamiast opisywać wszystko
-co jest możliwe zaimplementujemy po prostu pojedynczą końcówkę (_endpoint_), która przypomina
-każdy inny DSL HTTP
+co jest możliwe, zaimplementujemy po prostu pojedynczy endpoint, co przypomina
+każdy inny dsl do opisu HTTP.
 
 {lang="text"}
 ~~~~~~~~
@@ -14045,7 +14045,7 @@ ukończyć obietnicę `ptoken`:
 ~~~~~~~~
 
 ale zdefiniowanie logiki nie wystarczy, musimy jeszcze uruchomić nasz serwer, co też zrobimy
-używając `BlazeBuilder`
+używając `BlazeBuilder`.
 
 {lang="text"}
 ~~~~~~~~
@@ -14083,10 +14083,10 @@ Nasza implementacja `.start` i `.stop` jest więc bardzo prosta
     Task.fail(new IOException(s) with NoStackTrace)
 ~~~~~~~~
 
-Uśpienie wątku na `1.second` jest niezbędne, aby uniknąć wyłączenia serwera zanim odpowiedź trafi z powrotem
+Uśpienie wątku na `1.second` jest niezbędne, aby uniknąć wyłączenia serwera, zanim odpowiedź trafi z powrotem
 do przeglądarki. Z wydajnością współbieżności `IO` nie ma żartów!
 
-W końcu, aby utworzyć `BlazeUserInteraction` potrzebuje jedynie dwóch niezainicjalizowanych obietnic
+W końcu, aby utworzyć `BlazeUserInteraction` potrzebujemy jedynie dwóch niezainicjalizowanych obietnic
 
 {lang="text"}
 ~~~~~~~~
@@ -14109,8 +14109,8 @@ Mogliśmy użyć `IO[Void, ?]`, ale skoro reszta naszej aplikacji używa `Task` 
 I to tyle! Gratulujemy dotarcia do końca podróży.
 
 Jeśli w trakcie jej trwania nauczyłeś się czegoś, to proszę, powiedz o tym swoim znajomym. 
-Ta książka nie ma działu marketingu, więc jest to jedyny sposób w jaki potencjalni czytelnicy mogą się o niej dowiedzieć.
+Ta książka nie ma działu marketingu, więc jest to jedyny sposób, w jaki potencjalni czytelnicy mogą się o niej dowiedzieć.
 
-Aby zaangażować się w rozwój Scalaz wystarczy dołączyć do [pokoju na gitterze](https://gitter.im/scalaz/scalaz). Stamtąd
-możesz zadawać pytania, pomagać innym (teraz jesteś ekspertem!) i pomagać w tworzeniu kolejnych wersji biblioteki.
+Aby zaangażować się w rozwój Scalaz, wystarczy dołączyć do [pokoju na gitterze](https://gitter.im/scalaz/scalaz). Stamtąd
+możesz zadawać pytania, pomagać innym (teraz jesteś ekspertem!) i wspierać tworzenie kolejnych wersji biblioteki.
 
