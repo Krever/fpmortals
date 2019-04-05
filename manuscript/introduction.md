@@ -22,8 +22,7 @@ Niestety, API to miało jeden problem, zmuszało nas do rzutowania w czasie wyko
   }
 ~~~~~~~~
 
-W odpowiedzi na ten problem deweloperzy definiowali obiekty domenowe, które przyjmowały formę
-`CollcetionOfThing`, czyli były kolekcjami konkretnych typów, z ich własnym silnie typowanym interfejsem,
+W odpowiedzi na ten problem deweloperzy definiowali obiekty domenowe, które przyjmowały formę `CollectionOfThing`, czyli były kolekcjami konkretnych typów, z ich własnym silnie typowanym interfejsem,
 a Collection API stało się jedynie szczegółem implementacyjnym.
 
 W 2005 Java 5 wprowadziła *typy generyczne* (_generics_), pozwalające nam definiować `Collection<Thing>`,
@@ -37,7 +36,7 @@ obiektowym (OOP) oraz programowaniem funkcyjnym (FP).
 Dla większości programistów FP oznacza używanie niemutowalnych struktur danych tak często jak to możliwe,
 ale mutowalny stan jest nadal złem koniecznym, które musi być wyizolowane i zarządzane, np. przy użyciu aktorów z `Akki` lub
 klas używających `synchronized`. Ten styl FP skutkuje prostszymi programami, które łatwiej zrównoleglić i rozproszyć, 
-stawiając zdecydowany krok naprzód względem Javy. Jest to jednak niewielka część zalet i korzyści płynących z programowa funkcyjnego, 
+stawiając zdecydowany krok naprzód względem Javy. Jest to jednak niewielka część zalet i korzyści płynących z programowania funkcyjnego, 
 które odkryjemy w tej książce.
 
 Scala wprowadza również typ `Future`, sprawiając, że pisanie aplikacji asynchronicznych staje się dużo łatwiejsze.
@@ -49,7 +48,7 @@ wliczając testy, które teraz narażone są na arbitralne _timeouty_[^timeout].
     niesione znaczenie, niż wymyślać nową nazwę, której znaczenia trzeba się domyślać.
 
 Mamy więc problem podobny to tego z Javy 1.0: brakuje nam możliwości abstrahowania nad wykonaniem programu, tak samo,
-jak brakowało nam możliwość abstrahowania nad używanymi kolekcjami.
+jak brakowało nam możliwości abstrahowania nad używanymi kolekcjami.
 
 
 ## Abstrahowanie nad wykonaniem
@@ -201,7 +200,7 @@ pozwalając nam na napisanie:
 ~~~~~~~~
 
 Możemy teraz współdzielić implementację `echo` pomiędzy synchroniczną i asynchroniczną wersją naszego programu.
-Możemy napisać sztuczną (_mock_) implementację `Terminal[Now]` i użyć jej w naszych testach beż zagrożenia ze strony _timeoutów_. 
+Możemy napisać sztuczną (_mock_) implementację `Terminal[Now]` i użyć jej w naszych testach bez zagrożenia ze strony _timeoutów_. 
 
 Implementacje `Execution[Now]` oraz `Execution[Future]` mogą być reużywane przez generyczne metody takie jak `echo`.
 
